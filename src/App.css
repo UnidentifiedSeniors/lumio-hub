@@ -1,0 +1,660 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0b0e14;
+  color: white;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.landing h1 {
+  font-size: 64px;
+  margin-bottom: 10px;
+}
+
+.landing p {
+  color: #a8b0c2;
+  font-size: 20px;
+}
+
+.stats {
+  display: flex;
+  gap: 25px;
+  margin: 40px 0;
+}
+
+.stat-card {
+  background: #151a25;
+  padding: 25px;
+  width: 200px;
+  border-radius: 15px;
+}
+
+.stat-card h2 {
+  font-size: 35px;
+  margin: 0;
+}
+
+button {
+  background: #5865f2;
+  color: white;
+  border: none;
+  padding: 15px 35px;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+
+.sidebar {
+  width: 260px;
+  background: #111620;
+  padding: 30px;
+}
+
+
+.sidebar h2 {
+  font-size: 28px;
+  margin-bottom: 40px;
+}
+
+
+.sidebar p {
+  color: #a8b0c2;
+  padding: 12px 0;
+  cursor: pointer;
+}
+
+
+.sidebar p:hover {
+  color: white;
+}
+
+
+.content {
+  flex: 1;
+  padding: 40px;
+}
+
+.sidebar a {
+  display: block;
+  color: #a8b0c2;
+  text-decoration: none;
+  padding: 12px 0;
+  transition: 0.2s;
+}
+
+
+.sidebar a:hover {
+  color: white;
+  transform: translateX(5px);
+}
+
+.hero-card {
+  background: linear-gradient(
+    135deg,
+    #151a25,
+    #20283a
+  );
+
+  padding: 35px;
+  border-radius: 20px;
+  margin-bottom: 30px;
+}
+
+
+.hero-card h1 {
+  font-size: 42px;
+  margin: 0 0 10px;
+}
+
+
+.license-status {
+  margin-top: 25px;
+  display: flex;
+  justify-content: space-between;
+  max-width: 300px;
+
+  background: #0b0e14;
+  padding: 15px;
+  border-radius: 12px;
+}
+
+
+.dashboard-grid {
+
+  display: grid;
+
+  grid-template-columns:
+  repeat(3, 1fr);
+
+  gap: 25px;
+
+  margin-bottom: 30px;
+
+}
+
+
+.dashboard-card {
+
+  background: #151a25;
+
+  padding: 25px;
+
+  border-radius: 18px;
+
+}
+
+
+.dashboard-card h2 {
+
+  margin-top: 0;
+
+}
+
+
+.big-number {
+
+  font-size: 42px;
+
+  font-weight: bold;
+
+}
+
+
+.xp-bar {
+
+  width: 100%;
+
+  height: 12px;
+
+  background: #0b0e14;
+
+  border-radius: 20px;
+
+  overflow: hidden;
+
+}
+
+
+.xp-progress {
+
+  width: 35%;
+
+  height: 100%;
+
+  background: #5865f2;
+
+}
+
+
+.announcement {
+
+  margin-top: 20px;
+
+}
+
+.champion-grid {
+
+  display: grid;
+
+  grid-template-columns:
+  repeat(3, 1fr);
+
+  gap: 25px;
+
+  margin-top: 30px;
+
+}
+
+
+.champion-card {
+
+  background: #151a25;
+
+  padding: 25px;
+
+  border-radius: 18px;
+
+  transition: 0.2s;
+
+}
+
+
+.champion-card:hover {
+
+  transform: translateY(-5px);
+
+}
+
+
+.champion-card h2 {
+
+  margin-top: 15px;
+
+}
+
+
+.tier {
+
+  display: inline-block;
+
+  padding: 6px 12px;
+
+  background: #5865f2;
+
+  border-radius: 20px;
+
+  font-size: 14px;
+
+}
+
+
+.champion-card button {
+
+  width: 100%;
+
+  margin-top: 15px;
+
+}
+
+.champion-details {
+  max-width: 900px;
+}
+
+
+.details-grid {
+
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 25px;
+
+  margin: 30px 0;
+
+}
+
+
+.champion-details button {
+
+  margin-top: 20px;
+
+}
+
+.trade-layout {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 25px;
+
+}
+
+
+.trade-item {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  padding: 15px;
+
+  margin: 10px 0;
+
+  background: #0b0e14;
+
+  border-radius: 12px;
+
+  cursor: pointer;
+
+}
+
+
+.trade-item:hover {
+
+  background: #20283a;
+
+}
+
+.trade-item button {
+
+  padding: 8px 15px;
+
+  font-size: 14px;
+
+}
+
+
+.trade-item p {
+
+  margin: 5px 0;
+
+}
+
+
+hr {
+
+  border: none;
+
+  height: 1px;
+
+  background: #30384d;
+
+  margin: 25px 0;
+
+}
+
+.trade-container {
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:30px;
+
+}
+
+
+.trade-panel {
+
+background:#151a25;
+
+padding:25px;
+
+border-radius:20px;
+
+}
+
+
+
+.trade-card {
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+background:#0b0e14;
+
+padding:15px;
+
+margin:12px 0;
+
+border-radius:14px;
+
+}
+
+
+
+.trade-card h3 {
+
+margin:0;
+
+}
+
+
+
+.trade-card p {
+
+margin:5px 0;
+
+color:#a8b0c2;
+
+}
+
+
+
+.trade-card button {
+
+font-size:14px;
+
+padding:10px 15px;
+
+}
+
+
+
+.wanted-box {
+
+background:#20283a;
+
+padding:20px;
+
+border-radius:15px;
+
+}
+
+
+
+.offer-item {
+
+background:#0b0e14;
+
+padding:12px;
+
+margin:8px 0;
+
+border-radius:10px;
+
+}
+
+.modal-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(0,0,0,0.65);
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+}
+
+
+
+.trade-modal {
+
+  background:#151a25;
+
+  width:450px;
+
+  padding:30px;
+
+  border-radius:20px;
+
+}
+
+
+
+.modal-section {
+
+  background:#0b0e14;
+
+  padding:15px;
+
+  margin:15px 0;
+
+  border-radius:12px;
+
+}
+
+
+
+.modal-buttons {
+
+  display:flex;
+
+  gap:15px;
+
+  justify-content:flex-end;
+
+}
+
+.profile-card {
+
+  background:#151a25;
+
+  padding:30px;
+
+  border-radius:20px;
+
+  margin-bottom:25px;
+
+}
+
+
+
+.profile-grid {
+
+  display:grid;
+
+  grid-template-columns:
+  repeat(3,1fr);
+
+  gap:25px;
+
+  margin-bottom:25px;
+
+}
+
+.mission-grid {
+
+display:grid;
+
+grid-template-columns:
+repeat(3,1fr);
+
+gap:25px;
+
+}
+
+.leaderboard {
+
+display:flex;
+
+flex-direction:column;
+
+gap:15px;
+
+}
+
+
+
+.leader-card {
+
+background:#151a25;
+
+padding:20px;
+
+border-radius:18px;
+
+}
+
+
+
+.competition-grid {
+
+display:grid;
+
+grid-template-columns:
+repeat(2,1fr);
+
+gap:25px;
+
+}
+/* ===== New rarity / traits UI ===== */
+
+.rarity-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+  background: #5865f2;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.trait {
+  background: #0b0e14;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #a8b0c2;
+}
+
+.offer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0b0e14;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 10px;
+}
+
+.remove-offer-btn {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.remove-offer-btn:hover {
+  opacity: 0.8;
+}
+
+.trade-card p {
+  margin: 4px 0;
+}
+
+.trade-card .rarity-badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 3px 10px;
+  background: #5865f2;
+  border-radius: 16px;
+  color: #fff;
+  margin-bottom: 6px;
+}

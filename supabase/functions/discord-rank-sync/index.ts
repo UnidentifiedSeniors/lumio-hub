@@ -20,10 +20,25 @@ type ProfileRecord = {
 
 type RankRoleMap = Record<string, string>;
 
-function jsonResponse(body: Record<string, unknown>, status = 200) {
+function corsHeaders(request: Request) {
+  const origin = request.headers.get("Origin");
+  const allowedOrigin = origin === "https://lumiohub.app" || origin === "http://localhost:5173"
+    ? origin
+    : "https://lumiohub.app";
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Content-Type": "application/json",
+    Vary: "Origin",
+  };
+}
+
+function jsonResponse(request: Request, body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: corsHeaders(request),
   });
 }
 
@@ -115,8 +130,12 @@ async function syncRank(profile: ProfileRecord) {
 }
 
 serve(async (request) => {
+  if (request.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders(request) });
+  }
+
   if (request.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return jsonResponse(request, { error: "Method not allowed" }, 405);
   }
 
   try {
@@ -128,21 +147,21 @@ serve(async (request) => {
     // changed; XP gains within the same rank do not call Discord unnecessarily.
     if (webhookRecord) {
       if (payload.type !== "UPDATE") {
-        return jsonResponse({ skipped: "profile event is not an update" });
+        return jsonResponse(request, { skipped: "profile event is not an update" });
       }
       if (oldRecord?.rank === webhookRecord.rank) {
-        return jsonResponse({ skipped: "rank is unchanged" });
+        return jsonResponse(request, { skipped: "rank is unchanged" });
       }
 
       const result = await syncRank(webhookRecord);
-      return jsonResponse({ synced: true, source: "webhook", ...result });
+      return jsonResponse(request, { synced: true, source: "webhook", ...result });
     }
 
     // A signed-in member can manually reconcile their current role from
     // Settings—for example after joining the Discord server after a promotion.
     const authorization = request.headers.get("Authorization");
     if (!authorization) {
-      return jsonResponse({ error: "Missing authorization" }, 401);
+      return jsonResponse(request, { error: "Missing authorization" }, 401);
     }
 
     const supabase = createClient(
@@ -165,10 +184,10 @@ serve(async (request) => {
     }
 
     const result = await syncRank(profile);
-    return jsonResponse({ synced: true, source: "manual", ...result });
+    return jsonResponse(request, { synced: true, source: "manual", ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown Discord rank sync error";
     console.error("Discord rank sync error:", message);
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse(request, { error: message }, 500);
   }
 });

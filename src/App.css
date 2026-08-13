@@ -379,6 +379,175 @@ kbd {
   background: #7e82ff;
 }
 
+.notification-menu {
+  position: relative;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  z-index: 30;
+  width: min(370px, calc(100vw - 28px));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: #171a27;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.38);
+}
+
+.notification-dropdown-heading,
+.notification-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.notification-dropdown-heading {
+  padding: 14px 15px 11px;
+}
+
+.notification-dropdown-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.notification-dropdown-heading strong {
+  font-size: 0.84rem;
+}
+
+.notification-dropdown-heading span {
+  color: #848ba2;
+  font-size: 0.7rem;
+}
+
+.notification-dropdown-heading button,
+.notification-section-heading > a {
+  color: #aeb2ff;
+  font-size: 0.71rem;
+  font-weight: 700;
+}
+
+.notification-dropdown-heading button {
+  background: transparent;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.notification-dropdown-heading button:hover,
+.notification-section-heading > a:hover {
+  color: #fff;
+}
+
+.notification-list {
+  display: grid;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.notification-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 29px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: start;
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  color: #d9ddeb;
+  cursor: pointer;
+  padding: 12px 15px;
+  text-align: left;
+  transition: background 160ms ease;
+}
+
+.notification-entry:first-child {
+  border-top: 0;
+}
+
+.notification-entry:hover {
+  background: rgba(120, 124, 243, 0.09);
+}
+
+.notification-entry.unread {
+  background: linear-gradient(90deg, rgba(114, 118, 243, 0.13), rgba(114, 118, 243, 0.025));
+}
+
+.notification-entry.unread:hover {
+  background: linear-gradient(90deg, rgba(114, 118, 243, 0.19), rgba(114, 118, 243, 0.06));
+}
+
+.notification-icon {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid rgba(143, 146, 255, 0.25);
+  border-radius: 9px;
+  background: rgba(121, 124, 255, 0.12);
+  color: #b5b8ff;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.notification-icon-offer_accepted,
+.notification-icon-trade_completed {
+  border-color: rgba(75, 213, 163, 0.23);
+  background: rgba(75, 213, 163, 0.1);
+  color: #71e2b3;
+}
+
+.notification-icon-offer_declined,
+.notification-icon-offer_withdrawn {
+  border-color: rgba(237, 163, 116, 0.22);
+  background: rgba(237, 163, 116, 0.1);
+  color: #ffb780;
+}
+
+.notification-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.notification-copy strong {
+  color: #eef0fa;
+  font-size: 0.76rem;
+  font-weight: 720;
+}
+
+.notification-copy span {
+  color: #939ab1;
+  font-size: 0.7rem;
+  line-height: 1.38;
+}
+
+.notification-entry time {
+  margin-right: 7px;
+  color: #7c849b;
+  font-size: 0.64rem;
+  white-space: nowrap;
+}
+
+.notification-unread-dot {
+  position: absolute;
+  top: 15px;
+  right: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #898dff;
+  box-shadow: 0 0 8px rgba(137, 141, 255, 0.78);
+}
+
+.notification-empty {
+  margin: 0;
+  color: #8f96ab;
+  font-size: 0.77rem;
+  line-height: 1.5;
+  padding: 17px 15px 19px;
+}
+
 .account-menu {
   position: relative;
 }
@@ -677,6 +846,34 @@ kbd {
 
 .announcement {
   margin-top: 18px;
+}
+
+.notification-dashboard-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+.notification-section-heading {
+  padding: 20px 21px 15px;
+}
+
+.notification-section-heading .eyebrow {
+  margin-bottom: 4px;
+}
+
+.notification-section-heading h2 {
+  margin: 0;
+}
+
+.notification-dashboard-card .notification-entry {
+  padding-right: 21px;
+  padding-left: 21px;
+}
+
+.notification-dashboard-card .notification-empty {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-right: 21px;
+  padding-left: 21px;
 }
 
 .section-heading h2 {

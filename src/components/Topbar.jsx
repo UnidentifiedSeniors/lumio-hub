@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
+import { supabase } from "../lib/supabase";
+import NotificationList from "./NotificationList";
 
 function SearchIcon() {
   return (
@@ -23,8 +25,11 @@ function BellIcon() {
 function Topbar() {
   const { user, profile, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const [search, setSearch] = useState("");
   const menuRef = useRef(null);
+  const notificationsRef = useRef(null);
   const navigate = useNavigate();
 
   const displayName =
@@ -39,11 +44,39 @@ function Topbar() {
   useEffect(() => {
     const closeMenu = (event) => {
       if (!menuRef.current?.contains(event.target)) setMenuOpen(false);
+      if (!notificationsRef.current?.contains(event.target)) setNotificationsOpen(false);
     };
 
     document.addEventListener("mousedown", closeMenu);
     return () => document.removeEventListener("mousedown", closeMenu);
   }, []);
+
+  const loadNotifications = useCallback(async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("id, type, title, body, link_path, trade_id, created_at, read_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (!error) setNotifications(data || []);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      const clearNotifications = window.setTimeout(() => setNotifications([]), 0);
+      return () => window.clearTimeout(clearNotifications);
+    }
+
+    const initialLoad = window.setTimeout(() => void loadNotifications(), 0);
+    const interval = window.setInterval(() => void loadNotifications(), 60000);
+    return () => {
+      window.clearTimeout(initialLoad);
+      window.clearInterval(interval);
+    };
+  }, [user, loadNotifications]);
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -56,6 +89,42 @@ function Topbar() {
     await logout();
     navigate("/");
   };
+
+  const openNotifications = () => {
+    setMenuOpen(false);
+    setNotificationsOpen((open) => !open);
+    void loadNotifications();
+  };
+
+  const openNotification = async (notification) => {
+    setNotificationsOpen(false);
+
+    if (!notification.read_at) {
+      const readAt = new Date().toISOString();
+      setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read_at: readAt } : item));
+      const { error } = await supabase
+        .from("notifications")
+        .update({ read_at: readAt })
+        .eq("id", notification.id);
+      if (error) void loadNotifications();
+    }
+
+    navigate(notification.link_path || "/dashboard");
+  };
+
+  const markAllRead = async () => {
+    if (!user) return;
+    const readAt = new Date().toISOString();
+    setNotifications((current) => current.map((item) => item.read_at ? item : { ...item, read_at: readAt }));
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: readAt })
+      .eq("user_id", user.id)
+      .is("read_at", null);
+    if (error) void loadNotifications();
+  };
+
+  const unreadCount = notifications.filter((notification) => !notification.read_at).length;
 
   return (
     <header className="topbar">
@@ -72,10 +141,21 @@ function Topbar() {
       </form>
 
       <div className="topbar-actions">
-        <button className="icon-button notification-button" type="button" aria-label="Notifications">
-          <BellIcon />
-          <span className="notification-dot" />
-        </button>
+        <div className="notification-menu" ref={notificationsRef}>
+          <button aria-expanded={notificationsOpen} aria-haspopup="dialog" className="icon-button notification-button" onClick={openNotifications} type="button" aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}>
+            <BellIcon />
+            {unreadCount > 0 && <span className="notification-dot" />}
+          </button>
+          {notificationsOpen && (
+            <section aria-label="Notifications" className="notification-dropdown" role="dialog">
+              <div className="notification-dropdown-heading">
+                <div><strong>Notifications</strong><span>{unreadCount ? `${unreadCount} unread` : "All caught up"}</span></div>
+                {unreadCount > 0 && <button onClick={() => void markAllRead()} type="button">Mark all read</button>}
+              </div>
+              <NotificationList emptyCopy="Trade updates and offers will appear here." notifications={notifications} onOpen={openNotification} />
+            </section>
+          )}
+        </div>
 
         <div className="account-menu" ref={menuRef}>
           <button

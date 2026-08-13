@@ -1,4 +1,13 @@
 
+[auth]
+# Local Supabase mirrors the redirect allow-list used by production.
+site_url = "https://lumiohub.app"
+additional_redirect_urls = [
+  "https://lumiohub.app",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+]
+
 [functions.trade-notifier]
 enabled = true
 verify_jwt = false

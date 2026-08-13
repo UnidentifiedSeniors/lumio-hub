@@ -1,13 +1,4 @@
-import { supabase } from "../lib/supabase";
+import DiscordLogin from "../auth/DiscordLogin";
 
-function LoginButton() {
-  const login = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "discord",
-    });
-  };
-
-  return <button onClick={login}>Login with Discord</button>;
-}
-
-export default LoginButton;
+// Keep the existing public component path while sharing one OAuth implementation.
+export default DiscordLogin;

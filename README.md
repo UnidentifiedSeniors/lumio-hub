@@ -1,16 +1,29 @@
-# React + Vite
+# Lumio Hub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Lumio Hub is the licensed-trader marketplace for Anime Fighting Simulator champions. It helps players discover, propose, and coordinate trades; the actual champion exchange happens inside Roblox.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Copy `.env.example` to `.env` and add the Supabase project URL plus its **anon** key.
+2. Run `npm install` and `npm run dev`.
 
-## React Compiler
+Never expose a Supabase service-role key, a Discord client secret, or a Discord webhook URL in Vite variables or browser code.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Discord OAuth redirect setup
 
-## Expanding the ESLint configuration
+The website always asks Supabase to return OAuth users to `window.location.origin`. This yields `https://lumiohub.app` in production and `http://localhost:5173` during normal Vite development.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Configure the hosted Supabase project (**Authentication → URL Configuration**) with:
+
+- Site URL: `https://lumiohub.app`
+- Redirect URLs: `https://lumiohub.app`, `http://localhost:5173`, and `http://127.0.0.1:5173`
+
+The checked-in `supabase/config.toml` mirrors this allow-list for local Supabase development; it does not automatically update the hosted project.
+
+In the Discord Developer Portal, keep this OAuth2 redirect URI exactly as shown:
+
+`https://ioxqdrnqwljdnjjofyhh.supabase.co/auth/v1/callback`
+
+## Production check
+
+Deploy the frontend, open `https://lumiohub.app`, and choose **Login with Discord**. After authorizing Discord, the browser should land back at `https://lumiohub.app`; it must never navigate to localhost.

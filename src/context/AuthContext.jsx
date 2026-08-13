@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { signInWithDiscord, signOut } from "../lib/auth";
 import createProfile from "../utils/createProfile";
 
 const AuthContext = createContext();
@@ -8,6 +9,32 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  async function login() {
+    setAuthError(null);
+    setIsSigningIn(true);
+
+    const { error } = await signInWithDiscord();
+
+    if (error) {
+      setAuthError(error.message);
+      setIsSigningIn(false);
+    }
+
+    return { error };
+  }
+
+  async function logout() {
+    const { error } = await signOut();
+
+    if (error) {
+      setAuthError(error.message);
+    }
+
+    return { error };
+  }
 
   async function handleUser(sessionUser) {
     setUser(sessionUser);
@@ -53,6 +80,10 @@ export function AuthProvider({ children }) {
         user,
         profile,
         loading,
+        login,
+        logout,
+        authError,
+        isSigningIn,
       }}
     >
       {children}

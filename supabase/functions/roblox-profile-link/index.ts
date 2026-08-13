@@ -61,7 +61,10 @@ serve(async (request) => {
 
     const username = typeof payload.username === "string" ? payload.username.trim() : "";
     if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
-      return jsonResponse(request, { error: "Enter a valid Roblox username (3–20 letters, numbers, or underscores)." }, 400);
+      // This is an expected form-validation result, not a server failure.
+      // Returning a normal function response lets the website show the useful
+      // message instead of Supabase's generic non-2xx wording.
+      return jsonResponse(request, { error: "Enter a valid Roblox username (3–20 letters, numbers, or underscores)." });
     }
 
     const lookupResponse = await fetch(ROBLOX_USERNAME_LOOKUP, {
@@ -71,7 +74,7 @@ serve(async (request) => {
       signal: AbortSignal.timeout(7000),
     });
     if (lookupResponse.status === 429) {
-      return jsonResponse(request, { error: "Roblox is rate-limiting lookups. Try again in a moment." }, 429);
+      return jsonResponse(request, { error: "Roblox is rate-limiting lookups. Try again in a moment." });
     }
     if (!lookupResponse.ok) {
       throw new Error("Roblox could not look up that username right now");
@@ -80,7 +83,7 @@ serve(async (request) => {
     const lookup = await lookupResponse.json();
     const robloxUser = lookup?.data?.[0];
     if (!robloxUser?.id || !robloxUser?.name) {
-      return jsonResponse(request, { error: "No Roblox account was found for that username." }, 404);
+      return jsonResponse(request, { error: "No Roblox account was found for that username." });
     }
 
     const { error: updateError } = await supabase

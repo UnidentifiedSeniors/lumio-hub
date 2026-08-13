@@ -1,198 +1,211 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import Layout from "../components/Layout";
-import TradeCard from "../components/TradeCard";
-import TradeConfirmation from "../components/TradeConfirmation";
-
-import champions from "../data/champions";
-import validateTrade from "../utils/tradeValidator";
-import { calculateChampionValue, calculateTradeValue } from "../utils/valueCalculator";
-
-import { supabase } from "../lib/supabase";
 import useAuth from "../context/useAuth";
+import { supabase } from "../lib/supabase";
+import { getChampionTraits, getOwnedChampionValue, toTradeChampion } from "../utils/marketplace";
 
-const OFFER_LIMIT = 8;
+const OFFER_LIMIT = 4;
 
 function Trading() {
-  const { user, profile } = useAuth();
-
-  const [selected, setSelected] = useState(null);
-  const [offer, setOffer] = useState([]);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const { user } = useAuth();
+  const [listings, setListings] = useState([]);
+  const [ownedChampions, setOwnedChampions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
+  const [activeListing, setActiveListing] = useState(null);
+  const [offerIds, setOfferIds] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
-  const addToOffer = (champion) => {
-    if (champion.stock <= 0) return;
-    if (selected?.id === champion.id) return;
-    if (offer.some((item) => item.id === champion.id)) return;
-    if (offer.length >= OFFER_LIMIT) return;
-    setOffer([...offer, champion]);
-  };
+  const loadMarketplace = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
 
-  const removeFromOffer = (champion) => {
-    setOffer(offer.filter((c) => c.id !== champion.id));
-  };
+    const [listingsResult, ownedResult] = await Promise.all([
+      supabase.from("marketplace_listings").select("*").order("created_at", { ascending: false }),
+      supabase.from("user_champions").select("*").eq("owner_id", user.id).order("updated_at", { ascending: false }),
+    ]);
 
-  const selectChampion = (champion) => {
-    setSelected(champion);
-    setOffer([]);
-    setShowConfirm(false);
-  };
-
-  const resetTrade = () => {
-    setSelected(null);
-    setOffer([]);
-    setShowConfirm(false);
-    setSubmitting(false);
-    setSubmitError(null);
-  };
-
-  // value calculator (replaces fixed champion.value)
-  const offerValue = calculateTradeValue(offer);
-  const requestedValue = selected ? calculateChampionValue(selected) : 0;
-  const tradeResult = selected ? validateTrade(selected, offer) : null;
-
-  const submitTrade = async () => {
-    if (!tradeResult?.valid) return;
-    if (!user) {
-      console.error("User is not logged in");
-      return;
+    if (listingsResult.error || ownedResult.error) {
+      setError(listingsResult.error?.message || ownedResult.error?.message || "Unable to load the marketplace.");
+    } else {
+      setListings(listingsResult.data || []);
+      setOwnedChampions(ownedResult.data || []);
     }
+    setLoading(false);
+  }, [user]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadMarketplace();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadMarketplace]);
+
+  const visibleListings = useMemo(() => {
+    const normalizedQuery = search.trim().toLowerCase();
+    return listings.filter((listing) => {
+      if (listing.owner_id === user?.id) return false;
+      return !normalizedQuery || [listing.name, listing.rarity, listing.trait, listing.discord_display_name, listing.discord_username]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(normalizedQuery));
+    });
+  }, [listings, search, user]);
+
+  const selectedOffer = ownedChampions.filter((champion) => offerIds.includes(champion.id));
+  const offerValue = selectedOffer.reduce((total, champion) => total + getOwnedChampionValue(champion), 0);
+
+  const toggleOfferChampion = (championId) => {
+    setOfferIds((current) => {
+      if (current.includes(championId)) return current.filter((id) => id !== championId);
+      if (current.length >= OFFER_LIMIT) return current;
+      return [...current, championId];
+    });
+  };
+
+  const openOffer = (listing) => {
+    setError(null);
+    setSuccessMessage(null);
+    setActiveListing(listing);
+    setOfferIds([]);
+  };
+
+  const submitOffer = async () => {
+    if (!activeListing || !user || selectedOffer.length === 0) return;
     setSubmitting(true);
-    setSubmitError(null);
+    setError(null);
 
-    // Build lightweight champion payload objects { id, name, rarity, traits }
-    const pick = (c) => ({
-      id: c.id,
-      name: c.name,
-      rarity: c.rarity,
-      traits: c.traits || [],
+    const requestedChampion = toTradeChampion({
+      id: activeListing.user_champion_id,
+      name: activeListing.name,
+      rarity: activeListing.rarity,
+      trait: activeListing.trait,
+      base_value: activeListing.base_value,
+      market_adjustment: activeListing.market_adjustment,
     });
 
-    const trade = {
-      sender_id: profile?.id || user.id,
-      requested_champion: pick(selected),
-      offered_champions: offer.map(pick),
-      offer_value: offerValue,
-      requested_value: requestedValue,
-      status: "pending",
-      created_at: new Date().toISOString(),
-    };
+    const { data, error: insertError } = await supabase
+      .from("trades")
+      .insert({
+        sender_id: user.id,
+        recipient_id: activeListing.owner_id,
+        listing_id: activeListing.id,
+        requested_champion: requestedChampion,
+        requested_champions: [requestedChampion],
+        offered_champions: selectedOffer.map(toTradeChampion),
+        offer_value: offerValue,
+        requested_value: getOwnedChampionValue(activeListing),
+        status: "pending",
+      })
+      .select("trade_code")
+      .single();
 
-    const { error } = await supabase.from("trades").insert(trade);
-
-    if (error) {
-      console.error(error);
-      setSubmitError(error.message);
+    if (insertError) {
+      setError(insertError.message);
       setSubmitting(false);
       return;
     }
 
-    // Trade saved -> DB trigger assigns a 4-digit trade_code.
-    // Discord notification fires automatically via the edge function.
-    resetTrade();
+    setSuccessMessage(`Offer ${data?.trade_code ? `#${data.trade_code}` : "sent"} is now in the trader’s Received Trades.`);
+    setActiveListing(null);
+    setOfferIds([]);
     setSubmitting(false);
   };
 
   return (
-    <>
-      {showConfirm && selected && (
-        <TradeConfirmation
-          selected={selected}
-          offer={offer}
-          onRemove={removeFromOffer}
-          onConfirm={submitTrade}
-          onCancel={() => setShowConfirm(false)}
-          offerValue={offerValue}
-          requestedValue={requestedValue}
-          tradeResult={tradeResult}
-        />
+    <Layout>
+      <section className="page-heading page-heading-split">
+        <div>
+          <p className="eyebrow">Live community listings</p>
+          <h1>Trades</h1>
+          <p>Browse champions other licensed members have placed on Shelf, then send a private multi-champion offer.</p>
+        </div>
+        <label className="market-search">
+          <span>Search</span>
+          <input onChange={(event) => setSearch(event.target.value)} placeholder="Champion, trait, or trader" type="search" value={search} />
+        </label>
+      </section>
+
+      <section className="marketplace-summary">
+        <span><strong>{listings.length}</strong> active community listings</span>
+        <span><strong>{ownedChampions.length}</strong> champions ready to offer</span>
+        <span>Offers are private until accepted</span>
+      </section>
+
+      {error && <p className="form-error" role="alert">{error}</p>}
+      {successMessage && <p className="form-success" role="status">{successMessage}</p>}
+
+      {loading ? (
+        <p className="loading-copy">Loading live listings...</p>
+      ) : visibleListings.length === 0 ? (
+        <section className="empty-state marketplace-empty-state">
+          <span className="empty-state-icon">⇄</span>
+          <h2>{listings.length ? "No listings match that search" : "The marketplace is quiet right now"}</h2>
+          <p>{listings.length ? "Try a different champion, trait, or trader name." : "Create your own Shelf listing to be ready when other licensed traders arrive."}</p>
+        </section>
+      ) : (
+        <section className="marketplace-grid">
+          {visibleListings.map((listing) => {
+            const traits = getChampionTraits(listing);
+            const sellerName = listing.discord_display_name || listing.discord_username || "Licensed trader";
+            return (
+              <article className="marketplace-card" key={listing.id}>
+                <div className="card-topline">
+                  <span className={`rarity-badge rarity-${listing.rarity.toLowerCase().replaceAll(" ", "-")}`}>{listing.rarity}</span>
+                  <span className="listing-status listing-active">Live on Shelf</span>
+                </div>
+                <h2>{listing.name}</h2>
+                <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
+                <p className="market-value">◈ {getOwnedChampionValue(listing).toLocaleString()}</p>
+                {listing.note && <p className="listing-note">“{listing.note}”</p>}
+                <div className="seller-row">
+                  {listing.discord_avatar ? <img alt="" src={listing.discord_avatar} /> : <span>{sellerName.charAt(0).toUpperCase()}</span>}
+                  <div><small>Listed by</small><strong>{sellerName}</strong>{listing.discord_username && <em>@{listing.discord_username}</em>}</div>
+                </div>
+                <button className="primary-action card-action" onClick={() => openOffer(listing)} type="button">Make an offer</button>
+              </article>
+            );
+          })}
+        </section>
       )}
 
-      <Layout>
-        <h1>🤝 Trade Terminal</h1>
-
-        {submitError && <p style={{ color: "#ff6b6b" }}>⚠️ {submitError}</p>}
-
-        <div className="trade-container">
-          <section className="trade-panel">
-            <h2>Available Champions</h2>
-
-            {champions
-              .filter((champion) => champion.stock > 0)
-              .map((champion) => (
-                <TradeCard
-                  key={champion.id}
-                  champion={champion}
-                  value={calculateChampionValue(champion)}
-                  label={selected ? "Offer" : "Select"}
-                  action={() =>
-                    selected ? addToOffer(champion) : selectChampion(champion)
-                  }
-                />
-              ))}
-          </section>
-
-          <section className="trade-panel">
-            <h2>Your Trade</h2>
-
-            {selected ? (
-              <>
-                <div className="wanted-box">
-                  <h3>You Receive:</h3>
-
-                  <p>{selected.name}</p>
-
-                  <p>💎 {calculateChampionValue(selected)}</p>
-                </div>
-
-                <h3>Your Offer</h3>
-
-                {offer.length === 0 ? (
-                  <p>No champions added.</p>
-                ) : (
-                  offer.map((champion, index) => (
-                    <div className="offer-item" key={index}>
-                      {champion.name} ({champion.rarity}) — 💎{calculateChampionValue(champion)}
-                      <button
-                        className="remove-offer-btn"
-                        onClick={() => removeFromOffer(champion)}
-                        style={{ float: "right", fontSize: "12px", padding: "4px 10px" }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))
-                )}
-
-                <h2>Offer Value: 💎 {offerValue}</h2>
-
-                {tradeResult && (
-                  <h2 style={{ color: tradeResult.valid ? "#4caf50" : "#ff6b6b" }}>
-                    {tradeResult.valid ? "✅ " + tradeResult.message : "❌ " + tradeResult.message}
-                  </h2>
-                )}
-
-                {tradeResult?.valid && (
-                  <button
-                    onClick={() => setShowConfirm(true)}
-                    disabled={submitting}
-                  >
-                    Confirm Offer
-                  </button>
-                )}
-
-                <button onClick={resetTrade}>Cancel</button>
-              </>
+      {activeListing && (
+        <div className="modal-overlay" role="presentation">
+          <section aria-modal="true" className="trade-modal offer-modal" role="dialog">
+            <p className="eyebrow">Private offer</p>
+            <h2>Offer for {activeListing.name}</h2>
+            <div className="offer-target"><span>They have listed</span><strong>{activeListing.name} · ◈ {getOwnedChampionValue(activeListing).toLocaleString()}</strong></div>
+            {ownedChampions.length === 0 ? (
+              <p className="modal-copy">Add at least one champion to your Collection before sending an offer.</p>
             ) : (
-              <p>Choose a champion.</p>
+              <>
+                <p className="modal-copy">Choose up to {OFFER_LIMIT} champions from your Collection. The other trader will see every selection before they accept or decline.</p>
+                <div className="offer-picker">
+                  {ownedChampions.map((champion) => {
+                    const selected = offerIds.includes(champion.id);
+                    return (
+                      <button className={`offer-choice${selected ? " selected" : ""}`} key={champion.id} onClick={() => toggleOfferChampion(champion.id)} type="button">
+                        <span className="offer-choice-check">{selected ? "✓" : "+"}</span>
+                        <span><strong>{champion.name}</strong><small>{champion.rarity} · {champion.trait || "Standard"}</small></span>
+                        <em>◈ {getOwnedChampionValue(champion).toLocaleString()}</em>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="offer-total"><span>{selectedOffer.length} selected</span><strong>Offer total ◈ {offerValue.toLocaleString()}</strong></div>
+              </>
             )}
+            <div className="modal-buttons">
+              <button className="secondary-action" onClick={() => setActiveListing(null)} type="button">Cancel</button>
+              {ownedChampions.length > 0 && <button className="primary-action" disabled={selectedOffer.length === 0 || submitting} onClick={submitOffer} type="button">{submitting ? "Sending…" : "Send trade offer"}</button>}
+            </div>
           </section>
         </div>
-      </Layout>
-    </>
+      )}
+    </Layout>
   );
 }
 

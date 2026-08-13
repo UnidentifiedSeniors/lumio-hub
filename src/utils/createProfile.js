@@ -1,16 +1,20 @@
 import { supabase } from "../lib/supabase";
 
 // Maps a Supabase Auth user to a "profiles" row (creating if missing).
-// Returns { ...profile, trades_completed, badges, xp, rank } merged with auth metadata.
+// Profile creation can be requested more than once during OAuth startup, so it is idempotent.
 export default async function createProfile(user) {
   const userId = user.id;
 
-  // 1. Check the DB profiles table
-  const { data: existingProfile } = await supabase
+  const { data: existingProfile, error: fetchError } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error("PROFILE FETCH ERROR:", fetchError.message);
+    return null;
+  }
 
   if (existingProfile) {
     return { ...existingProfile, ...user.user_metadata };
@@ -45,18 +49,25 @@ export default async function createProfile(user) {
 
     xp: 0,
     rank: "Rookie Trader",
-
-    badges: [],
   };
 
-  const { data, error } = await supabase
+  const { error: createError } = await supabase
     .from("profiles")
-    .insert(newProfile)
-    .select()
-    .single();
+    .upsert(newProfile, { onConflict: "id", ignoreDuplicates: true });
 
-  if (error) {
-    console.error("PROFILE CREATION ERROR:", error);
+  if (createError) {
+    console.error("PROFILE CREATION ERROR:", createError.message);
+    return null;
+  }
+
+  const { data, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError || !data) {
+    console.error("PROFILE READBACK ERROR:", profileError?.message || "No profile was returned");
     return null;
   }
 

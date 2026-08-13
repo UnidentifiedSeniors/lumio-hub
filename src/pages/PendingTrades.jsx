@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import Layout from "../components/Layout";
 
@@ -16,6 +17,7 @@ function PendingTrades() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(null);
+  const [recipients, setRecipients] = useState({});
 
   useEffect(() => {
     if (!user) return undefined;
@@ -27,12 +29,22 @@ function PendingTrades() {
       .select("*")
       .eq("sender_id", user.id)
       .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (!active) return;
         if (error) {
           console.error("TRADE FETCH ERROR:", error);
         } else {
           setTrades(data || []);
+          const recipientIds = [...new Set((data || []).map((trade) => trade.recipient_id).filter(Boolean))];
+          if (recipientIds.length) {
+            const { data: profileData, error: profileError } = await supabase
+              .from("public_profiles")
+              .select("id, discord_username, discord_display_name")
+              .in("id", recipientIds);
+            if (active && !profileError) {
+              setRecipients(Object.fromEntries((profileData || []).map((profile) => [profile.id, profile])));
+            }
+          }
         }
         setLoading(false);
       });
@@ -97,6 +109,8 @@ function PendingTrades() {
           const requested = trade.requested_champion || { name: "Open direct offer", rarity: "No specific champion requested" };
           const offered = trade.offered_champions || [];
           const code = trade.trade_code ? `#${trade.trade_code}` : "Trade code pending";
+          const recipient = recipients[trade.recipient_id];
+          const recipientName = recipient?.discord_display_name || recipient?.discord_username;
 
           return (
             <article className="sent-trade-card" key={trade.id}>
@@ -109,6 +123,14 @@ function PendingTrades() {
                   {statusEmoji[trade.status] || trade.status}
                 </span>
               </div>
+
+              {recipientName ? (
+                <Link className="trade-participant" to={`/trader/${trade.recipient_id}`}>
+                  To <strong>{recipientName}</strong> {recipient.discord_username && recipient.discord_display_name && <span>@{recipient.discord_username}</span>}
+                </Link>
+              ) : trade.recipient_id ? (
+                <span className="trade-participant">To a licensed trader</span>
+              ) : null}
 
               <h3>You requested</h3>
               <p>

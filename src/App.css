@@ -866,6 +866,24 @@ kbd {
   font-size: 0.76rem !important;
 }
 
+.trade-participant {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: -5px 0 4px;
+  color: #aeb5ce;
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+a.trade-participant:hover {
+  color: #c9ccff;
+}
+
+.trade-participant span {
+  color: #7e879f;
+}
+
 .trade-status,
 .connected-label,
 .coming-soon-label {

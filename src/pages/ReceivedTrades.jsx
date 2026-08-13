@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import Layout from "../components/Layout";
 import useAuth from "../context/useAuth";
@@ -114,6 +115,7 @@ function ReceivedTrades() {
                   <div>
                     <span className="trade-code">{trade.trade_code ? `#${trade.trade_code}` : "Trade code pending"}</span>
                     <h2>{senderName} made an offer</h2>
+                    {sender?.id && <Link className="trade-participant" to={`/trader/${sender.id}`}>View trader profile</Link>}
                   </div>
                   <span className={`trade-status status-${trade.status}`}>{STATUS_LABELS[trade.status] || trade.status}</span>
                 </div>

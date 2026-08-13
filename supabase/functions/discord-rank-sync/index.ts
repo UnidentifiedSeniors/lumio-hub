@@ -5,7 +5,7 @@ const DISCORD_API = "https://discord.com/api/v10";
 const SUPPORTED_RANKS = new Set([
   "Rookie Trader",
   "Beginner Trader",
-  "Certified Trader",
+  "Skilled Trader",
   "Advanced Trader",
   "Elite Trader",
   "Master Trader",

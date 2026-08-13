@@ -76,7 +76,7 @@ as $$
     when total_xp >= 30000 then 'Master Trader'
     when total_xp >= 15000 then 'Elite Trader'
     when total_xp >= 5000 then 'Advanced Trader'
-    when total_xp >= 1500 then 'Certified Trader'
+    when total_xp >= 1500 then 'Skilled Trader'
     when total_xp >= 500 then 'Beginner Trader'
     else 'Rookie Trader'
   end;

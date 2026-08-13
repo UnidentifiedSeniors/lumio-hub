@@ -30,7 +30,7 @@ Deploy the frontend, open `https://lumiohub.app`, and choose **Login with Discor
 
 ## Discord rank-role sync
 
-Lumio can keep Discord roles aligned with the rank stored in `profiles.rank`. The server-side `discord-rank-sync` function supports the current progression labels: `Rookie Trader`, `Beginner Trader`, `Certified Trader`, `Advanced Trader`, `Elite Trader`, `Master Trader`, and `Lumio Legend`.
+Lumio can keep Discord roles aligned with the rank stored in `profiles.rank`. The server-side `discord-rank-sync` function supports the current progression labels: `Rookie Trader`, `Beginner Trader`, `Skilled Trader`, `Advanced Trader`, `Elite Trader`, `Master Trader`, and `Lumio Legend`.
 
 Before enabling the Database Webhook, create a Discord bot, invite it to the Lumio server with **Manage Roles**, and place its highest role above every Lumio rank role. Then add these **Supabase Edge Function secrets**—never Vite variables or committed files:
 

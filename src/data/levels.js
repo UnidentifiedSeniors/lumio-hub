@@ -13,7 +13,7 @@ const levels = [
 
   {
     level: 10,
-    title: "Certified Trader",
+    title: "Skilled Trader",
     requiredXP: 1500
   },
 

@@ -88,10 +88,7 @@ a {
   display: block;
   width: 33px;
   height: 33px;
-  border: 1px solid rgba(148, 150, 255, 0.38);
-  border-radius: 10px;
   object-fit: cover;
-  box-shadow: 0 8px 22px rgba(91, 94, 218, 0.25);
 }
 
 .landing-brand em {
@@ -429,10 +426,9 @@ a {
   width: 35px;
   height: 35px;
   place-items: center;
-  border: 1px solid rgba(148, 150, 255, 0.5);
-  border-radius: 11px;
-  background: linear-gradient(145deg, #8688ff, #5256d9);
-  box-shadow: 0 8px 24px rgba(101, 103, 243, 0.26);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   color: white;
   font-size: 1.05rem;
   font-weight: 800;
@@ -1439,6 +1435,46 @@ a.trade-participant:hover {
 
 .rank-sync-card {
   min-height: 250px;
+}
+
+.display-name-card {
+  min-height: 274px;
+}
+
+.display-name-form {
+  display: grid;
+  width: 100%;
+  gap: 9px;
+  margin-top: auto;
+}
+
+.display-name-form input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  outline: none;
+  background: rgba(5, 7, 13, 0.38);
+  color: #edf0fb;
+  padding: 0 11px;
+  font-size: 0.78rem;
+}
+
+.display-name-form input:focus {
+  border-color: rgba(137, 141, 255, 0.58);
+  box-shadow: 0 0 0 3px rgba(111, 114, 241, 0.1);
+}
+
+.display-name-card > small {
+  margin-top: 10px;
+  color: #7e879e;
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.display-name-card .inline-success,
+.display-name-card .inline-error {
+  margin-top: 8px !important;
 }
 
 .rank-sync-footer {

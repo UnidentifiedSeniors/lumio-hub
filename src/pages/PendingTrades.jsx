@@ -135,7 +135,7 @@ function PendingTrades() {
               <h3>You requested</h3>
               <p>
                 <strong>{requested.name || "Open direct offer"}</strong>{" "}
-                ({requested.rarity || "—"})
+                {requested.rarity && requested.rarity !== "No specific champion requested" ? `(${requested.rarity})` : null}
               </p>
 
               <h3>You offered</h3>
@@ -144,7 +144,7 @@ function PendingTrades() {
               ) : (
                 offered.map((champion, index) => (
                   <p key={index}>
-                    {champion.name} ({champion.rarity})
+                    {champion.name}{champion.rarity ? ` (${champion.rarity})` : ""}
                   </p>
                 ))
               )}

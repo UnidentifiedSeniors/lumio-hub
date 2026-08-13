@@ -126,11 +126,11 @@ function ReceivedTrades() {
                 <div className="trade-details-grid">
                   <div>
                     <h3>You listed</h3>
-                    {requested.length ? requested.map((champion) => <p key={`${trade.id}-${champion.user_champion_id || champion.id}`}><strong>{champion.name}</strong> <span>({champion.rarity})</span></p>) : <p><strong>Open direct offer</strong> <span>(no specific champion requested)</span></p>}
+                    {requested.length ? requested.map((champion) => <p key={`${trade.id}-${champion.user_champion_id || champion.id}`}><strong>{champion.name}</strong>{champion.rarity && <span> ({champion.rarity})</span>}</p>) : <p><strong>Open direct offer</strong> <span>(no specific champion requested)</span></p>}
                   </div>
                   <div>
                     <h3>They offered</h3>
-                    {offered.map((champion) => <p key={`${trade.id}-${champion.user_champion_id || champion.id}`}><strong>{champion.name}</strong> <span>({champion.rarity})</span></p>)}
+                    {offered.map((champion) => <p key={`${trade.id}-${champion.user_champion_id || champion.id}`}><strong>{champion.name}</strong>{champion.rarity && <span> ({champion.rarity})</span>}</p>)}
                   </div>
                 </div>
                 <div className="trade-footer">

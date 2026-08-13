@@ -9,6 +9,8 @@ import { supabase } from "../lib/supabase";
 function Dashboard() {
   const { user, profile } = useAuth();
   const [recentTrades, setRecentTrades] = useState([]);
+  const [completedTradeCount, setCompletedTradeCount] = useState(0);
+  const [collectionCount, setCollectionCount] = useState(0);
 
   // Use the profile (DB row) instead of raw auth user
   const displayName =
@@ -25,16 +27,29 @@ function Dashboard() {
   useEffect(() => {
     if (!user) return;
 
-    // Fetch recent trades (last 5)
-    supabase
-      .from("trades")
-      .select("*")
-      .eq("sender_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .then(({ data, error }) => {
-        if (!error) setRecentTrades(data || []);
-      });
+    const participantFilter = `sender_id.eq.${user.id},recipient_id.eq.${user.id}`;
+
+    Promise.all([
+      supabase
+        .from("trades")
+        .select("*")
+        .or(participantFilter)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("trades")
+        .select("id")
+        .or(participantFilter)
+        .eq("status", "completed"),
+      supabase
+        .from("user_champions")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", user.id),
+    ]).then(([recentResult, completedResult, collectionResult]) => {
+      if (!recentResult.error) setRecentTrades(recentResult.data || []);
+      if (!completedResult.error) setCompletedTradeCount(completedResult.data?.length || 0);
+      if (!collectionResult.error) setCollectionCount(collectionResult.count || 0);
+    });
   }, [user]);
 
   return (
@@ -69,14 +84,14 @@ function Dashboard() {
 
         <div className="dashboard-card">
           <h2>Completed trades</h2>
-          <p className="big-number">{profile?.trades_completed ?? 0}</p>
+          <p className="big-number">{completedTradeCount}</p>
           <p>Your confirmed in-game exchanges</p>
         </div>
 
         <div className="dashboard-card">
           <h2>Collection</h2>
-          <p className="big-number">—</p>
-          <p>Champion inventory syncs here next</p>
+          <p className="big-number">{collectionCount}</p>
+          <p>Private champion copies in your inventory</p>
         </div>
       </section>
 
@@ -110,19 +125,21 @@ function Dashboard() {
         <section className="dashboard-card">
           <h2>Recent trade activity</h2>
           {recentTrades.map((trade) => {
-            const rc = trade.requested_champion || {};
-            const statusLabel =
-              trade.status === "pending"
-                ? "🟡 Pending"
-                : trade.status === "completed"
-                ? "✅ Completed"
-                : "❌ Cancelled";
+            const rc = trade.requested_champion || { name: "an open direct offer" };
+            const statusLabels = {
+              pending: "🟡 Pending",
+              accepted: "🔵 Accepted",
+              completed: "✅ Completed",
+              declined: "⚪ Declined",
+              cancelled: "❌ Cancelled",
+            };
+            const statusLabel = statusLabels[trade.status] || trade.status;
             return (
               <div className="activity-row" key={trade.id}>
                 <span className="activity-status">{statusLabel}</span>
                 <p>
                   <strong>{trade.trade_code ? `#${trade.trade_code}` : "Trade code pending"}</strong>
-                  {" · "}{trade.offered_champions?.length || 0} offered for {rc.name || "Unknown"}
+                  {" · "}{trade.offered_champions?.length || 0} offered for {rc.name || "an open direct offer"}
                 </p>
               </div>
             );

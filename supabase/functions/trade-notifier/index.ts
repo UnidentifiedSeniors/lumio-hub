@@ -17,8 +17,18 @@ const RARITY_EMOJI: Record<string, string> = {
 
 const STATUS_EMOJI: Record<string, string> = {
   pending: "⏳ Pending Trade",
+  accepted: "🤝 Trade Accepted",
+  declined: "↩️ Trade Declined",
   completed: "✅ Completed Trade",
   cancelled: "❌ Cancelled Trade",
+};
+
+const STATUS_DESCRIPTION: Record<string, string> = {
+  pending: "A new trade request has been created.",
+  accepted: "This offer has been accepted. Coordinate the actual champion exchange inside Anime Fighting Simulator, then mark it completed in Lumio.",
+  declined: "This offer was declined, or its Shelf listing was reserved for another trade.",
+  completed: "The traders recorded their in-game champion exchange as completed.",
+  cancelled: "This trade has been cancelled by the trader.",
 };
 
 const RARITY_COLOR: Record<string, number> = {
@@ -74,8 +84,8 @@ serve(async (req) => {
 
     // Requested champion block
     const requestedChampion = trade.requested_champion || {};
-    const requestedName = requestedChampion.name || "Unknown";
-    const requestedRarity = requestedChampion.rarity || "Unknown";
+    const requestedName = requestedChampion.name || "Open direct offer";
+    const requestedRarity = requestedChampion.rarity || "No specific champion requested";
     const requestedTraits = Array.isArray(requestedChampion.traits)
       ? requestedChampion.traits.join(", ")
       : "";
@@ -101,7 +111,7 @@ serve(async (req) => {
         embeds: [
           {
             title: STATUS_EMOJI[trade.status || "pending"] || "⏳ Pending Trade",
-            description: "A new trade request has been created.",
+            description: STATUS_DESCRIPTION[trade.status || "pending"],
             color: embedColor,
             thumbnail: profile?.discord_avatar
               ? { url: profile.discord_avatar }
@@ -110,7 +120,7 @@ serve(async (req) => {
               { name: "👤 Trader", value: trader, inline: false },
               { name: "🎯 Requested Champion", value: requestedValue, inline: false },
               { name: "📦 Offering", value: offeredValue, inline: false },
-              { name: "🆔 Trade ID", value: tradeCode, inline: true },
+              { name: "🆔 Trade Code", value: tradeCode, inline: true },
               {
                 name: "⏳ Status",
                                 value: trade.status || "Pending",
@@ -169,10 +179,7 @@ serve(async (req) => {
         embeds: [
           {
             title: STATUS_EMOJI[trade.status || "pending"] || "⏳ Pending Trade",
-            description:
-              trade.status === "cancelled"
-                ? "This trade has been cancelled by the trader."
-                : "This trade has been updated.",
+            description: STATUS_DESCRIPTION[trade.status || "pending"] || "This trade has been updated.",
             color: embedColor,
             thumbnail: profile?.discord_avatar
               ? { url: profile.discord_avatar }
@@ -181,7 +188,7 @@ serve(async (req) => {
               { name: "👤 Trader", value: trader, inline: false },
               { name: "🎯 Requested Champion", value: requestedValue, inline: false },
               { name: "📦 Offering", value: offeredValue, inline: false },
-              { name: "🆔 Trade ID", value: tradeCode, inline: true },
+              { name: "🆔 Trade Code", value: tradeCode, inline: true },
               {
                 name: "⏳ Status",
                 value: STATUS_EMOJI[trade.status || "pending"] || trade.status,

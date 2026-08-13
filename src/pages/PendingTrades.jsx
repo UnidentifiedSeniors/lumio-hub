@@ -155,6 +155,16 @@ function PendingTrades() {
 
               <p className="trade-created">Sent {formatDate(trade.created_at)}</p>
 
+              {trade.status === "accepted" && (
+                <section className="trade-coordination">
+                  <strong>Accepted — coordinate the in-game exchange</strong>
+                  <p>Your offer is reserved. Use {code} while you and the recipient complete the real champion exchange in Anime Fighting Simulator. The recipient records completion afterward.</p>
+                  {recipientName && <Link className="secondary-action coordination-link" to={`/trader/${trade.recipient_id}`}>Open trader profile</Link>}
+                </section>
+              )}
+
+              {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDate(trade.completed_at || trade.updated_at)}</p>}
+
               {trade.status === "pending" && (
                 <button
                   onClick={() => cancelTrade(trade.id)}

@@ -26,6 +26,7 @@ function ReceivedTrades() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [respondingId, setRespondingId] = useState(null);
+  const [acceptingTrade, setAcceptingTrade] = useState(null);
 
   const loadTrades = useCallback(async () => {
     if (!user) return;
@@ -70,16 +71,19 @@ function ReceivedTrades() {
   const respondToTrade = async (tradeId, status) => {
     setRespondingId(tradeId);
     setError(null);
-    const { error: updateError } = await supabase
+    const expectedStatus = status === "completed" ? "accepted" : "pending";
+    const { data, error: updateError } = await supabase
       .from("trades")
       .update({ status })
       .eq("id", tradeId)
-      .eq("status", "pending");
+      .eq("status", expectedStatus)
+      .select("id");
 
-    if (updateError) {
-      setError(updateError.message);
+    if (updateError || !data?.length) {
+      setError(updateError?.message || "This offer changed before it could be updated. Refresh and try again.");
     } else {
-      setTrades((current) => current.map((trade) => trade.id === tradeId ? { ...trade, status } : trade));
+      const timestampField = status === "accepted" ? "accepted_at" : status === "completed" ? "completed_at" : null;
+      setTrades((current) => current.map((trade) => trade.id === tradeId ? { ...trade, status, ...(timestampField ? { [timestampField]: new Date().toISOString() } : {}) } : trade));
     }
     setRespondingId(null);
   };
@@ -131,12 +135,35 @@ function ReceivedTrades() {
                 </div>
                 <div className="trade-footer">
                   <span>◈ {trade.offer_value?.toLocaleString() || "0"} offered · {formatDateTime(trade.created_at)}</span>
-                  {trade.status === "pending" && <div className="card-actions"><button className="secondary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "declined")} type="button">Decline</button><button className="primary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "accepted")} type="button">{respondingId === trade.id ? "Updating…" : "Accept offer"}</button></div>}
+                  {trade.status === "pending" && <div className="card-actions"><button className="secondary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "declined")} type="button">Decline</button><button className="primary-action" disabled={respondingId === trade.id} onClick={() => setAcceptingTrade(trade)} type="button">Accept offer</button></div>}
                 </div>
+                {trade.status === "accepted" && (
+                  <section className="trade-coordination">
+                    <strong>Accepted — coordinate in Anime Fighting Simulator</strong>
+                    <p>Share trade code {trade.trade_code ? `#${trade.trade_code}` : "with the sender"}, complete the actual exchange in-game, then record it here. {trade.listing_id ? "This Shelf listing is now unavailable to other traders." : "This was an open direct offer."}</p>
+                    <button className="primary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "completed")} type="button">{respondingId === trade.id ? "Updating…" : "Mark exchange completed"}</button>
+                  </section>
+                )}
+                {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at)}</p>}
               </article>
             );
           })}
         </section>
+      )}
+
+      {acceptingTrade && (
+        <div className="modal-overlay" role="presentation">
+          <section aria-modal="true" className="trade-modal acceptance-modal" role="dialog">
+            <p className="eyebrow">Accept trade offer</p>
+            <h2>Reserve this trade?</h2>
+            <p className="modal-copy">Lumio will not move any Roblox champions. You and the sender must complete the exchange inside Anime Fighting Simulator.</p>
+            {acceptingTrade.listing_id && <div className="form-value-preview"><span>Public Shelf</span><strong>This listing will become unavailable</strong></div>}
+            <div className="modal-buttons">
+              <button className="secondary-action" onClick={() => setAcceptingTrade(null)} type="button">Keep reviewing</button>
+              <button className="primary-action" disabled={respondingId === acceptingTrade.id} onClick={async () => { await respondToTrade(acceptingTrade.id, "accepted"); setAcceptingTrade(null); }} type="button">{respondingId === acceptingTrade.id ? "Accepting…" : "Accept & coordinate"}</button>
+            </div>
+          </section>
+        </div>
       )}
     </Layout>
   );

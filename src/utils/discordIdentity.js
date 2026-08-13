@@ -16,8 +16,6 @@ export function getDiscordIdentity(user) {
     ...sources.map((source) => source.user_name),
     ...sources.map((source) => source.preferred_username),
     ...sources.map((source) => source.username),
-    user?.email?.split("@")[0],
-    "trader",
   );
 
   const displayName = firstText(
@@ -27,6 +25,7 @@ export function getDiscordIdentity(user) {
     ...sources.map((source) => source.nickname),
     ...sources.map((source) => source.name),
     username,
+    "Trader",
   );
 
   const avatar = firstText(
@@ -40,5 +39,5 @@ export function getDiscordIdentity(user) {
     user?.id,
   );
 
-  return { avatar, discordId, displayName, username };
+  return { avatar, discordId, displayName, username: username || displayName };
 }

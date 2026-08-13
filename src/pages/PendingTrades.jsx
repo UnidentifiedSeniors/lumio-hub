@@ -126,7 +126,7 @@ function PendingTrades() {
 
               {recipientName ? (
                 <Link className="trade-participant" to={`/trader/${trade.recipient_id}`}>
-                  To <strong>{recipientName}</strong> {recipient.discord_username && recipient.discord_display_name && <span>@{recipient.discord_username}</span>}
+                  To <strong>{recipientName}</strong> {recipient.discord_display_name && <span>Discord · {recipient.discord_display_name}</span>}
                 </Link>
               ) : trade.recipient_id ? (
                 <span className="trade-participant">To a licensed trader</span>

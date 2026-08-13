@@ -38,7 +38,7 @@ function Topbar() {
     profile?.discord_display_name ||
     discordIdentity.displayName ||
     "Trader";
-  const username = profile?.discord_username || discordIdentity.username;
+  const discordDisplayName = profile?.discord_display_name || discordIdentity.displayName || "Discord member";
   const avatar = profile?.discord_avatar || discordIdentity.avatar;
   const initial = displayName.charAt(0).toUpperCase();
 
@@ -173,7 +173,7 @@ function Topbar() {
             )}
             <span className="account-trigger-copy">
               <strong>{displayName}</strong>
-              {username && <small>@{username}</small>}
+              <small>Discord · {discordDisplayName}</small>
             </span>
             <svg viewBox="0 0 24 24" aria-hidden="true" className="chevron-icon">
               <path d="m7 10 5 5 5-5" />
@@ -184,7 +184,7 @@ function Topbar() {
             <div className="account-dropdown" role="menu">
               <div className="account-menu-header">
                 <strong>{displayName}</strong>
-                {username && <span>@{username}</span>}
+                <span>Discord · {discordDisplayName}</span>
               </div>
               <Link onClick={() => setMenuOpen(false)} role="menuitem" to="/profile">
                 My Profile

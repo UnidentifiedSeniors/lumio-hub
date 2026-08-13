@@ -37,10 +37,10 @@ function Profile() {
     discordIdentity.displayName ||
     "Trader";
 
-  const discordUsername =
-    profile?.discord_username ||
-    discordIdentity.username ||
-    "username";
+  const discordDisplayName =
+    profile?.discord_display_name ||
+    discordIdentity.displayName ||
+    "Discord member";
 
   const avatar = profile?.discord_avatar || discordIdentity.avatar;
 
@@ -79,7 +79,7 @@ function Profile() {
         <div className="profile-hero-copy">
           <span className="profile-license-label">Licensed trader</span>
           <h2>{displayName}</h2>
-          <p className="profile-handle">@{discordUsername}</p>
+          <p className="profile-handle">Discord · {discordDisplayName}</p>
           <div className="profile-meta">
             <span>{rank.title}</span>
             <span>{profile?.roblox_username ? `Roblox: ${profile.roblox_username}` : "Roblox not linked"}</span>
@@ -117,7 +117,7 @@ function Profile() {
           <div className="profile-panel-heading"><div><p className="eyebrow">Connections</p><h2>Linked accounts</h2></div><Link to="/settings">Manage</Link></div>
           <div className="account-connection-row">
             <span className="connection-icon"><ProfileIcon name="discord" /></span>
-            <div><strong>Discord</strong><span>{displayName} · @{discordUsername}</span></div>
+            <div><strong>Discord</strong><span>{discordDisplayName}</span></div>
             <span className="connected-label">Connected</span>
           </div>
           <div className="account-connection-row">

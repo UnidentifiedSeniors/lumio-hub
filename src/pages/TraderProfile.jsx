@@ -97,7 +97,7 @@ function TraderProfile() {
         <div className="trader-hero-copy">
           <p className="eyebrow">Licensed trader</p>
           <h1>{displayName}</h1>
-          {trader.discord_username && <p className="trader-handle">@{trader.discord_username}</p>}
+          {trader.discord_display_name && <p className="trader-handle">Discord · {trader.discord_display_name}</p>}
           <div className="trader-meta"><span>{trader.rank || "Rookie Trader"}</span>{trader.roblox_username && <span>Roblox: {trader.roblox_username}</span>}<span>Joined {formatDateTime(trader.created_at)}</span></div>
         </div>
         <div className="trader-hero-action">

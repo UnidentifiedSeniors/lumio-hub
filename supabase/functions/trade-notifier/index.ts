@@ -69,7 +69,9 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Profile lookup (display name + @username + avatar)
+    // The public Discord display name is safe to show. Do not surface the
+    // legacy username field here: OAuth metadata can supply an email-derived
+    // value when Discord does not return a traditional discriminator handle.
     const { data: profile } = await supabase
       .from("profiles")
       .select("discord_username, discord_display_name, discord_avatar")
@@ -77,10 +79,7 @@ serve(async (req) => {
       .single();
 
     const traderName = profile?.discord_display_name || "Unknown";
-    const traderUsername = profile?.discord_username
-      ? "@" + profile.discord_username
-      : "Unknown";
-    const trader = traderName + "\n" + traderUsername;
+    const trader = traderName;
 
     // Requested champion block
     const requestedChampion = trade.requested_champion || {};

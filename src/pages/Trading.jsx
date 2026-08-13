@@ -113,7 +113,7 @@ function Trading() {
                 {listing.note && <p className="listing-note">“{listing.note}”</p>}
                 <Link className="seller-row" to={`/trader/${listing.owner_id}`}>
                   {listing.discord_avatar ? <img alt="" src={listing.discord_avatar} /> : <span>{sellerName.charAt(0).toUpperCase()}</span>}
-                  <div><small>Listed by</small><strong>{sellerName}</strong>{listing.discord_username && <em>@{listing.discord_username}</em>}</div>
+                  <div><small>Listed by</small><strong>{sellerName}</strong>{listing.discord_display_name && <em>Discord · {listing.discord_display_name}</em>}</div>
                 </Link>
                 <button className="primary-action card-action" onClick={() => openOffer(listing)} type="button">Make an offer</button>
               </article>

@@ -70,7 +70,7 @@ function Trading() {
       <section className="page-heading page-heading-split">
         <div>
           <p className="eyebrow">Live community listings</p>
-          <h1>Trades</h1>
+          <h1>Market</h1>
           <p>Browse champions other licensed members have placed on Shelf, then send a private multi-champion offer.</p>
         </div>
         <label className="market-search">

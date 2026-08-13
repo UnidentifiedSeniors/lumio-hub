@@ -158,6 +158,12 @@ a {
   font-weight: 800;
 }
 
+.brand-logo {
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
 .brand strong,
 .brand small {
   display: block;
@@ -1851,6 +1857,302 @@ a.trade-participant:hover {
   margin-top: 9px;
 }
 
+/* Account profile */
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(132, 136, 255, 0.2);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(105, 109, 236, 0.3), transparent 24rem),
+    linear-gradient(125deg, rgba(28, 32, 52, 0.94), rgba(17, 20, 33, 0.94));
+  padding: clamp(23px, 3.4vw, 34px);
+}
+
+.profile-hero-avatar {
+  width: 78px;
+  height: 78px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(174, 177, 255, 0.54);
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(128, 132, 255, 0.08);
+  object-fit: cover;
+}
+
+.profile-hero-copy {
+  min-width: 0;
+}
+
+.profile-license-label {
+  display: inline-flex;
+  border: 1px solid rgba(84, 219, 172, 0.22);
+  border-radius: 99px;
+  background: rgba(70, 210, 162, 0.08);
+  color: #75dfb6;
+  padding: 4px 8px;
+  font-size: 0.65rem;
+  font-weight: 760;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.profile-hero h2 {
+  overflow: hidden;
+  margin: 9px 0 2px;
+  color: #fbfcff;
+  font-size: clamp(1.65rem, 3vw, 2.3rem);
+  letter-spacing: -0.055em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-handle {
+  margin: 0;
+  color: #99a1b9;
+  font-size: 0.81rem;
+}
+
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  margin-top: 13px;
+  color: #a4abc0;
+  font-size: 0.72rem;
+}
+
+.profile-meta span + span::before {
+  margin-right: 12px;
+  color: #5b637a;
+  content: "•";
+}
+
+.profile-hero-actions {
+  display: grid;
+  min-width: 150px;
+  gap: 10px;
+  margin-left: auto;
+  text-align: right;
+}
+
+.profile-hero-actions .secondary-action {
+  white-space: nowrap;
+}
+
+.profile-settings-link,
+.profile-panel-heading > a,
+.row-link {
+  color: #afb3ff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.profile-settings-link:hover,
+.profile-panel-heading > a:hover,
+.row-link:hover {
+  color: #fff;
+}
+
+.profile-metrics {
+  display: grid;
+  grid-template-columns: minmax(1.25fr, 1.65fr) repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0;
+}
+
+.profile-metric,
+.profile-detail-panel {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(19, 22, 34, 0.82);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.14);
+}
+
+.profile-metric {
+  display: flex;
+  min-height: 187px;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.profile-progress-card {
+  border-color: rgba(133, 137, 255, 0.2);
+  background: linear-gradient(135deg, rgba(42, 46, 73, 0.88), rgba(19, 22, 34, 0.9));
+}
+
+.profile-metric-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #a7aec3;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.profile-metric-icon,
+.connection-icon {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(138, 142, 255, 0.24);
+  border-radius: 9px;
+  background: rgba(117, 121, 243, 0.11);
+  color: #b9bcff;
+}
+
+.profile-metric-icon {
+  width: 29px;
+  height: 29px;
+}
+
+.profile-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.profile-metric > strong {
+  margin-top: auto;
+  color: #f5f6ff;
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+}
+
+.profile-progress-card > strong {
+  margin-top: 20px;
+}
+
+.profile-metric p {
+  margin: 5px 0 0;
+  color: #9098b1;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.profile-progress-card .xp-bar {
+  margin-top: 13px;
+}
+
+.profile-progress-card small {
+  margin-top: 8px;
+  color: #aeb4d0;
+  font-size: 0.68rem;
+}
+
+.profile-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.profile-detail-panel {
+  padding: 21px;
+}
+
+.profile-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.profile-panel-heading .eyebrow {
+  margin-bottom: 5px;
+}
+
+.profile-panel-heading h2 {
+  margin: 0;
+  color: #f0f2fd;
+  font-size: 0.96rem;
+}
+
+.account-connection-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.065);
+  padding: 12px 0;
+}
+
+.account-connection-row:last-child {
+  padding-bottom: 0;
+}
+
+.connection-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.account-connection-row > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.account-connection-row strong {
+  color: #ecedf8;
+  font-size: 0.76rem;
+}
+
+.account-connection-row span:not(.connection-icon):not(.connected-label) {
+  overflow: hidden;
+  color: #8d96ad;
+  font-size: 0.69rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-badges span {
+  border: 1px solid rgba(147, 150, 255, 0.23);
+  border-radius: 99px;
+  background: rgba(117, 121, 243, 0.1);
+  color: #c6c9ff;
+  padding: 6px 9px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.profile-badges-empty {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border-top: 1px solid rgba(255, 255, 255, 0.065);
+  padding-top: 17px;
+}
+
+.profile-badges-empty .connection-icon {
+  width: 37px;
+  height: 37px;
+  flex: 0 0 auto;
+}
+
+.profile-badges-empty strong {
+  display: block;
+  color: #e6e8f5;
+  font-size: 0.76rem;
+}
+
+.profile-badges-empty p {
+  margin: 4px 0 0;
+  color: #8d95ab;
+  font-size: 0.71rem;
+  line-height: 1.43;
+}
+
 .trade-coordination {
   border: 1px solid rgba(106, 216, 192, 0.2);
   border-radius: 12px;
@@ -2191,6 +2493,22 @@ hr {
     margin-left: 0;
     text-align: left;
   }
+
+  .profile-hero {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .profile-hero-actions {
+    width: 100%;
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .profile-metrics,
+  .profile-detail-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2198,8 +2516,21 @@ hr {
     grid-template-columns: 1fr;
   }
 
+  .topbar {
+    gap: 10px;
+  }
+
+  .topbar-search {
+    min-width: 0;
+  }
+
+  .topbar-actions {
+    flex: 0 0 auto;
+    gap: 7px;
+  }
+
   .notification-button {
-    display: none;
+    display: grid;
   }
 
   .topbar-search input {

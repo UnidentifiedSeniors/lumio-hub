@@ -1,9 +1,11 @@
 import { supabase } from "../lib/supabase";
+import { getDiscordIdentity } from "./discordIdentity";
 
 // Maps a Supabase Auth user to a "profiles" row (creating if missing).
 // Profile creation can be requested more than once during OAuth startup, so it is idempotent.
 export default async function createProfile(user) {
   const userId = user.id;
+  const identity = getDiscordIdentity(user);
 
   const { data: existingProfile, error: fetchError } = await supabase
     .from("profiles")
@@ -17,32 +19,39 @@ export default async function createProfile(user) {
   }
 
   if (existingProfile) {
-    return { ...existingProfile, ...user.user_metadata };
+    const identityUpdate = {
+      discord_id: identity.discordId,
+      discord_username: identity.username,
+      discord_display_name: identity.displayName,
+      discord_avatar: identity.avatar,
+    };
+    const hasChanged = Object.entries(identityUpdate).some(
+      ([field, value]) => value && existingProfile[field] !== value,
+    );
+
+    if (hasChanged) {
+      const { data: refreshedProfile, error: updateError } = await supabase
+        .from("profiles")
+        .update(identityUpdate)
+        .eq("id", userId)
+        .select("*")
+        .maybeSingle();
+
+      if (!updateError && refreshedProfile) return refreshedProfile;
+      if (updateError) console.error("PROFILE IDENTITY UPDATE ERROR:", updateError.message);
+    }
+
+    return existingProfile;
   }
 
   // 2. Create the profile row
   const newProfile = {
     id: userId,
 
-    discord_id:
-      user.user_metadata?.provider_id ||
-      user.id,
-
-    discord_username:
-      user.user_metadata?.user_name ||
-      user.user_metadata?.preferred_username ||
-      user.user_metadata?.full_name ||
-      user.email ||
-      "trader",
-
-    discord_display_name:
-      user.user_metadata?.full_name ||
-      user.user_metadata?.name ||
-      "Trader",
-
-    discord_avatar:
-      user.user_metadata?.avatar_url ||
-      null,
+    discord_id: identity.discordId,
+    discord_username: identity.username,
+    discord_display_name: identity.displayName,
+    discord_avatar: identity.avatar,
 
     roblox_id: null,
     roblox_username: null,
@@ -71,5 +80,5 @@ export default async function createProfile(user) {
     return null;
   }
 
-  return { ...data, ...user.user_metadata };
+  return data;
 }

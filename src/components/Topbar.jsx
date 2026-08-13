@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
+import { getDiscordIdentity } from "../utils/discordIdentity";
 import NotificationList from "./NotificationList";
 
 function SearchIcon() {
@@ -31,14 +32,14 @@ function Topbar() {
   const menuRef = useRef(null);
   const notificationsRef = useRef(null);
   const navigate = useNavigate();
+  const discordIdentity = getDiscordIdentity(user);
 
   const displayName =
     profile?.discord_display_name ||
-    user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
+    discordIdentity.displayName ||
     "Trader";
-  const username = profile?.discord_username || user?.user_metadata?.user_name;
-  const avatar = profile?.discord_avatar || user?.user_metadata?.avatar_url;
+  const username = profile?.discord_username || discordIdentity.username;
+  const avatar = profile?.discord_avatar || discordIdentity.avatar;
   const initial = displayName.charAt(0).toUpperCase();
 
   useEffect(() => {

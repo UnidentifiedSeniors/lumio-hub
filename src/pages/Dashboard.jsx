@@ -139,7 +139,7 @@ function Dashboard() {
         <div className="quick-actions">
           <Link to="/trades">
             <span>↗</span>
-            <strong>Explore Trades</strong>
+            <strong>Explore Market</strong>
             <small>Browse public listings</small>
           </Link>
           <Link to="/shelf">

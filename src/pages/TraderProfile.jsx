@@ -62,7 +62,7 @@ function TraderProfile() {
           <span className="empty-state-icon">?</span>
           <h2>Trader profile unavailable</h2>
           <p>{error || "This trader may no longer have a public Lumio profile."}</p>
-          <Link className="secondary-action" to="/trades">Explore Trades</Link>
+          <Link className="secondary-action" to="/trades">Explore Market</Link>
         </section>
       </Layout>
     );
@@ -91,7 +91,7 @@ function TraderProfile() {
 
   return (
     <Layout>
-      <Link className="back-link" to="/trades">← Back to Trades</Link>
+      <Link className="back-link" to="/trades">← Back to Market</Link>
       <section className="trader-hero">
         {trader.discord_avatar ? <img alt="" className="trader-avatar" src={trader.discord_avatar} /> : <span className="trader-avatar avatar-fallback">{displayName.charAt(0).toUpperCase()}</span>}
         <div className="trader-hero-copy">

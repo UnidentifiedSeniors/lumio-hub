@@ -127,7 +127,7 @@ function Shelf() {
         <section className="empty-state shelf-empty-state">
           <span className="empty-state-icon">⌁</span>
           <h2>Your Shelf is waiting</h2>
-          <p>Select a champion from your Collection to create a public listing. Active listings appear in Trades, while every offer stays private.</p>
+          <p>Select a champion from your Collection to create a public listing. Active listings appear in Market, while every offer stays private.</p>
           {availableChampions.length ? <button className="secondary-action" onClick={() => setShowListingForm(true)} type="button">Create first listing</button> : <Link className="secondary-action" to="/collection">Open Collection</Link>}
         </section>
       ) : (

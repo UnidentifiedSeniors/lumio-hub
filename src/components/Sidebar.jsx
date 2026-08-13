@@ -1,8 +1,9 @@
 import { NavLink } from "react-router-dom";
+import lumioLogo from "../assets/Lumio Logo.png";
 
 const navigation = [
   { to: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { to: "/trades", label: "Trades", icon: "trades" },
+  { to: "/trades", label: "Market", icon: "trades" },
   { to: "/shelf", label: "Shelf", icon: "shelf" },
   { to: "/received-trades", label: "Received Trades", icon: "received" },
   { to: "/sent-trades", label: "Sent Trades", icon: "sent" },
@@ -32,7 +33,7 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <NavLink to="/dashboard" className="brand" aria-label="Lumio Hub dashboard">
-        <span className="brand-mark">L</span>
+        <img alt="" className="brand-mark brand-logo" src={lumioLogo} />
         <span>
           <strong>Lumio</strong>
           <small>Trading Hub</small>

@@ -4,6 +4,22 @@ import Layout from "../components/Layout";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 
+async function edgeFunctionErrorMessage(data, error, fallback) {
+  if (data?.error) return data.error;
+
+  const response = error?.context;
+  if (response && typeof response.json === "function") {
+    try {
+      const errorBody = await response.json();
+      if (errorBody?.error) return errorBody.error;
+    } catch {
+      // The response body may already be consumed. Use the generic SDK error.
+    }
+  }
+
+  return error?.message || fallback;
+}
+
 function Settings() {
   const { profile, refreshProfile } = useAuth();
   const [syncingRank, setSyncingRank] = useState(false);
@@ -23,7 +39,7 @@ function Settings() {
     if (error || data?.error) {
       setRankSyncMessage({
         type: "error",
-        text: data?.error || error?.message || "Unable to sync your Discord rank.",
+        text: await edgeFunctionErrorMessage(data, error, "Unable to sync your Discord rank."),
       });
     } else {
       setRankSyncMessage({
@@ -44,7 +60,7 @@ function Settings() {
     });
 
     if (error || data?.error) {
-      setRobloxMessage({ type: "error", text: data?.error || error?.message || "Unable to link that Roblox account." });
+      setRobloxMessage({ type: "error", text: await edgeFunctionErrorMessage(data, error, "Unable to link that Roblox account.") });
     } else {
       setRobloxUsername("");
       await refreshProfile();
@@ -63,7 +79,7 @@ function Settings() {
     });
 
     if (error || data?.error) {
-      setRobloxMessage({ type: "error", text: data?.error || error?.message || "Unable to disconnect Roblox right now." });
+      setRobloxMessage({ type: "error", text: await edgeFunctionErrorMessage(data, error, "Unable to disconnect Roblox right now.") });
     } else {
       await refreshProfile();
       setRobloxMessage({ type: "success", text: "Your Roblox account has been disconnected." });

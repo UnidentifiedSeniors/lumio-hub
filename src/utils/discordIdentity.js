@@ -8,7 +8,9 @@ function firstText(...values) {
 export function getDiscordIdentity(user) {
   const metadata = user?.user_metadata || {};
   const discordIdentity = user?.identities?.find((identity) => identity.provider === "discord")?.identity_data || {};
-  const sources = [metadata, discordIdentity];
+  // Prefer Discord's provider payload. Supabase metadata can contain a
+  // generic email-derived name, which is not a member's Discord @handle.
+  const sources = [discordIdentity, metadata];
 
   const username = firstText(
     ...sources.map((source) => source.user_name),

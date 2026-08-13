@@ -1401,6 +1401,119 @@ kbd {
   font-size: 0.73rem;
 }
 
+.back-link {
+  display: inline-flex;
+  margin-bottom: 18px;
+  color: #aab0c9;
+  font-size: 0.8rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: #d7dbff;
+}
+
+.trader-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid rgba(132, 136, 255, 0.18);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(105, 108, 241, 0.22), transparent 20rem),
+    rgba(20, 23, 37, 0.9);
+  padding: clamp(22px, 3.4vw, 34px);
+}
+
+.trader-avatar {
+  width: 74px;
+  height: 74px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(173, 176, 255, 0.45);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.trader-hero-copy {
+  min-width: 0;
+}
+
+.trader-hero-copy .eyebrow {
+  margin-bottom: 5px;
+}
+
+.trader-hero h1 {
+  overflow: hidden;
+  margin: 0;
+  color: #fafbff;
+  font-size: clamp(1.7rem, 3.2vw, 2.35rem);
+  letter-spacing: -0.05em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trader-handle {
+  margin: 4px 0 0;
+  color: #9ba3ba;
+  font-size: 0.83rem;
+}
+
+.trader-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 15px;
+  margin-top: 13px;
+  color: #8991a7;
+  font-size: 0.73rem;
+}
+
+.trader-meta span + span::before {
+  margin-right: 15px;
+  color: #586078;
+  content: "•";
+}
+
+.trader-hero-action {
+  display: grid;
+  min-width: 160px;
+  gap: 9px;
+  margin-left: auto;
+  text-align: right;
+}
+
+.trader-hero-action span {
+  color: #8d95ac;
+  font-size: 0.69rem;
+  line-height: 1.4;
+}
+
+.profile-listings-heading {
+  margin-top: 32px;
+}
+
+.profile-listings-heading h2 {
+  margin: 0;
+  color: #f2f4fc;
+  font-size: 1.2rem;
+}
+
+.profile-listings-heading p:last-child {
+  margin-top: 6px;
+}
+
+.seller-row {
+  text-decoration: none;
+}
+
+.seller-row:hover strong {
+  color: #bec2ff;
+}
+
+.profile-public-link {
+  margin-top: 9px;
+}
+
 /* Existing terminal, modal, champion and profile screens */
 .trade-container,
 .trade-layout {
@@ -1680,6 +1793,17 @@ hr {
   .trade-footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .trader-hero {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .trader-hero-action {
+    width: 100%;
+    margin-left: 0;
+    text-align: left;
   }
 }
 

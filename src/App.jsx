@@ -20,6 +20,7 @@ import useAuth from "./context/useAuth";
 import PendingTrades from "./pages/PendingTrades";
 import Shelf from "./pages/Shelf";
 import ReceivedTrades from "./pages/ReceivedTrades";
+import TraderProfile from "./pages/TraderProfile";
 
 function App() {
   const { user, loading } = useAuth();
@@ -59,6 +60,8 @@ function App() {
       <Route path="/pending-trades" element={<Navigate to="/sent-trades" replace />} />
 
       <Route path="/profile" element={user ? <Profile /> : <Landing />} />
+
+      <Route path="/trader/:traderId" element={user ? <TraderProfile /> : <Landing />} />
 
       <Route path="/missions" element={user ? <Missions /> : <Landing />} />
 

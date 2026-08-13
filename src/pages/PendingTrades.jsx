@@ -94,7 +94,7 @@ function PendingTrades() {
       ) : (
         <section className="trade-list">
           {trades.map((trade) => {
-          const requested = trade.requested_champion || {};
+          const requested = trade.requested_champion || { name: "Open direct offer", rarity: "No specific champion requested" };
           const offered = trade.offered_champions || [];
           const code = trade.trade_code ? `#${trade.trade_code}` : "Trade code pending";
 
@@ -103,7 +103,7 @@ function PendingTrades() {
               <div className="trade-card-heading">
                 <div>
                   <span className="trade-code">{code}</span>
-                  <h2>{requested.name || "Requested champion"}</h2>
+                  <h2>{requested.name || "Open direct offer"}</h2>
                 </div>
                 <span className={`trade-status status-${trade.status}`}>
                   {statusEmoji[trade.status] || trade.status}
@@ -112,7 +112,7 @@ function PendingTrades() {
 
               <h3>You requested</h3>
               <p>
-                <strong>{requested.name || "Unknown"}</strong>{" "}
+                <strong>{requested.name || "Open direct offer"}</strong>{" "}
                 ({requested.rarity || "—"})
               </p>
 

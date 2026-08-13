@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 import Layout from "../components/Layout";
+import OfferComposer from "../components/OfferComposer";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
-import { getChampionTraits, getOwnedChampionValue, toTradeChampion } from "../utils/marketplace";
-
-const OFFER_LIMIT = 4;
+import { getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
 
 function Trading() {
   const { user } = useAuth();
@@ -14,9 +14,7 @@ function Trading() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [activeListing, setActiveListing] = useState(null);
-  const [offerIds, setOfferIds] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
+  const [offerTarget, setOfferTarget] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
   const loadMarketplace = useCallback(async () => {
@@ -55,64 +53,16 @@ function Trading() {
     });
   }, [listings, search, user]);
 
-  const selectedOffer = ownedChampions.filter((champion) => offerIds.includes(champion.id));
-  const offerValue = selectedOffer.reduce((total, champion) => total + getOwnedChampionValue(champion), 0);
-
-  const toggleOfferChampion = (championId) => {
-    setOfferIds((current) => {
-      if (current.includes(championId)) return current.filter((id) => id !== championId);
-      if (current.length >= OFFER_LIMIT) return current;
-      return [...current, championId];
-    });
-  };
-
   const openOffer = (listing) => {
     setError(null);
     setSuccessMessage(null);
-    setActiveListing(listing);
-    setOfferIds([]);
-  };
-
-  const submitOffer = async () => {
-    if (!activeListing || !user || selectedOffer.length === 0) return;
-    setSubmitting(true);
-    setError(null);
-
-    const requestedChampion = toTradeChampion({
-      id: activeListing.user_champion_id,
-      name: activeListing.name,
-      rarity: activeListing.rarity,
-      trait: activeListing.trait,
-      base_value: activeListing.base_value,
-      market_adjustment: activeListing.market_adjustment,
+    setOfferTarget({
+      recipientId: listing.owner_id,
+      listingId: listing.id,
+      requestedChampion: listing,
+      title: `Offer for ${listing.name}`,
+      summary: `${listing.name} · ◈ ${getOwnedChampionValue(listing).toLocaleString()}`,
     });
-
-    const { data, error: insertError } = await supabase
-      .from("trades")
-      .insert({
-        sender_id: user.id,
-        recipient_id: activeListing.owner_id,
-        listing_id: activeListing.id,
-        requested_champion: requestedChampion,
-        requested_champions: [requestedChampion],
-        offered_champions: selectedOffer.map(toTradeChampion),
-        offer_value: offerValue,
-        requested_value: getOwnedChampionValue(activeListing),
-        status: "pending",
-      })
-      .select("trade_code")
-      .single();
-
-    if (insertError) {
-      setError(insertError.message);
-      setSubmitting(false);
-      return;
-    }
-
-    setSuccessMessage(`Offer ${data?.trade_code ? `#${data.trade_code}` : "sent"} is now in the trader’s Received Trades.`);
-    setActiveListing(null);
-    setOfferIds([]);
-    setSubmitting(false);
   };
 
   return (
@@ -161,10 +111,10 @@ function Trading() {
                 <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
                 <p className="market-value">◈ {getOwnedChampionValue(listing).toLocaleString()}</p>
                 {listing.note && <p className="listing-note">“{listing.note}”</p>}
-                <div className="seller-row">
+                <Link className="seller-row" to={`/trader/${listing.owner_id}`}>
                   {listing.discord_avatar ? <img alt="" src={listing.discord_avatar} /> : <span>{sellerName.charAt(0).toUpperCase()}</span>}
                   <div><small>Listed by</small><strong>{sellerName}</strong>{listing.discord_username && <em>@{listing.discord_username}</em>}</div>
-                </div>
+                </Link>
                 <button className="primary-action card-action" onClick={() => openOffer(listing)} type="button">Make an offer</button>
               </article>
             );
@@ -172,39 +122,7 @@ function Trading() {
         </section>
       )}
 
-      {activeListing && (
-        <div className="modal-overlay" role="presentation">
-          <section aria-modal="true" className="trade-modal offer-modal" role="dialog">
-            <p className="eyebrow">Private offer</p>
-            <h2>Offer for {activeListing.name}</h2>
-            <div className="offer-target"><span>They have listed</span><strong>{activeListing.name} · ◈ {getOwnedChampionValue(activeListing).toLocaleString()}</strong></div>
-            {ownedChampions.length === 0 ? (
-              <p className="modal-copy">Add at least one champion to your Collection before sending an offer.</p>
-            ) : (
-              <>
-                <p className="modal-copy">Choose up to {OFFER_LIMIT} champions from your Collection. The other trader will see every selection before they accept or decline.</p>
-                <div className="offer-picker">
-                  {ownedChampions.map((champion) => {
-                    const selected = offerIds.includes(champion.id);
-                    return (
-                      <button className={`offer-choice${selected ? " selected" : ""}`} key={champion.id} onClick={() => toggleOfferChampion(champion.id)} type="button">
-                        <span className="offer-choice-check">{selected ? "✓" : "+"}</span>
-                        <span><strong>{champion.name}</strong><small>{champion.rarity} · {champion.trait || "Standard"}</small></span>
-                        <em>◈ {getOwnedChampionValue(champion).toLocaleString()}</em>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="offer-total"><span>{selectedOffer.length} selected</span><strong>Offer total ◈ {offerValue.toLocaleString()}</strong></div>
-              </>
-            )}
-            <div className="modal-buttons">
-              <button className="secondary-action" onClick={() => setActiveListing(null)} type="button">Cancel</button>
-              {ownedChampions.length > 0 && <button className="primary-action" disabled={selectedOffer.length === 0 || submitting} onClick={submitOffer} type="button">{submitting ? "Sending…" : "Send trade offer"}</button>}
-            </div>
-          </section>
-        </div>
-      )}
+      {offerTarget && <OfferComposer onClose={() => setOfferTarget(null)} onSent={(code) => { setOfferTarget(null); setSuccessMessage(`Offer ${code ? `#${code}` : "sent"} is now in the trader’s Received Trades.`); }} target={offerTarget} />}
     </Layout>
   );
 }

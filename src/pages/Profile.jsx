@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import getRank from "../utils/rankCalculator";
 import getXPProgress from "../utils/xpProgress";
@@ -43,6 +44,8 @@ function Profile() {
             ? profile.roblox_username
             : "Not Connected"}
         </p>
+
+        {user && <Link className="secondary-action profile-public-link" to={`/trader/${user.id}`}>View public profile</Link>}
       </div>
 
       <div className="profile-grid">

@@ -954,6 +954,45 @@ a.trade-participant:hover {
   margin-top: auto;
 }
 
+.rank-sync-card {
+  min-height: 250px;
+}
+
+.rank-sync-footer {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.rank-sync-current {
+  color: #9299af;
+  font-size: 0.75rem;
+}
+
+.rank-sync-current strong {
+  color: #dfe3fb;
+}
+
+.rank-sync-footer .secondary-action {
+  width: 100%;
+}
+
+.inline-success,
+.inline-error {
+  margin: 11px 0 0 !important;
+  font-size: 0.73rem !important;
+  line-height: 1.45 !important;
+}
+
+.inline-success {
+  color: #74dfb4 !important;
+}
+
+.inline-error {
+  color: #ff9da7 !important;
+}
+
 .coming-soon-label {
   background: rgba(255, 255, 255, 0.06);
   color: #9da4b8;

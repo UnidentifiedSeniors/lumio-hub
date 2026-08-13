@@ -27,3 +27,17 @@ In the Discord Developer Portal, keep this OAuth2 redirect URI exactly as shown:
 ## Production check
 
 Deploy the frontend, open `https://lumiohub.app`, and choose **Login with Discord**. After authorizing Discord, the browser should land back at `https://lumiohub.app`; it must never navigate to localhost.
+
+## Discord rank-role sync
+
+Lumio can keep Discord roles aligned with the rank stored in `profiles.rank`. The server-side `discord-rank-sync` function supports the current progression labels: `Rookie Trader`, `Beginner Trader`, `Certified Trader`, `Advanced Trader`, `Elite Trader`, `Master Trader`, and `Lumio Legend`.
+
+Before enabling the Database Webhook, create a Discord bot, invite it to the Lumio server with **Manage Roles**, and place its highest role above every Lumio rank role. Then add these **Supabase Edge Function secrets**—never Vite variables or committed files:
+
+- `DISCORD_BOT_TOKEN`
+- `DISCORD_GUILD_ID`
+- `DISCORD_RANK_ROLE_IDS`, a JSON object such as `{"Rookie Trader":"123...","Beginner Trader":"456..."}`
+
+In **Database → Webhooks**, create an `UPDATE` webhook for `public.profiles`, choose the `discord-rank-sync` Edge Function, and use **Add auth header with service key**. The function ignores profile updates where the rank has not changed. Members can also use **Settings → Sync my Discord rank** after the server configuration is complete.
+
+The function only adds/removes role IDs listed in `DISCORD_RANK_ROLE_IDS`; it does not touch any other server roles.

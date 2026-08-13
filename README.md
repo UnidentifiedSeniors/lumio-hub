@@ -7,7 +7,7 @@ Lumio Hub is the licensed-trader marketplace for Anime Fighting Simulator champi
 1. Copy `.env.example` to `.env` and add the Supabase project URL plus its **anon** key.
 2. Run `npm install` and `npm run dev`.
 
-Never expose a Supabase service-role key, a Discord client secret, or a Discord webhook URL in Vite variables or browser code.
+Never expose a Supabase service-role key, a Discord client secret, or a Discord webhook URL in Vite variables or browser code. `VITE_DISCORD_INVITE_URL` is deliberately public; it should contain only your server's public invite URL.
 
 ## Discord OAuth redirect setup
 
@@ -42,6 +42,10 @@ In **Database → Webhooks**, create an `UPDATE` webhook for `public.profiles`, 
 
 The function only adds/removes role IDs listed in `DISCORD_RANK_ROLE_IDS`; it does not touch any other server roles.
 
+## Public community activity
+
+The signed-out landing page reads three public aggregate counts from the `public-community-stats` Edge Function: licensed traders (`profiles`), live listings (`shelf_listings` with `status = active`), and confirmed trades (`trades` with `status = completed`). The function returns only counts and is deliberately unauthenticated so visitors can see real activity without gaining access to member data.
+
 ## Roblox profile link
 
-The Settings page validates a public Roblox username through Roblox's user lookup API and stores its stable Roblox user ID plus canonical username in `profiles`. It never requests Roblox credentials and is not ownership verification; use Roblox OAuth later if Lumio needs proof that a member controls the linked account.
+The Settings page offers an optional public coordination link. It validates a public Roblox username through Roblox's user lookup API and stores its stable Roblox user ID plus canonical username in `profiles`, so traders know where to meet once a trade is accepted. It never requests Roblox credentials and is not ownership verification. Discord OAuth remains Lumio's secure sign-in and licensing layer. Add Roblox OAuth only if Lumio eventually needs proof that a member controls the linked Roblox account.

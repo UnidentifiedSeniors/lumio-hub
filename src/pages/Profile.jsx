@@ -123,7 +123,7 @@ function Profile() {
           <div className="account-connection-row">
             <span className="connection-icon"><ProfileIcon name="roblox" /></span>
             <div><strong>Roblox</strong><span>{profile?.roblox_username ? `@${profile.roblox_username}` : "Not linked yet"}</span></div>
-            {profile?.roblox_username ? <span className="connected-label">Linked</span> : <Link className="row-link" to="/settings">Connect</Link>}
+            {profile?.roblox_username ? <span className="connected-label">Public link</span> : <Link className="row-link" to="/settings">Connect</Link>}
           </div>
         </article>
 

@@ -115,7 +115,7 @@ function Settings() {
         <article className="settings-card roblox-link-card">
           <span className="settings-card-label">Connections</span>
           <h2>Roblox</h2>
-          <p>Link the public Roblox username you use for Anime Fighting Simulator so accepted trades are easier to coordinate.</p>
+          <p>Optionally add the public Roblox username you use for Anime Fighting Simulator so accepted trades are easier to coordinate.</p>
           <div className="roblox-connection-panel">
             {profile?.roblox_username && <span className="connected-label">Linked · @{profile.roblox_username}</span>}
             <form className="roblox-link-form" onSubmit={linkRoblox}>
@@ -134,7 +134,7 @@ function Settings() {
                 {profile?.roblox_username && <button className="text-action danger-action" disabled={linkingRoblox} onClick={() => void unlinkRoblox()} type="button">Disconnect</button>}
               </div>
             </form>
-            <small>We validate that the public account exists; Lumio never asks for Roblox credentials.</small>
+            <small>Public identity link only — we check that the account exists, not that you own it. Lumio never asks for Roblox credentials; Discord remains your secure Lumio sign-in.</small>
             {robloxMessage && <p className={robloxMessage.type === "success" ? "inline-success" : "inline-error"} role={robloxMessage.type === "success" ? "status" : "alert"}>{robloxMessage.text}</p>}
           </div>
         </article>

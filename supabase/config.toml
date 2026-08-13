@@ -32,3 +32,9 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/roblox-profile-link/deno.json"
 entrypoint = "./functions/roblox-profile-link/index.ts"
+
+[functions.public-community-stats]
+enabled = true
+verify_jwt = false
+import_map = "./functions/public-community-stats/deno.json"
+entrypoint = "./functions/public-community-stats/index.ts"

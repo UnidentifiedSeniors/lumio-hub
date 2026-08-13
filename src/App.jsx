@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Routes, Route } from "react-router-dom";
 
 import Champion from "./pages/Champion";
 
@@ -16,8 +16,10 @@ import Competitions from "./pages/Competitions";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
 
-import { useAuth } from "./context/AuthContext";
+import useAuth from "./context/useAuth";
 import PendingTrades from "./pages/PendingTrades";
+import Shelf from "./pages/Shelf";
+import ReceivedTrades from "./pages/ReceivedTrades";
 
 function App() {
   const { user, loading } = useAuth();
@@ -40,16 +42,21 @@ function App() {
 
       <Route path="/champion/:id" element={user ? <Champion /> : <Landing />} />
 
-      <Route path="/trading" element={user ? <Trading /> : <Landing />} />
+      <Route path="/trades" element={user ? <Trading /> : <Landing />} />
+
+      <Route path="/trading" element={<Navigate to="/trades" replace />} />
 
       <Route path="/history" element={user ? <History /> : <Landing />} />
 
       <Route path="/collection" element={user ? <Collection /> : <Landing />} />
 
-      <Route
-        path="/pending-trades"
-        element={user ? <PendingTrades /> : <Landing />}
-      />
+      <Route path="/shelf" element={user ? <Shelf /> : <Landing />} />
+
+      <Route path="/received-trades" element={user ? <ReceivedTrades /> : <Landing />} />
+
+      <Route path="/sent-trades" element={user ? <PendingTrades /> : <Landing />} />
+
+      <Route path="/pending-trades" element={<Navigate to="/sent-trades" replace />} />
 
       <Route path="/profile" element={user ? <Profile /> : <Landing />} />
 

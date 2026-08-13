@@ -1,11 +1,10 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import champions from "../data/champions";
 import { calculateChampionValue } from "../utils/valueCalculator";
 
 function Champion() {
   const { id } = useParams();
-  const navigate = useNavigate();
 
   const champion = champions.find((item) => item.id === Number(id));
 

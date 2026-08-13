@@ -1,7 +1,7 @@
 import Layout from "../components/Layout";
 import getRank from "../utils/rankCalculator";
 import getXPProgress from "../utils/xpProgress";
-import { useAuth } from "../context/AuthContext";
+import useAuth from "../context/useAuth";
 
 function Profile() {
   const { user, profile } = useAuth();

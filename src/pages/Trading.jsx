@@ -9,7 +9,7 @@ import validateTrade from "../utils/tradeValidator";
 import { calculateChampionValue, calculateTradeValue } from "../utils/valueCalculator";
 
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../context/AuthContext";
+import useAuth from "../context/useAuth";
 
 const OFFER_LIMIT = 8;
 

@@ -6,7 +6,7 @@ export default async function createProfile(user) {
   const userId = user.id;
 
   // 1. Check the DB profiles table
-  const { data: existingProfile, error: fetchError } = await supabase
+  const { data: existingProfile } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", userId)

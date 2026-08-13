@@ -1,8 +1,9 @@
 import Layout from "../components/Layout";
-import { useAuth } from "../context/AuthContext";
+import useAuth from "../context/useAuth";
 import getRank from "../utils/rankCalculator";
 import getXPProgress from "../utils/xpProgress";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 function Dashboard() {
@@ -19,6 +20,7 @@ function Dashboard() {
   const totalXP = profile?.xp ?? 0;
   const rank = getRank(totalXP);
   const progress = getXPProgress(totalXP);
+  const xpPercentage = Math.max(0, Math.min(100, progress.percentage));
 
   useEffect(() => {
     if (!user) return;
@@ -38,9 +40,10 @@ function Dashboard() {
   return (
     <Layout>
       <section className="hero-card">
+        <p className="eyebrow">Licensed trader workspace</p>
         <h1>Welcome back, {displayName}</h1>
 
-        <p>Your Lumio Hub trading command center.</p>
+        <p>Keep your marketplace listings, direct offers, and trading progress in one clear place.</p>
 
         <div className="license-status">
           <span>🪪 Trading License</span>
@@ -50,36 +53,62 @@ function Dashboard() {
 
       <section className="dashboard-grid">
         <div className="dashboard-card">
-          <h2>📈 Trading Level</h2>
+          <h2>Trading rank</h2>
 
-          <p className="big-number">{rank.title} (Lvl {rank.level})</p>
+          <p className="big-number">{rank.title}</p>
 
           <div className="xp-bar">
             <div
               className="xp-progress"
-              style={{ width: `${progress.percentage}%` }}
+              style={{ width: `${xpPercentage}%` }}
             />
           </div>
 
-          <p>{totalXP} XP</p>
+          <p>{totalXP.toLocaleString()} XP · Level {rank.level}</p>
         </div>
 
         <div className="dashboard-card">
-          <h2>🤝 Your Trades</h2>
+          <h2>Completed trades</h2>
           <p className="big-number">{profile?.trades_completed ?? 0}</p>
-          <p>Trades Completed</p>
+          <p>Your confirmed in-game exchanges</p>
         </div>
 
         <div className="dashboard-card">
-          <h2>📦 Champion Stock</h2>
+          <h2>Collection</h2>
           <p className="big-number">—</p>
-          <p>Champions Available</p>
+          <p>Champion inventory syncs here next</p>
+        </div>
+      </section>
+
+      <section className="dashboard-card quick-actions-card">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Quick actions</p>
+            <h2>Trade without losing momentum</h2>
+          </div>
+        </div>
+        <div className="quick-actions">
+          <Link to="/trades">
+            <span>↗</span>
+            <strong>Explore Trades</strong>
+            <small>Browse public listings</small>
+          </Link>
+          <Link to="/shelf">
+            <span>⌁</span>
+            <strong>Manage Shelf</strong>
+            <small>List your champions</small>
+          </Link>
+          <Link to="/received-trades">
+            <span>↓</span>
+            <strong>Review Offers</strong>
+            <small>See direct proposals</small>
+          </Link>
         </div>
       </section>
 
       {recentTrades.length > 0 && (
         <section className="dashboard-card">
-          <h2>📜 Recent Trades</h2>
+          <h2>Recent trade activity</h2>
           {recentTrades.map((trade) => {
             const rc = trade.requested_champion || {};
             const statusLabel =
@@ -89,19 +118,21 @@ function Dashboard() {
                 ? "✅ Completed"
                 : "❌ Cancelled";
             return (
-              <p key={trade.id}>
-                Trade #{trade.trade_code || trade.id.slice(0, 8)} —{" "}
-                {trade.offered_champions?.length || 0} offered for{" "}
-                <strong>{rc.name || "Unknown"}</strong> — {statusLabel}
-              </p>
+              <div className="activity-row" key={trade.id}>
+                <span className="activity-status">{statusLabel}</span>
+                <p>
+                  <strong>{trade.trade_code ? `#${trade.trade_code}` : "Trade code pending"}</strong>
+                  {" · "}{trade.offered_champions?.length || 0} offered for {rc.name || "Unknown"}
+                </p>
+              </div>
             );
           })}
         </section>
       )}
 
       <section className="dashboard-card announcement">
-        <h2>📢 Announcements</h2>
-        <p>Welcome to Lumio Hub! Trading services are being prepared.</p>
+        <h2>Notifications</h2>
+        <p>You are all caught up. Trade requests, listing activity, and completion reminders will show here.</p>
       </section>
     </Layout>
   );

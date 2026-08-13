@@ -1,11 +1,14 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import getRank from "../utils/rankCalculator";
 import getXPProgress from "../utils/xpProgress";
 import useAuth from "../context/useAuth";
+import { supabase } from "../lib/supabase";
 
 function Profile() {
   const { user, profile } = useAuth();
+  const [completedTradeCount, setCompletedTradeCount] = useState(0);
 
   // Use profile data from the DB (not the hardcoded 0)
   const totalXP = profile?.xp ?? 0;
@@ -24,6 +27,22 @@ function Profile() {
     "username";
 
   const avatar = profile?.discord_avatar || user?.user_metadata?.avatar_url;
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const participantFilter = `sender_id.eq.${user.id},recipient_id.eq.${user.id}`;
+    supabase
+      .from("trades")
+      .select("id")
+      .or(participantFilter)
+      .eq("status", "completed")
+      .then(({ data, error }) => {
+        if (!error) setCompletedTradeCount(data?.length || 0);
+      });
+
+    return undefined;
+  }, [user]);
 
   return (
     <Layout>
@@ -69,7 +88,7 @@ function Profile() {
         <div className="dashboard-card">
           <h2>🤝 Completed Trades</h2>
 
-          <p className="big-number">{profile?.trades_completed ?? 0}</p>
+          <p className="big-number">{completedTradeCount}</p>
         </div>
 
         <div className="dashboard-card">

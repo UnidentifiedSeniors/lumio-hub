@@ -20,7 +20,7 @@ function tradeRequestedChampions(trade) {
 }
 
 function ReceivedTrades() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [trades, setTrades] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
@@ -77,13 +77,13 @@ function ReceivedTrades() {
       .update({ status })
       .eq("id", tradeId)
       .eq("status", expectedStatus)
-      .select("id");
+      .select("id, status, accepted_at, completed_at, updated_at, xp_awarded");
 
     if (updateError || !data?.length) {
       setError(updateError?.message || "This offer changed before it could be updated. Refresh and try again.");
     } else {
-      const timestampField = status === "accepted" ? "accepted_at" : status === "completed" ? "completed_at" : null;
-      setTrades((current) => current.map((trade) => trade.id === tradeId ? { ...trade, status, ...(timestampField ? { [timestampField]: new Date().toISOString() } : {}) } : trade));
+      setTrades((current) => current.map((trade) => trade.id === tradeId ? { ...trade, ...data[0] } : trade));
+      if (status === "completed") await refreshProfile();
     }
     setRespondingId(null);
   };
@@ -144,7 +144,7 @@ function ReceivedTrades() {
                     <button className="primary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "completed")} type="button">{respondingId === trade.id ? "Updating…" : "Mark exchange completed"}</button>
                   </section>
                 )}
-                {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at)}</p>}
+                {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}
               </article>
             );
           })}

@@ -163,7 +163,7 @@ function PendingTrades() {
                 </section>
               )}
 
-              {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDate(trade.completed_at || trade.updated_at)}</p>}
+              {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDate(trade.completed_at || trade.updated_at)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}
 
               {trade.status === "pending" && (
                 <button

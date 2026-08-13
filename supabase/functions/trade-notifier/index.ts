@@ -100,6 +100,13 @@ serve(async (req) => {
 
     const requestedRarityValue = RARITY_COLOR[requestedRarity] || 0x3498db;
     const embedColor = requestedRarityValue;
+    const progressionField = trade.status === "completed" && trade.xp_awarded
+      ? [{
+        name: "⭐ Progression",
+        value: `Both traders earned **${trade.xp_awarded} XP**.`,
+        inline: false,
+      }]
+      : [];
 
     const tradeCode = trade.trade_code
       ? "#" + trade.trade_code
@@ -126,6 +133,7 @@ serve(async (req) => {
                                 value: trade.status || "Pending",
                 inline: true,
               },
+              ...progressionField,
             ],
             timestamp: trade.created_at || new Date().toISOString(),
           },
@@ -194,6 +202,7 @@ serve(async (req) => {
                 value: STATUS_EMOJI[trade.status || "pending"] || trade.status,
                 inline: true,
               },
+              ...progressionField,
             ],
             timestamp: trade.created_at || new Date().toISOString(),
           },

@@ -42,6 +42,24 @@ export function AuthProvider({ children }) {
     setProfile(userProfile);
   }
 
+  async function refreshProfile() {
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      setAuthError(error.message);
+      return null;
+    }
+
+    setProfile(data);
+    return data;
+  }
+
   useEffect(() => {
     const setupAuth = async () => {
       const {
@@ -81,6 +99,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         logout,
+        refreshProfile,
         authError,
         isSigningIn,
       }}

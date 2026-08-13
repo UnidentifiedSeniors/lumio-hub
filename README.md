@@ -41,3 +41,7 @@ Before enabling the Database Webhook, create a Discord bot, invite it to the Lum
 In **Database → Webhooks**, create an `UPDATE` webhook for `public.profiles`, choose the `discord-rank-sync` Edge Function, and use **Add auth header with service key**. The function ignores profile updates where the rank has not changed. Members can also use **Settings → Sync my Discord rank** after the server configuration is complete.
 
 The function only adds/removes role IDs listed in `DISCORD_RANK_ROLE_IDS`; it does not touch any other server roles.
+
+## Roblox profile link
+
+The Settings page validates a public Roblox username through Roblox's user lookup API and stores its stable Roblox user ID plus canonical username in `profiles`. It never requests Roblox credentials and is not ownership verification; use Roblox OAuth later if Lumio needs proof that a member controls the linked account.

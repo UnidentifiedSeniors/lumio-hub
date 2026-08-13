@@ -5,9 +5,12 @@ import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 
 function Settings() {
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [syncingRank, setSyncingRank] = useState(false);
   const [rankSyncMessage, setRankSyncMessage] = useState(null);
+  const [robloxUsername, setRobloxUsername] = useState("");
+  const [linkingRoblox, setLinkingRoblox] = useState(false);
+  const [robloxMessage, setRobloxMessage] = useState(null);
 
   const syncDiscordRank = async () => {
     setSyncingRank(true);
@@ -29,6 +32,43 @@ function Settings() {
       });
     }
     setSyncingRank(false);
+  };
+
+  const linkRoblox = async (event) => {
+    event.preventDefault();
+    setLinkingRoblox(true);
+    setRobloxMessage(null);
+
+    const { data, error } = await supabase.functions.invoke("roblox-profile-link", {
+      body: { username: robloxUsername },
+    });
+
+    if (error || data?.error) {
+      setRobloxMessage({ type: "error", text: data?.error || error?.message || "Unable to link that Roblox account." });
+    } else {
+      setRobloxUsername("");
+      await refreshProfile();
+      setRobloxMessage({ type: "success", text: `@${data.roblox.username} is linked to your Lumio profile.` });
+    }
+    setLinkingRoblox(false);
+  };
+
+  const unlinkRoblox = async () => {
+    if (!window.confirm("Disconnect this Roblox account from Lumio?")) return;
+
+    setLinkingRoblox(true);
+    setRobloxMessage(null);
+    const { data, error } = await supabase.functions.invoke("roblox-profile-link", {
+      body: { action: "unlink" },
+    });
+
+    if (error || data?.error) {
+      setRobloxMessage({ type: "error", text: data?.error || error?.message || "Unable to disconnect Roblox right now." });
+    } else {
+      await refreshProfile();
+      setRobloxMessage({ type: "success", text: "Your Roblox account has been disconnected." });
+    }
+    setLinkingRoblox(false);
   };
 
   return (
@@ -56,11 +96,31 @@ function Settings() {
           </div>
           {rankSyncMessage && <p className={rankSyncMessage.type === "success" ? "inline-success" : "inline-error"} role={rankSyncMessage.type === "success" ? "status" : "alert"}>{rankSyncMessage.text}</p>}
         </article>
-        <article className="settings-card">
+        <article className="settings-card roblox-link-card">
           <span className="settings-card-label">Connections</span>
           <h2>Roblox</h2>
-          <p>Connect your Roblox identity to make accepted trade coordination clearer.</p>
-          <button className="secondary-action" type="button">Connect Roblox</button>
+          <p>Link the public Roblox username you use for Anime Fighting Simulator so accepted trades are easier to coordinate.</p>
+          <div className="roblox-connection-panel">
+            {profile?.roblox_username && <span className="connected-label">Linked · @{profile.roblox_username}</span>}
+            <form className="roblox-link-form" onSubmit={linkRoblox}>
+              <label className="sr-only" htmlFor="roblox-username">Roblox username</label>
+              <input
+                autoComplete="off"
+                disabled={linkingRoblox}
+                id="roblox-username"
+                maxLength="20"
+                onChange={(event) => setRobloxUsername(event.target.value)}
+                placeholder={profile?.roblox_username ? "Replace Roblox username" : "Roblox username"}
+                value={robloxUsername}
+              />
+              <div className="roblox-link-actions">
+                <button className="secondary-action" disabled={linkingRoblox || !robloxUsername.trim()} type="submit">{linkingRoblox ? "Looking up…" : profile?.roblox_username ? "Update link" : "Connect Roblox"}</button>
+                {profile?.roblox_username && <button className="text-action danger-action" disabled={linkingRoblox} onClick={() => void unlinkRoblox()} type="button">Disconnect</button>}
+              </div>
+            </form>
+            <small>We validate that the public account exists; Lumio never asks for Roblox credentials.</small>
+            {robloxMessage && <p className={robloxMessage.type === "success" ? "inline-success" : "inline-error"} role={robloxMessage.type === "success" ? "status" : "alert"}>{robloxMessage.text}</p>}
+          </div>
         </article>
         <article className="settings-card">
           <span className="settings-card-label">Trading</span>

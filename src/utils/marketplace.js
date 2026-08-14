@@ -31,3 +31,8 @@ export function formatDateTime(value) {
   if (!value) return "—";
   return new Date(value).toLocaleString();
 }
+
+export function getListingCode(listingId) {
+  const compactId = String(listingId || "").replaceAll("-", "").slice(0, 6).toUpperCase();
+  return compactId ? `L-${compactId}` : "L-PENDING";
+}

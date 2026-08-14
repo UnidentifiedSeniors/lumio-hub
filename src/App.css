@@ -2577,6 +2577,34 @@ a.trade-participant:hover {
   line-height: 1.4;
 }
 
+.trader-profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+  margin: 18px 0 0;
+}
+
+.trader-profile-stats article {
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 14px;
+  background: rgba(19, 22, 34, 0.66);
+  padding: 15px;
+}
+
+.trader-profile-stats span,
+.trader-profile-stats small {
+  color: #8e97af;
+  font-size: 0.67rem;
+}
+
+.trader-profile-stats strong {
+  color: #f0f2fb;
+  font-size: 1.15rem;
+  letter-spacing: -0.04em;
+}
+
 .profile-listings-heading {
   margin-top: 32px;
 }
@@ -3333,6 +3361,10 @@ hr {
     width: 100%;
     margin-left: 0;
     text-align: left;
+  }
+
+  .trader-profile-stats {
+    grid-template-columns: 1fr;
   }
 
   .profile-hero {

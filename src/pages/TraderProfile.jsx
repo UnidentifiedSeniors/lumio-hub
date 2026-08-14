@@ -2,16 +2,23 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import Layout from "../components/Layout";
+import ListingArtwork from "../components/ListingArtwork";
 import OfferComposer from "../components/OfferComposer";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
-import { formatDateTime, getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
+import { formatDateTime, getChampionTraits, getListingCode, getOwnedChampionValue } from "../utils/marketplace";
+
+function formatCount(value) {
+  if (value === null || value === undefined) return "—";
+  return Number(value).toLocaleString();
+}
 
 function TraderProfile() {
   const { traderId } = useParams();
   const { user } = useAuth();
   const [trader, setTrader] = useState(null);
   const [listings, setListings] = useState([]);
+  const [traderStats, setTraderStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [offerTarget, setOfferTarget] = useState(null);
@@ -22,7 +29,7 @@ function TraderProfile() {
     setLoading(true);
     setError(null);
 
-    const [profileResult, listingsResult] = await Promise.all([
+    const [profileResult, listingsResult, statsResult] = await Promise.all([
       supabase
         .from("public_profiles")
         .select("*")
@@ -33,6 +40,11 @@ function TraderProfile() {
         .select("*")
         .eq("owner_id", traderId)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("public_trader_stats")
+        .select("completed_trade_count, collection_count, active_listing_count")
+        .eq("id", traderId)
+        .maybeSingle(),
     ]);
 
     if (profileResult.error || listingsResult.error) {
@@ -40,6 +52,7 @@ function TraderProfile() {
     } else {
       setTrader(profileResult.data);
       setListings(listingsResult.data || []);
+      setTraderStats(statsResult.data || null);
     }
     setLoading(false);
   }, [traderId]);
@@ -98,12 +111,18 @@ function TraderProfile() {
           <p className="eyebrow">Licensed trader</p>
           <h1>{displayName}</h1>
           {trader.discord_display_name && <p className="trader-handle">Discord · {trader.discord_display_name}</p>}
-          <div className="trader-meta"><span>{trader.rank || "Rookie Trader"}</span><span>Joined {formatDateTime(trader.created_at)}</span></div>
+          <div className="trader-meta"><span>{trader.rank || "Rookie Trader"}</span><span>{formatCount(trader.xp)} XP</span><span>Joined {formatDateTime(trader.created_at)}</span></div>
         </div>
         <div className="trader-hero-action">
           {isOwnProfile ? <Link className="secondary-action" to="/profile">Edit my profile</Link> : <button className="primary-action" onClick={openDirectOffer} type="button">Send trade offer</button>}
           <span>Private offers go directly to this trader.</span>
         </div>
+      </section>
+
+      <section className="trader-profile-stats" aria-label={`${displayName}'s public trading summary`}>
+        <article><span>Completed trades</span><strong>{formatCount(traderStats?.completed_trade_count)}</strong><small>Confirmed in-game exchanges</small></article>
+        <article><span>Collection</span><strong>{formatCount(traderStats?.collection_count)}</strong><small>Private champion copies</small></article>
+        <article><span>Active listings</span><strong>{formatCount(traderStats?.active_listing_count ?? listings.length)}</strong><small>Available on Shelf</small></article>
       </section>
 
       <section className="page-heading profile-listings-heading">
@@ -128,6 +147,8 @@ function TraderProfile() {
             return (
               <article className="marketplace-card" key={listing.id}>
                 <div className="card-topline"><span className={`rarity-badge rarity-${listing.rarity.toLowerCase().replaceAll(" ", "-")}`}>{listing.rarity}</span><span className="listing-status listing-active">Live on Shelf</span></div>
+                <span className="listing-code">Listing {getListingCode(listing.id)}</span>
+                <ListingArtwork imageUrl={listing.image_url} name={listing.name} rarity={listing.rarity} />
                 <h2>{listing.name}</h2>
                 <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
                 <p className="market-value">◈ {getOwnedChampionValue(listing).toLocaleString()}</p>

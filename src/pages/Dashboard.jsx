@@ -8,6 +8,17 @@ import { supabase } from "../lib/supabase";
 import getRank from "../utils/rankCalculator";
 import getXPProgress from "../utils/xpProgress";
 
+function DashboardIcon({ name }) {
+  const paths = {
+    license: <><path d="M12 3 19 6v5c0 4.6-2.9 8.1-7 10-4.1-1.9-7-5.4-7-10V6z" /><path d="m9 12 2 2 4-4" /></>,
+    market: <><path d="M5 8h13" /><path d="m14 4 4 4-4 4" /><path d="M19 16H6" /><path d="m10 12-4 4 4 4" /></>,
+    shelf: <><path d="M4 5h16v5H4z" /><path d="M4 14h16v5H4z" /><path d="M8 5v5" /><path d="M16 14v5" /></>,
+    inbox: <><path d="M4 5h16v14H4z" /><path d="m5 7 7 5 7-5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></>,
+  };
+
+  return <svg aria-hidden="true" className="dashboard-icon" viewBox="0 0 24 24">{paths[name]}</svg>;
+}
+
 function Dashboard() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -96,7 +107,7 @@ function Dashboard() {
         <p>Keep your marketplace listings, direct offers, and trading progress in one clear place.</p>
 
         <div className="license-status">
-          <span>🪪 Trading License</span>
+          <span className="license-status-label"><DashboardIcon name="license" />Trading License</span>
           <strong>Active</strong>
         </div>
       </section>
@@ -139,17 +150,17 @@ function Dashboard() {
         </div>
         <div className="quick-actions">
           <Link to="/trades">
-            <span>↗</span>
+            <span className="quick-action-icon"><DashboardIcon name="market" /></span>
             <strong>Explore Market</strong>
             <small>Browse public listings</small>
           </Link>
           <Link to="/shelf">
-            <span>⌁</span>
+            <span className="quick-action-icon"><DashboardIcon name="shelf" /></span>
             <strong>Manage Shelf</strong>
             <small>List your champions</small>
           </Link>
           <Link to="/received-trades">
-            <span>↓</span>
+            <span className="quick-action-icon"><DashboardIcon name="inbox" /></span>
             <strong>Review Offers</strong>
             <small>See direct proposals</small>
           </Link>
@@ -162,16 +173,16 @@ function Dashboard() {
           {recentTrades.map((trade) => {
             const rc = trade.requested_champion || { name: "an open direct offer" };
             const statusLabels = {
-              pending: "🟡 Pending",
-              accepted: "🔵 Accepted",
-              completed: "✅ Completed",
-              declined: "⚪ Declined",
-              cancelled: "❌ Cancelled",
+              pending: "Pending",
+              accepted: "Accepted",
+              completed: "Completed",
+              declined: "Declined",
+              cancelled: "Cancelled",
             };
             const statusLabel = statusLabels[trade.status] || trade.status;
             return (
               <div className="activity-row" key={trade.id}>
-                <span className="activity-status">{statusLabel}</span>
+                <span className={`activity-status activity-status-${trade.status || "pending"}`}>{statusLabel}</span>
                 <p>
                   <strong>{trade.trade_code ? `#${trade.trade_code}` : "Trade code pending"}</strong>
                   {" · "}{trade.offered_champions?.length || 0} offered for {rc.name || "an open direct offer"}

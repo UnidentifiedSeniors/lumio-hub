@@ -1077,6 +1077,22 @@ kbd {
   color: #5ce0ad;
 }
 
+.license-status-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dashboard-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1193,7 +1209,7 @@ kbd {
   transform: translateY(-2px);
 }
 
-.quick-actions span {
+.quick-actions > a > .quick-action-icon {
   display: grid;
   width: 27px;
   height: 27px;
@@ -1202,7 +1218,11 @@ kbd {
   border-radius: 8px;
   background: rgba(119, 122, 244, 0.14);
   color: #b5b8ff;
-  font-size: 1rem;
+}
+
+.quick-action-icon .dashboard-icon {
+  width: 15px;
+  height: 15px;
 }
 
 .quick-actions strong,
@@ -1236,9 +1256,49 @@ kbd {
 }
 
 .activity-status {
-  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-width: 82px;
+  gap: 6px;
   color: #aeb4c8;
   font-size: 0.71rem;
+  font-weight: 680;
+}
+
+.activity-status::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8b93a8;
+  content: "";
+}
+
+.activity-status-pending {
+  color: #f8cb6e;
+}
+
+.activity-status-pending::before {
+  background: #f8cb6e;
+}
+
+.activity-status-accepted,
+.activity-status-completed {
+  color: #67dfb0;
+}
+
+.activity-status-accepted::before,
+.activity-status-completed::before {
+  background: #67dfb0;
+}
+
+.activity-status-cancelled,
+.activity-status-declined {
+  color: #f58e97;
+}
+
+.activity-status-cancelled::before,
+.activity-status-declined::before {
+  background: #f58e97;
 }
 
 /* Page cards, offers, and empty states */

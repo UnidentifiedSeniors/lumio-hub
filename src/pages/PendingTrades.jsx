@@ -11,6 +11,7 @@ import useAuth from "../context/useAuth";
 import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
 import { getDatePreferences } from "../utils/datePreferences";
 import { formatDateTime } from "../utils/marketplace";
+import { filterTradeActivity, TRADE_OUTCOME_FILTERS } from "../utils/tradeActivityVisibility";
 import { hasTwoPartyConfirmation } from "../utils/tradeCompletion";
 
 const STATUS_LABELS = {
@@ -34,7 +35,10 @@ function PendingTrades() {
   const [error, setError] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
   const cancelledPreferenceKey = user?.id ? `lumio-sent-trades-hide-cancelled:${user.id}` : "";
+  const completedPreferenceKey = user?.id ? `lumio-sent-trades-hide-completed:${user.id}` : "";
   const [hideCancelled, setHideCancelled] = useState(() => readBooleanPreference(cancelledPreferenceKey));
+  const [hideCompleted, setHideCompleted] = useState(() => readBooleanPreference(completedPreferenceKey));
+  const [outcomeFilter, setOutcomeFilter] = useState("all");
 
   useEffect(() => {
     if (!user) return undefined;
@@ -120,7 +124,8 @@ function PendingTrades() {
     setConfirmingId(null);
   };
 
-  const visibleTrades = hideCancelled ? trades.filter((trade) => trade.status !== "cancelled") : trades;
+  const visibleTrades = filterTradeActivity(trades, outcomeFilter, { hideCancelled, hideCompleted });
+  const completedTradeCount = trades.filter((trade) => trade.status === "completed").length;
   const cancelledTradeCount = trades.filter((trade) => trade.status === "cancelled").length;
 
   const toggleCancelledVisibility = () => {
@@ -128,6 +133,14 @@ function PendingTrades() {
     setHideCancelled(next);
     saveBooleanPreference(cancelledPreferenceKey, next);
   };
+
+  const toggleCompletedVisibility = () => {
+    const next = !hideCompleted;
+    setHideCompleted(next);
+    saveBooleanPreference(completedPreferenceKey, next);
+  };
+
+  const hiddenOutcomes = [hideCompleted && "completed", hideCancelled && "cancelled"].filter(Boolean);
 
   return (
     <Layout>
@@ -137,10 +150,27 @@ function PendingTrades() {
         <p>Track the offers you have sent directly to other traders.</p>
       </section>
 
-      {cancelledTradeCount > 0 && (
+      {(completedTradeCount > 0 || cancelledTradeCount > 0) && (
+        <section className="activity-filter-toolbar history-toolbar" aria-label="Sent trade filters">
+          <div>
+            <p className="eyebrow">Trade activity</p>
+            <h2>{visibleTrades.length} {visibleTrades.length === 1 ? "offer" : "offers"}</h2>
+          </div>
+          <div className="history-filters" role="group" aria-label="Filter sent trades by outcome">
+            {TRADE_OUTCOME_FILTERS.map((option) => (
+              <button aria-pressed={outcomeFilter === option.key} className={outcomeFilter === option.key ? "active" : ""} key={option.key} onClick={() => setOutcomeFilter(option.key)} type="button">{option.label}</button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(completedTradeCount > 0 || cancelledTradeCount > 0) && (
         <section className="activity-visibility-bar">
-          <span>{hideCancelled ? `${cancelledTradeCount} cancelled offer${cancelledTradeCount === 1 ? " is" : "s are"} hidden on this device.` : "Keep completed activity tidy without deleting your trade history."}</span>
-          <button aria-pressed={hideCancelled} className="activity-visibility-control" onClick={toggleCancelledVisibility} type="button">{hideCancelled ? "Show cancelled offers" : "Hide cancelled offers"}</button>
+          <span>{hiddenOutcomes.length ? `${hiddenOutcomes.join(" and ")} trades are hidden from your default view. Outcome filters still let you review them.` : "Hide completed or cancelled activity from your default view without deleting its record."}</span>
+          <div className="activity-visibility-actions">
+            {completedTradeCount > 0 && <button aria-pressed={hideCompleted} className="activity-visibility-control" onClick={toggleCompletedVisibility} type="button">{hideCompleted ? "Show completed" : "Hide completed"}</button>}
+            {cancelledTradeCount > 0 && <button aria-pressed={hideCancelled} className="activity-visibility-control" onClick={toggleCancelledVisibility} type="button">{hideCancelled ? "Show cancelled" : "Hide cancelled"}</button>}
+          </div>
         </section>
       )}
 
@@ -151,9 +181,9 @@ function PendingTrades() {
       ) : visibleTrades.length === 0 ? (
         <section className="empty-state">
           <span className="empty-state-icon">↑</span>
-          <h2>{trades.length && hideCancelled ? "Cancelled offers are hidden" : "No sent trades yet"}</h2>
-          <p>{trades.length && hideCancelled ? "Show cancelled offers whenever you need to review them." : "Your direct offers and their current status will appear here."}</p>
-          {trades.length && hideCancelled && <button className="secondary-action" onClick={toggleCancelledVisibility} type="button">Show cancelled offers</button>}
+          <h2>{trades.length ? "No offers match this view" : "No sent trades yet"}</h2>
+          <p>{trades.length ? "Use a different outcome filter, or show hidden activity from the controls above." : "Your direct offers and their current status will appear here."}</p>
+          {trades.length && outcomeFilter !== "all" && <button className="secondary-action" onClick={() => setOutcomeFilter("all")} type="button">Return to default view</button>}
         </section>
       ) : (
         <section className="trade-list">

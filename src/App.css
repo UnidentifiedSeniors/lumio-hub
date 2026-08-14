@@ -2527,6 +2527,14 @@ a.trade-participant:hover {
   color: #fff;
 }
 
+.activity-visibility-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
 .collection-grid,
 .shelf-grid,
 .marketplace-grid {

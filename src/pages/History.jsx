@@ -98,7 +98,11 @@ function History() {
   }, [user]);
 
   const visibleTrades = useMemo(() => (
-    filter === "all" ? trades : trades.filter((trade) => trade.status === filter)
+    filter === "all"
+      ? trades
+      : filter === "completed_cancelled"
+        ? trades.filter((trade) => ["completed", "cancelled"].includes(trade.status))
+        : trades.filter((trade) => trade.status === filter)
   ), [filter, trades]);
 
   const completedCount = trades.filter((trade) => trade.status === "completed").length;
@@ -127,7 +131,7 @@ function History() {
           <h2>{visibleTrades.length} {visibleTrades.length === 1 ? "record" : "records"}</h2>
         </div>
         <div className="history-filters" role="group" aria-label="Filter trade history">
-          {[{ key: "all", label: "All" }, { key: "completed", label: "Completed" }, { key: "declined", label: "Declined" }, { key: "cancelled", label: "Withdrawn" }].map((option) => (
+          {[{ key: "all", label: "All" }, { key: "completed", label: "Completed" }, { key: "cancelled", label: "Withdrawn" }, { key: "completed_cancelled", label: "Completed + withdrawn" }, { key: "declined", label: "Declined" }].map((option) => (
             <button aria-pressed={filter === option.key} className={filter === option.key ? "active" : ""} key={option.key} onClick={() => setFilter(option.key)} type="button">{option.label}</button>
           ))}
         </div>

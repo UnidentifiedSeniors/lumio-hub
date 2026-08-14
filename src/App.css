@@ -1697,6 +1697,191 @@ a.trade-participant:hover {
   margin-top: 16px;
 }
 
+.listing-card-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.listing-card-actions .primary-action {
+  width: 100%;
+}
+
+.listing-menu-wrap {
+  position: relative;
+}
+
+.listing-menu-trigger {
+  display: grid;
+  width: 42px;
+  height: 100%;
+  min-height: 40px;
+  place-items: center;
+  border: 1px solid rgba(171, 174, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+  color: #c6caff;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.listing-menu-trigger:hover,
+.listing-menu-trigger[aria-expanded="true"] {
+  border-color: rgba(152, 156, 255, 0.58);
+  background: rgba(113, 116, 241, 0.14);
+  color: #fff;
+}
+
+.listing-action-menu {
+  position: absolute;
+  z-index: 12;
+  right: 0;
+  bottom: calc(100% + 8px);
+  display: grid;
+  width: 188px;
+  overflow: hidden;
+  border: 1px solid rgba(164, 168, 255, 0.23);
+  border-radius: 12px;
+  background: #202439;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+  padding: 5px;
+}
+
+.listing-action-menu button,
+.listing-action-menu a {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #d5d9ed;
+  cursor: pointer;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 620;
+  text-align: left;
+  text-decoration: none;
+}
+
+.listing-action-menu button:hover,
+.listing-action-menu a:hover,
+.listing-action-menu button:focus-visible,
+.listing-action-menu a:focus-visible {
+  outline: none;
+  background: rgba(127, 130, 244, 0.14);
+  color: #fff;
+}
+
+.listing-action-menu button:nth-child(3):hover,
+.listing-action-menu button:nth-child(3):focus-visible {
+  background: rgba(245, 111, 121, 0.12);
+  color: #ffb0b8;
+}
+
+.market-filter-control {
+  border: 0;
+  background: transparent;
+  color: #afb4ff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 0;
+}
+
+.market-filter-control:hover {
+  color: #fff;
+}
+
+.shared-listing {
+  border-color: rgba(130, 219, 204, 0.48);
+  box-shadow: 0 0 0 4px rgba(79, 213, 190, 0.1), 0 18px 42px rgba(0, 0, 0, 0.12);
+}
+
+.market-safety-modal {
+  width: min(100%, 520px);
+}
+
+.market-safety-modal .modal-buttons {
+  flex-wrap: wrap;
+}
+
+.market-safety-modal .modal-buttons .primary-action,
+.market-safety-modal .modal-buttons .secondary-action,
+.market-safety-modal .modal-buttons .danger-action {
+  text-decoration: none;
+}
+
+.danger-action {
+  border: 1px solid rgba(244, 108, 118, 0.25);
+  border-radius: 10px;
+  background: rgba(244, 108, 118, 0.1);
+  color: #ffb1b8;
+  cursor: pointer;
+  padding: 10px 13px;
+  font: inherit;
+  font-size: 0.77rem;
+  font-weight: 700;
+}
+
+.danger-action:hover {
+  border-color: rgba(244, 108, 118, 0.48);
+  background: rgba(244, 108, 118, 0.16);
+  color: #fff;
+}
+
+.market-filter-list {
+  display: grid;
+  gap: 13px;
+  margin-top: 17px;
+}
+
+.market-filter-list > div {
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 11px;
+  background: rgba(5, 7, 13, 0.3);
+  padding: 12px;
+}
+
+.market-filter-list h3 {
+  margin: 0 0 8px;
+  color: #dfe3f5;
+  font-size: 0.78rem;
+}
+
+.market-filter-list p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 7px 0 0;
+  color: #9fa7bf;
+  font-size: 0.74rem;
+}
+
+.market-filter-list button {
+  border: 0;
+  background: transparent;
+  color: #afb4ff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.market-filter-list button:hover {
+  color: #fff;
+}
+
+.market-filter-list small {
+  color: #7f879f;
+  font-size: 0.72rem;
+}
+
 .listing-note,
 .modal-copy {
   color: #959db5;

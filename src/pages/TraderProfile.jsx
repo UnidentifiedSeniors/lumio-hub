@@ -83,6 +83,7 @@ function TraderProfile() {
 
   const displayName = trader.lumio_display_name || trader.discord_display_name || trader.discord_username || "Licensed trader";
   const isOwnProfile = user?.id === trader.id;
+  const directOffersEnabled = trader.direct_offers_enabled !== false;
   const openDirectOffer = () => {
     setSuccessMessage(null);
     setOfferTarget({
@@ -114,8 +115,8 @@ function TraderProfile() {
           <div className="trader-meta"><span>{trader.rank || "Rookie Trader"}</span><span>{formatCount(trader.xp)} XP</span><span>Joined {formatDateTime(trader.created_at)}</span></div>
         </div>
         <div className="trader-hero-action">
-          {isOwnProfile ? <Link className="secondary-action" to="/profile">Edit my profile</Link> : <button className="primary-action" onClick={openDirectOffer} type="button">Send trade offer</button>}
-          <span>Private offers go directly to this trader.</span>
+          {isOwnProfile ? <Link className="secondary-action" to="/profile">Edit my profile</Link> : directOffersEnabled ? <button className="primary-action" onClick={openDirectOffer} type="button">Send trade offer</button> : <button className="secondary-action" disabled type="button">Direct offers paused</button>}
+          <span>{isOwnProfile ? "Manage your public trading availability in Settings." : directOffersEnabled ? "Private offers go directly to this trader." : "This trader is not accepting profile-based offers right now."}</span>
         </div>
       </section>
 
@@ -137,8 +138,8 @@ function TraderProfile() {
         <section className="empty-state">
           <span className="empty-state-icon">⌁</span>
           <h2>No public listings yet</h2>
-          <p>{isOwnProfile ? "Add a champion to your Shelf when you are ready to receive marketplace offers." : "You can still send this trader an open direct offer from their profile."}</p>
-          {!isOwnProfile && <button className="secondary-action" onClick={openDirectOffer} type="button">Send direct offer</button>}
+          <p>{isOwnProfile ? "Add a champion to your Shelf when you are ready to receive marketplace offers." : directOffersEnabled ? "You can still send this trader an open direct offer from their profile." : "This trader has paused profile-based offers and does not have any public Shelf listings right now."}</p>
+          {!isOwnProfile && directOffersEnabled && <button className="secondary-action" onClick={openDirectOffer} type="button">Send direct offer</button>}
         </section>
       ) : (
         <section className="marketplace-grid">

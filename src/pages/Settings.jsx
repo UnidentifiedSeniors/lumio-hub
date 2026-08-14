@@ -30,8 +30,12 @@ function Settings() {
   const [notificationPreferences, setNotificationPreferences] = useState({ new_offers: true, trade_updates: true });
   const [savingNotificationPreferences, setSavingNotificationPreferences] = useState(false);
   const [notificationPreferenceMessage, setNotificationPreferenceMessage] = useState(null);
+  const [savingDirectOffers, setSavingDirectOffers] = useState(false);
+  const [directOfferMessage, setDirectOfferMessage] = useState(null);
   const displayNameFeatureEnabled = Object.hasOwn(profile || {}, "lumio_display_name");
   const notificationPreferencesFeatureEnabled = Object.hasOwn(profile || {}, "notification_preferences");
+  const directOfferPreferenceFeatureEnabled = Object.hasOwn(profile || {}, "direct_offers_enabled");
+  const directOffersEnabled = profile?.direct_offers_enabled !== false;
 
   useEffect(() => {
     setLumioDisplayName(profile?.lumio_display_name || profile?.discord_display_name || profile?.discord_username || "");
@@ -121,6 +125,32 @@ function Settings() {
     setSavingNotificationPreferences(false);
   };
 
+  const toggleDirectOffers = async () => {
+    if (!user || savingDirectOffers) return;
+
+    const nextEnabled = !directOffersEnabled;
+    setSavingDirectOffers(true);
+    setDirectOfferMessage(null);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ direct_offers_enabled: nextEnabled })
+      .eq("id", user.id);
+
+    if (error) {
+      setDirectOfferMessage({ type: "error", text: error.message || "Unable to update direct-offer availability." });
+    } else {
+      await refreshProfile();
+      setDirectOfferMessage({
+        type: "success",
+        text: nextEnabled
+          ? "Direct offers are available from your public profile."
+          : "Direct offers are paused. Your active Shelf listings remain available.",
+      });
+    }
+    setSavingDirectOffers(false);
+  };
+
   return (
     <Layout>
       <section className="page-heading">
@@ -188,6 +218,22 @@ function Settings() {
             </div>
           ) : (
             <small>Available as soon as the account settings update is applied.</small>
+          )}
+        </article>
+        <article className="settings-card direct-offer-preferences-card">
+          <span className="settings-card-label">Trading availability</span>
+          <h2>Direct offers</h2>
+          <p>Control whether licensed traders can send an open offer from your public profile. Your active Shelf listings stay offerable either way.</p>
+          {directOfferPreferenceFeatureEnabled ? (
+            <div className="notification-preference-list">
+              <button aria-pressed={directOffersEnabled} className="notification-preference" disabled={savingDirectOffers} onClick={() => void toggleDirectOffers()} type="button">
+                <span><strong>Accept direct offers</strong><small>{directOffersEnabled ? "Traders can start an open offer from your profile." : "Profile-based offers are paused until you turn this back on."}</small></span>
+                <span className={`preference-switch${directOffersEnabled ? " is-on" : ""}`} aria-hidden="true"><i /></span>
+              </button>
+              {directOfferMessage && <p className={directOfferMessage.type === "success" ? "inline-success" : "inline-error"} role={directOfferMessage.type === "success" ? "status" : "alert"}>{directOfferMessage.text}</p>}
+            </div>
+          ) : (
+            <small>Available as soon as the trading availability update is applied.</small>
           )}
         </article>
       </section>

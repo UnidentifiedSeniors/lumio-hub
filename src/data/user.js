@@ -4,7 +4,6 @@ const user = {
 
   discord: "Joseph#0000",
 
-  roblox: "Not Linked",
 
 
   totalXP: 0,

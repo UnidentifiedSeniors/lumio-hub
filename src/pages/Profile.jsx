@@ -14,7 +14,6 @@ function ProfileIcon({ name }) {
     trades: <><path d="M7 7h10" /><path d="m13 3 4 4-4 4" /><path d="M17 17H7" /><path d="m11 21-4-4 4-4" /></>,
     collection: <><rect x="4" y="5" width="16" height="14" rx="2" /><path d="M8 5V3h8v2" /><path d="M8 10h8" /><path d="M8 14h5" /></>,
     discord: <><path d="M8 7.5a15 15 0 0 1 8 0l1.5 8.5-3.1 1.9-1.4-1.1h-2l-1.4 1.1L6.5 16z" /><path d="M9.5 12h.01" /><path d="M14.5 12h.01" /></>,
-    roblox: <><path d="M7 3h10l4 4v10l-4 4H7l-4-4V7z" /><path d="m9 9 6 6" /><path d="m15 9-6 6" /></>,
     badge: <><circle cx="12" cy="10" r="6" /><path d="m8.5 15.1-1 5 4.5-2.4 4.5 2.4-1-5" /></>,
   };
 
@@ -82,7 +81,6 @@ function Profile() {
           <p className="profile-handle">Discord · {discordDisplayName}</p>
           <div className="profile-meta">
             <span>{rank.title}</span>
-            <span>{profile?.roblox_username ? `Roblox: ${profile.roblox_username}` : "Roblox not linked"}</span>
             {profile?.created_at && <span>Member since {new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" }).format(new Date(profile.created_at))}</span>}
           </div>
         </div>
@@ -119,11 +117,6 @@ function Profile() {
             <span className="connection-icon"><ProfileIcon name="discord" /></span>
             <div><strong>Discord</strong><span>{discordDisplayName}</span></div>
             <span className="connected-label">Connected</span>
-          </div>
-          <div className="account-connection-row">
-            <span className="connection-icon"><ProfileIcon name="roblox" /></span>
-            <div><strong>Roblox</strong><span>{profile?.roblox_username ? `@${profile.roblox_username}` : "Not linked yet"}</span></div>
-            {profile?.roblox_username ? <span className="connected-label">Public link</span> : <Link className="row-link" to="/settings">Connect</Link>}
           </div>
         </article>
 

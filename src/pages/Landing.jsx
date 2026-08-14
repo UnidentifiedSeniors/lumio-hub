@@ -61,7 +61,7 @@ function Landing() {
               <div className="landing-login"><LoginButton /></div>
               {discordInviteUrl && <a className="landing-discord-button" href={discordInviteUrl} target="_blank" rel="noreferrer">Join the community <span aria-hidden="true">↗</span></a>}
             </div>
-            <p className="landing-assurance">Discord-secured access · Public Roblox identity links are optional</p>
+            <p className="landing-assurance">Discord-secured access · Private offers stay between traders</p>
           </div>
 
           <aside className="landing-community-card">

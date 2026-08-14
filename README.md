@@ -46,6 +46,6 @@ The function only adds/removes role IDs listed in `DISCORD_RANK_ROLE_IDS`; it do
 
 The signed-out landing page reads three public aggregate counts from the `public-community-stats` Edge Function: licensed traders (`profiles`), live listings (`shelf_listings` with `status = active`), and confirmed trades (`trades` with `status = completed`). The function returns only counts and is deliberately unauthenticated so visitors can see real activity without gaining access to member data.
 
-## Roblox profile link
+## Future Roblox account verification
 
-The Settings page offers an optional public coordination link. It validates a public Roblox username through Roblox's user lookup API and stores its stable Roblox user ID plus canonical username in `profiles`, so traders know where to meet once a trade is accepted. It never requests Roblox credentials and is not ownership verification. Discord OAuth remains Lumio's secure sign-in and licensing layer. Add Roblox OAuth only if Lumio eventually needs proof that a member controls the linked Roblox account.
+Lumio does not currently collect or display Roblox account identities. If verified Roblox identities become valuable as the community grows, use Roblox OAuth so a member authorizes Lumio directly through Roblox. Never substitute a public username lookup for account ownership verification.

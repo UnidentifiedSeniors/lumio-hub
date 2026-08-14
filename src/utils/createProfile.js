@@ -53,9 +53,6 @@ export default async function createProfile(user) {
     discord_display_name: identity.displayName,
     discord_avatar: identity.avatar,
 
-    roblox_id: null,
-    roblox_username: null,
-
     xp: 0,
     rank: "Rookie Trader",
   };

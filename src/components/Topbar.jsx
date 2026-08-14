@@ -5,6 +5,36 @@ import { supabase } from "../lib/supabase";
 import { getDiscordIdentity } from "../utils/discordIdentity";
 import NotificationList from "./NotificationList";
 
+const EMPTY_SEARCH_RESULTS = {
+  collection: [],
+  market: [],
+  traders: [],
+  trades: [],
+};
+
+function matchesSearch(item, fields, query) {
+  return fields.some((field) => String(item?.[field] || "").toLowerCase().includes(query));
+}
+
+function tradeMatchesSearch(trade, query) {
+  const championNames = [
+    ...(trade.requested_champions || []),
+    ...(trade.requested_champion ? [trade.requested_champion] : []),
+    ...(trade.offered_champions || []),
+  ].map((champion) => [champion?.name, champion?.rarity, champion?.trait, ...(champion?.traits || [])].filter(Boolean).join(" "));
+
+  return [trade.trade_code, trade.status, ...championNames]
+    .filter(Boolean)
+    .some((value) => String(value).toLowerCase().includes(query));
+}
+
+function requestedTradeLabel(trade) {
+  const requested = trade.requested_champions?.length
+    ? trade.requested_champions
+    : (trade.requested_champion ? [trade.requested_champion] : []);
+  return requested.map((champion) => champion.name).filter(Boolean).join(" · ") || "Open direct offer";
+}
+
 function SearchIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -29,8 +59,14 @@ function Topbar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+  const [searchResults, setSearchResults] = useState(EMPTY_SEARCH_RESULTS);
   const menuRef = useRef(null);
   const notificationsRef = useRef(null);
+  const searchRef = useRef(null);
+  const searchInputRef = useRef(null);
   const navigate = useNavigate();
   const discordIdentity = getDiscordIdentity(user);
 
@@ -47,10 +83,25 @@ function Topbar() {
     const closeMenu = (event) => {
       if (!menuRef.current?.contains(event.target)) setMenuOpen(false);
       if (!notificationsRef.current?.contains(event.target)) setNotificationsOpen(false);
+      if (!searchRef.current?.contains(event.target)) setSearchOpen(false);
     };
 
     document.addEventListener("mousedown", closeMenu);
     return () => document.removeEventListener("mousedown", closeMenu);
+  }, []);
+
+  useEffect(() => {
+    const handleShortcut = (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+        searchInputRef.current?.focus();
+      }
+      if (event.key === "Escape") setSearchOpen(false);
+    };
+
+    document.addEventListener("keydown", handleShortcut);
+    return () => document.removeEventListener("keydown", handleShortcut);
   }, []);
 
   const loadNotifications = useCallback(async () => {
@@ -80,10 +131,72 @@ function Topbar() {
     };
   }, [user, loadNotifications]);
 
+  useEffect(() => {
+    const query = search.trim().toLowerCase();
+    let active = true;
+
+    if (!user || query.length < 2) {
+      const resetTimer = window.setTimeout(() => {
+        if (!active) return;
+        setSearchResults(EMPTY_SEARCH_RESULTS);
+        setSearchLoading(false);
+        setSearchError(null);
+      }, 0);
+      return () => {
+        active = false;
+        window.clearTimeout(resetTimer);
+      };
+    }
+
+    const searchTimer = window.setTimeout(() => {
+      const loadSearchResults = async () => {
+        setSearchLoading(true);
+        setSearchError(null);
+
+        const [collectionResult, marketResult, traderResult, tradeResult] = await Promise.all([
+          supabase.from("user_champions").select("id, name, rarity, trait, updated_at").eq("owner_id", user.id).order("updated_at", { ascending: false }).limit(120),
+          supabase.from("marketplace_listings").select("id, owner_id, name, rarity, trait, lumio_display_name, discord_display_name, discord_username, created_at").order("created_at", { ascending: false }).limit(120),
+          supabase.from("public_profiles").select("id, lumio_display_name, discord_display_name, discord_username, rank, xp").order("xp", { ascending: false }).limit(120),
+          supabase.from("trades").select("id, trade_code, status, sender_id, recipient_id, requested_champion, requested_champions, offered_champions, updated_at").or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`).order("updated_at", { ascending: false }).limit(120),
+        ]);
+
+        if (!active) return;
+
+        const sourceError = [collectionResult, marketResult, traderResult, tradeResult].find((result) => result.error)?.error;
+        if (sourceError) setSearchError(sourceError.message || "Unable to search every Lumio area right now.");
+
+        setSearchResults({
+          collection: (collectionResult.data || []).filter((champion) => matchesSearch(champion, ["name", "rarity", "trait"], query)).slice(0, 3),
+          market: (marketResult.data || []).filter((listing) => listing.owner_id !== user.id && matchesSearch(listing, ["name", "rarity", "trait", "lumio_display_name", "discord_display_name", "discord_username"], query)).slice(0, 3),
+          traders: (traderResult.data || []).filter((trader) => trader.id !== user.id && matchesSearch(trader, ["lumio_display_name", "discord_display_name", "discord_username", "rank"], query)).slice(0, 3),
+          trades: (tradeResult.data || []).filter((trade) => tradeMatchesSearch(trade, query)).slice(0, 3),
+        });
+        setSearchLoading(false);
+      };
+
+      void loadSearchResults();
+    }, 180);
+
+    return () => {
+      active = false;
+      window.clearTimeout(searchTimer);
+    };
+  }, [search, user]);
+
   const submitSearch = (event) => {
     event.preventDefault();
     const query = search.trim();
+    if (query.length >= 2) {
+      setSearchOpen(true);
+      return;
+    }
     navigate(query ? `/collection?search=${encodeURIComponent(query)}` : "/collection");
+  };
+
+  const openSearchResult = (path) => {
+    setSearchOpen(false);
+    setSearch("");
+    navigate(path);
   };
 
   const handleSignOut = async () => {
@@ -127,20 +240,49 @@ function Topbar() {
   };
 
   const unreadCount = notifications.filter((notification) => !notification.read_at).length;
+  const hasSearchResults = Object.values(searchResults).some((results) => results.length > 0);
 
   return (
     <header className="topbar">
-      <form className="topbar-search" onSubmit={submitSearch}>
-        <SearchIcon />
-        <input
-          aria-label="Search Lumio Hub"
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search champions, traders, and trades"
-          type="search"
-          value={search}
-        />
-        <kbd>⌘ K</kbd>
-      </form>
+      <div className="topbar-search-wrap" ref={searchRef}>
+        <form className="topbar-search" onSubmit={submitSearch}>
+          <SearchIcon />
+          <input
+            aria-controls="global-search-results"
+            aria-expanded={searchOpen}
+            aria-label="Search Lumio Hub"
+            onChange={(event) => { setSearch(event.target.value); setSearchOpen(true); }}
+            onFocus={() => setSearchOpen(true)}
+            placeholder="Search champions, traders, and trades"
+            ref={searchInputRef}
+            type="search"
+            value={search}
+          />
+          <kbd>⌘ K</kbd>
+        </form>
+        {searchOpen && (
+          <section aria-label="Lumio search results" className="global-search-panel" id="global-search-results" role="dialog">
+            {search.trim().length < 2 ? (
+              <p className="global-search-empty">Type at least two characters to search your Collection, the Market, traders, and your trade activity.</p>
+            ) : searchLoading ? (
+              <p className="global-search-empty">Searching Lumio...</p>
+            ) : (
+              <>
+                {searchError && <p className="global-search-error" role="alert">{searchError}</p>}
+                {hasSearchResults ? (
+                  <div className="global-search-groups">
+                    {searchResults.collection.length > 0 && <section className="global-search-group"><p>Your Collection</p>{searchResults.collection.map((champion) => <button className="global-search-result" key={champion.id} onClick={() => openSearchResult(`/collection?search=${encodeURIComponent(champion.name)}`)} type="button"><span className="global-search-result-kind">Collection</span><span><strong>{champion.name}</strong><small>{champion.rarity} · {champion.trait || "Standard"}</small></span></button>)}</section>}
+                    {searchResults.market.length > 0 && <section className="global-search-group"><p>Live Market</p>{searchResults.market.map((listing) => <button className="global-search-result" key={listing.id} onClick={() => openSearchResult(`/trades?listing=${listing.id}`)} type="button"><span className="global-search-result-kind">Market</span><span><strong>{listing.name}</strong><small>{listing.rarity} · {listing.trait || "Standard"} · {listing.lumio_display_name || listing.discord_display_name || listing.discord_username || "Licensed trader"}</small></span></button>)}</section>}
+                    {searchResults.traders.length > 0 && <section className="global-search-group"><p>Traders</p>{searchResults.traders.map((trader) => { const name = trader.lumio_display_name || trader.discord_display_name || trader.discord_username || "Licensed trader"; return <button className="global-search-result" key={trader.id} onClick={() => openSearchResult(`/trader/${trader.id}`)} type="button"><span className="global-search-result-kind">Trader</span><span><strong>{name}</strong><small>{trader.rank || "Rookie Trader"} · {Number(trader.xp || 0).toLocaleString()} XP</small></span></button>; })}</section>}
+                    {searchResults.trades.length > 0 && <section className="global-search-group"><p>Your Trade Activity</p>{searchResults.trades.map((trade) => { const isSender = trade.sender_id === user?.id; const path = ["pending", "accepted"].includes(trade.status) ? (isSender ? "/sent-trades" : "/received-trades") : "/history"; return <button className="global-search-result" key={trade.id} onClick={() => openSearchResult(path)} type="button"><span className="global-search-result-kind">Trade</span><span><strong>{trade.trade_code ? `#${trade.trade_code}` : "Trade offer"} · {trade.status}</strong><small>{requestedTradeLabel(trade)}</small></span></button>; })}</section>}
+                  </div>
+                ) : <p className="global-search-empty">No Lumio results match “{search.trim()}”.</p>}
+                <div className="global-search-footer"><button onClick={() => openSearchResult(`/collection?search=${encodeURIComponent(search.trim())}`)} type="button">Open Collection search</button><span>Esc to close</span></div>
+              </>
+            )}
+          </section>
+        )}
+      </div>
 
       <div className="topbar-actions">
         <div className="notification-menu" ref={notificationsRef}>

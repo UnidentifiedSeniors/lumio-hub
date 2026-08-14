@@ -47,7 +47,10 @@ function Collection() {
   const selectedTraitData = traits.find((trait) => trait.name === selectedTrait);
 
   useEffect(() => {
-    setSearch(searchParams.get("search") || "");
+    const timer = window.setTimeout(() => {
+      setSearch(searchParams.get("search") || "");
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [searchParams]);
 
   const loadCollection = useCallback(async () => {

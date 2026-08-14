@@ -1,7 +1,4 @@
-export function hasTwoPartyConfirmation(trade) {
-  return Object.hasOwn(trade || {}, "sender_confirmed_at")
-    && Object.hasOwn(trade || {}, "recipient_confirmed_at");
-}
+import { hasTwoPartyConfirmation } from "../utils/tradeCompletion";
 
 function TradeCompletionConfirmation({ busy, counterpartName, currentUserId, onConfirm, trade }) {
   if (!hasTwoPartyConfirmation(trade)) return null;

@@ -66,9 +66,12 @@ function Trading() {
   const discordInviteUrl = import.meta.env.VITE_DISCORD_INVITE_URL?.trim();
 
   useEffect(() => {
-    if (!user?.id) return;
-    setHiddenListingIds(getSavedIds(hiddenListingsKey(user.id)));
-    setBlockedTraderIds(getSavedIds(blockedTradersKey(user.id)));
+    if (!user?.id) return undefined;
+    const timer = window.setTimeout(() => {
+      setHiddenListingIds(getSavedIds(hiddenListingsKey(user.id)));
+      setBlockedTraderIds(getSavedIds(blockedTradersKey(user.id)));
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [user?.id]);
 
   useEffect(() => {
@@ -220,6 +223,15 @@ function Trading() {
     saveIds(blockedTradersKey(user.id), nextIds);
   };
 
+  const clearMarketFilters = () => {
+    setHiddenListingIds([]);
+    setBlockedTraderIds([]);
+    saveIds(hiddenListingsKey(user.id), []);
+    saveIds(blockedTradersKey(user.id), []);
+    setFiltersOpen(false);
+    setSuccessMessage("Market filters cleared. All available listings and traders are visible again.");
+  };
+
   return (
     <Layout>
       <section className="page-heading page-heading-split">
@@ -346,7 +358,7 @@ function Trading() {
                 {blockedTraders.length ? blockedTraders.map((listing) => <p key={listing.owner_id}><span>{listing.lumio_display_name || listing.discord_display_name || listing.discord_username || "Licensed trader"}</span><button onClick={() => unblockTrader(listing.owner_id)} type="button">Unblock</button></p>) : <small>No blocked traders.</small>}
               </div>
             </div>
-            <div className="modal-buttons"><button className="primary-action" onClick={() => setFiltersOpen(false)} type="button">Done</button></div>
+            <div className="modal-buttons"><button className="secondary-action" onClick={clearMarketFilters} type="button">Clear all filters</button><button className="primary-action" onClick={() => setFiltersOpen(false)} type="button">Done</button></div>
           </section>
         </div>
       )}

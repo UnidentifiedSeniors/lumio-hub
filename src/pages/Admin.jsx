@@ -1,12 +1,7 @@
-import Layout from "../components/Layout";
+import { Navigate } from "react-router-dom";
 
 function Admin() {
-  return (
-    <Layout>
-      <h1>Admin</h1>
-      <p>Coming soon.</p>
-    </Layout>
-  );
+  return <Navigate replace to="/dashboard" />;
 }
 
 export default Admin;

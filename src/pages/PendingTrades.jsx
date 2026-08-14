@@ -3,13 +3,14 @@ import { Link } from "react-router-dom";
 
 import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
-import TradeCompletionConfirmation, { hasTwoPartyConfirmation } from "../components/TradeCompletionConfirmation";
+import TradeCompletionConfirmation from "../components/TradeCompletionConfirmation";
 import TradeDetailsModal, { TradeChampionList } from "../components/TradeDetailsModal";
 
 import { supabase } from "../lib/supabase";
 import useAuth from "../context/useAuth";
 import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
 import { formatDateTime } from "../utils/marketplace";
+import { hasTwoPartyConfirmation } from "../utils/tradeCompletion";
 
 const STATUS_LABELS = {
   pending: "Pending",

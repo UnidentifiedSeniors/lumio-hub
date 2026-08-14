@@ -38,16 +38,22 @@ function Settings() {
   const directOffersEnabled = profile?.direct_offers_enabled !== false;
 
   useEffect(() => {
-    setLumioDisplayName(profile?.lumio_display_name || profile?.discord_display_name || profile?.discord_username || "");
+    const timer = window.setTimeout(() => {
+      setLumioDisplayName(profile?.lumio_display_name || profile?.discord_display_name || profile?.discord_username || "");
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [profile?.discord_display_name, profile?.discord_username, profile?.lumio_display_name]);
 
   useEffect(() => {
-    const savedPreferences = profile?.notification_preferences;
-    setNotificationPreferences({
-      ...savedPreferences,
-      new_offers: savedPreferences?.new_offers !== false,
-      trade_updates: savedPreferences?.trade_updates !== false,
-    });
+    const timer = window.setTimeout(() => {
+      const savedPreferences = profile?.notification_preferences;
+      setNotificationPreferences({
+        ...savedPreferences,
+        new_offers: savedPreferences?.new_offers !== false,
+        trade_updates: savedPreferences?.trade_updates !== false,
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [profile?.notification_preferences]);
 
   const syncDiscordRank = async () => {

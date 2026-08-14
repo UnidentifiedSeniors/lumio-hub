@@ -78,6 +78,8 @@ function App() {
       <Route path="/settings" element={user ? <Settings /> : <Landing />} />
 
       <Route path="/admin" element={user ? <Admin /> : <Landing />} />
+
+      <Route path="*" element={<Navigate replace to={user ? "/dashboard" : "/"} />} />
     </Routes>
   );
 }

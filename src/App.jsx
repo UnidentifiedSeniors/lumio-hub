@@ -1,7 +1,7 @@
 import { Navigate, Routes, Route } from "react-router-dom";
 
 import Champion from "./pages/Champion";
-import DiscordCommunityPrompt from "./components/DiscordCommunityPrompt";
+import GlobalAds from "./components/GlobalAds";
 
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
@@ -83,7 +83,7 @@ function App() {
 
         <Route path="*" element={<Navigate replace to={user ? "/dashboard" : "/"} />} />
       </Routes>
-      <DiscordCommunityPrompt />
+      <GlobalAds />
     </>
   );
 }

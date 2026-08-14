@@ -2919,6 +2919,39 @@ a.trade-participant:hover {
   line-height: 1.55;
 }
 
+.trade-confirmation-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: #7ee3c3;
+  font-size: 0.65rem;
+  font-weight: 760;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.trade-confirmation-progress {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0;
+}
+
+.trade-confirmation-progress span {
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.trade-confirmation-progress .confirmed {
+  background: rgba(65, 216, 166, 0.12);
+  color: #8be7bf;
+}
+
+.trade-confirmation-progress .waiting {
+  background: rgba(255, 255, 255, 0.055);
+  color: #aab2c6;
+}
+
 .coordination-link {
   min-height: 34px;
   font-size: 0.72rem;

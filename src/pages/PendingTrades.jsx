@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Layout from "../components/Layout";
+import TradeCompletionConfirmation, { hasTwoPartyConfirmation } from "../components/TradeCompletionConfirmation";
 import TradeDetailsModal, { TradeChampionList } from "../components/TradeDetailsModal";
 
 import { supabase } from "../lib/supabase";
@@ -9,13 +10,15 @@ import useAuth from "../context/useAuth";
 import { formatDateTime } from "../utils/marketplace";
 
 function PendingTrades() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(null);
   const [recipients, setRecipients] = useState({});
   const [detailsTrade, setDetailsTrade] = useState(null);
+  const [confirmingId, setConfirmingId] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -77,6 +80,29 @@ function PendingTrades() {
     setCancelling(null);
   };
 
+  const confirmExchange = async (trade) => {
+    if (!user) return;
+    const confirmationField = user.id === trade.sender_id ? "sender_confirmed_at" : "recipient_confirmed_at";
+
+    setConfirmingId(trade.id);
+    setError(null);
+    const { data, error: updateError } = await supabase
+      .from("trades")
+      .update({ [confirmationField]: new Date().toISOString() })
+      .eq("id", trade.id)
+      .eq("status", "accepted")
+      .select("*")
+      .maybeSingle();
+
+    if (updateError || !data) {
+      setError(updateError?.message || "This trade changed before your confirmation could be recorded. Refresh and try again.");
+    } else {
+      setTrades((current) => current.map((item) => item.id === trade.id ? data : item));
+      if (data.status === "completed") await refreshProfile();
+    }
+    setConfirmingId(null);
+  };
+
   const statusEmoji = {
     pending: "🟡 Pending",
     accepted: "🔵 Accepted",
@@ -92,6 +118,8 @@ function PendingTrades() {
         <h1>Sent Trades</h1>
         <p>Track the offers you have sent directly to other traders.</p>
       </section>
+
+      {error && <p className="form-error" role="alert">{error}</p>}
 
       {loading ? (
         <p className="loading-copy">Loading sent trades...</p>
@@ -145,11 +173,15 @@ function PendingTrades() {
               <p className="trade-created">Sent {formatDateTime(trade.created_at)}</p>
 
               {trade.status === "accepted" && (
-                <section className="trade-coordination">
-                  <strong>Accepted — coordinate the in-game exchange</strong>
-                  <p>Your offer is reserved. Use {code} while you and the recipient complete the real champion exchange in Anime Fighting Simulator. The recipient records completion afterward.</p>
-                  {recipientName && <Link className="secondary-action coordination-link" to={`/trader/${trade.recipient_id}`}>Open trader profile</Link>}
-                </section>
+                hasTwoPartyConfirmation(trade) ? (
+                  <TradeCompletionConfirmation busy={confirmingId === trade.id} counterpartName={recipientName} currentUserId={user?.id} onConfirm={confirmExchange} trade={trade} />
+                ) : (
+                  <section className="trade-coordination">
+                    <strong>Accepted — coordinate the in-game exchange</strong>
+                    <p>Your offer is reserved. Use {code} while you and the recipient complete the real champion exchange in Anime Fighting Simulator. The recipient records completion afterward.</p>
+                    {recipientName && <Link className="secondary-action coordination-link" to={`/trader/${trade.recipient_id}`}>Open trader profile</Link>}
+                  </section>
+                )
               )}
 
               {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}

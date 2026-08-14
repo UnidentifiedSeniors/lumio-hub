@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Layout from "../components/Layout";
+import TradeCompletionConfirmation, { hasTwoPartyConfirmation } from "../components/TradeCompletionConfirmation";
 import TradeDetailsModal, { TradeChampionList } from "../components/TradeDetailsModal";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
@@ -29,6 +30,7 @@ function ReceivedTrades() {
   const [respondingId, setRespondingId] = useState(null);
   const [acceptingTrade, setAcceptingTrade] = useState(null);
   const [detailsTrade, setDetailsTrade] = useState(null);
+  const [confirmingId, setConfirmingId] = useState(null);
 
   const loadTrades = useCallback(async () => {
     if (!user) return;
@@ -90,6 +92,29 @@ function ReceivedTrades() {
     setRespondingId(null);
   };
 
+  const confirmExchange = async (trade) => {
+    if (!user) return;
+    const confirmationField = user.id === trade.sender_id ? "sender_confirmed_at" : "recipient_confirmed_at";
+
+    setConfirmingId(trade.id);
+    setError(null);
+    const { data, error: updateError } = await supabase
+      .from("trades")
+      .update({ [confirmationField]: new Date().toISOString() })
+      .eq("id", trade.id)
+      .eq("status", "accepted")
+      .select("*")
+      .maybeSingle();
+
+    if (updateError || !data) {
+      setError(updateError?.message || "This trade changed before your confirmation could be recorded. Refresh and try again.");
+    } else {
+      setTrades((current) => current.map((item) => item.id === trade.id ? data : item));
+      if (data.status === "completed") await refreshProfile();
+    }
+    setConfirmingId(null);
+  };
+
   return (
     <Layout>
       <section className="page-heading">
@@ -143,11 +168,15 @@ function ReceivedTrades() {
                   </div>
                 </div>
                 {trade.status === "accepted" && (
-                  <section className="trade-coordination">
-                    <strong>Accepted — coordinate in Anime Fighting Simulator</strong>
-                    <p>Share trade code {trade.trade_code ? `#${trade.trade_code}` : "with the sender"}, complete the actual exchange in-game, then record it here. {trade.listing_id ? "This Shelf listing is now unavailable to other traders." : "This was an open direct offer."}</p>
-                    <button className="primary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "completed")} type="button">{respondingId === trade.id ? "Updating…" : "Mark exchange completed"}</button>
-                  </section>
+                  hasTwoPartyConfirmation(trade) ? (
+                    <TradeCompletionConfirmation busy={confirmingId === trade.id} counterpartName={senderName} currentUserId={user?.id} onConfirm={confirmExchange} trade={trade} />
+                  ) : (
+                    <section className="trade-coordination">
+                      <strong>Accepted — coordinate in Anime Fighting Simulator</strong>
+                      <p>Share trade code {trade.trade_code ? `#${trade.trade_code}` : "with the sender"}, complete the actual exchange in-game, then record it here. {trade.listing_id ? "This Shelf listing is now unavailable to other traders." : "This was an open direct offer."}</p>
+                      <button className="primary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "completed")} type="button">{respondingId === trade.id ? "Updating…" : "Mark exchange completed"}</button>
+                    </section>
+                  )
                 )}
                 {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}
               </article>

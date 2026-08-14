@@ -43,6 +43,8 @@ function TradeDetailsModal({ trade, counterpartName, leftLabel, leftChampions, r
           <div><span>Offer value</span><strong>◈ {Number(trade.offer_value || 0).toLocaleString()}</strong></div>
         </div>
 
+        {trade.offer_note && <section className="trade-note-preview"><span>Offer note</span><p>{trade.offer_note}</p></section>}
+
         <div className="trade-detail-groups">
           <section>
             <h3>{leftLabel}</h3>

@@ -194,6 +194,8 @@ function PendingTrades() {
                 <p className="trade-offer-total">Offer value: <strong>◈ {Number(trade.offer_value || 0).toLocaleString()}</strong></p>
               )}
 
+              {trade.offer_note && <section className="trade-note-preview trade-note-inline"><span>Your note</span><p>{trade.offer_note}</p></section>}
+
               <p className="trade-created">Sent {formatDateTime(trade.created_at)}</p>
 
               {trade.status === "accepted" && (

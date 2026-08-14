@@ -188,6 +188,7 @@ function ReceivedTrades() {
                     {trade.status === "pending" && <><button className="secondary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "declined")} type="button">Decline</button><button className="primary-action" disabled={respondingId === trade.id} onClick={() => setAcceptingTrade(trade)} type="button">Accept offer</button></>}
                   </div>
                 </div>
+                {trade.offer_note && <section className="trade-note-preview trade-note-inline"><span>Offer note</span><p>{trade.offer_note}</p></section>}
                 {trade.status === "accepted" && (
                   hasTwoPartyConfirmation(trade) ? (
                     <TradeCompletionConfirmation busy={confirmingId === trade.id} counterpartName={senderName} currentUserId={user?.id} onConfirm={confirmExchange} trade={trade} />

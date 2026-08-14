@@ -10,6 +10,7 @@ function OfferComposer({ target, onClose, onSent }) {
   const { user } = useAuth();
   const [ownedChampions, setOwnedChampions] = useState([]);
   const [offerIds, setOfferIds] = useState([]);
+  const [offerNote, setOfferNote] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -67,6 +68,7 @@ function OfferComposer({ target, onClose, onSent }) {
         offered_champions: selectedOffer.map(toTradeChampion),
         offer_value: offerValue,
         requested_value: requestedChampion ? getOwnedChampionValue(target.requestedChampion) : null,
+        offer_note: offerNote.trim() || null,
         status: "pending",
       })
       .select("trade_code")
@@ -114,6 +116,11 @@ function OfferComposer({ target, onClose, onSent }) {
               })}
             </div>
             <div className="offer-total"><span>{selectedOffer.length} selected</span><strong>Offer total ◈ {offerValue.toLocaleString()}</strong></div>
+            <label className="offer-note-field" htmlFor="offer-note">
+              <span>Offer note <small>Optional</small></span>
+              <textarea id="offer-note" maxLength="280" onChange={(event) => setOfferNote(event.target.value)} placeholder="Add context for this trader, such as what kinds of offers you are open to." rows="3" value={offerNote} />
+              <small>{offerNote.length}/280</small>
+            </label>
           </>
         )}
         <div className="modal-buttons">

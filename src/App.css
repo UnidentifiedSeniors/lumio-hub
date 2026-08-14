@@ -3695,6 +3695,53 @@ a.trade-participant:hover {
   margin: 13px 0 16px;
 }
 
+.offer-note-field {
+  display: grid;
+  gap: 7px;
+  margin: 0 0 16px;
+}
+
+.offer-note-field > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #b8bfd1;
+  font-size: 0.72rem;
+  font-weight: 720;
+}
+
+.offer-note-field > span small,
+.offer-note-field > small {
+  color: #7f879f;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.offer-note-field > small {
+  justify-self: end;
+  margin-top: -3px;
+}
+
+.offer-note-field textarea {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  outline: none;
+  background: rgba(5, 7, 13, 0.38);
+  color: #e6e9f5;
+  font: inherit;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  padding: 10px 11px;
+}
+
+.offer-note-field textarea:focus {
+  border-color: rgba(143, 146, 255, 0.58);
+  box-shadow: 0 0 0 3px rgba(105, 108, 241, 0.1);
+}
+
 .trade-details-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3760,6 +3807,35 @@ a.trade-participant:hover {
 .trade-offer-total strong {
   color: #dce0ff;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.trade-note-preview {
+  display: grid;
+  gap: 5px;
+  border-left: 2px solid rgba(133, 138, 255, 0.58);
+  background: rgba(103, 107, 237, 0.065);
+  margin: 15px 0 0;
+  padding: 10px 12px;
+}
+
+.trade-note-preview > span {
+  color: #abb0ff;
+  font-size: 0.66rem;
+  font-weight: 760;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.trade-note-preview p {
+  margin: 0;
+  color: #c4cadb;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.trade-note-inline {
+  margin-top: 13px;
 }
 
 .trade-card-actions,

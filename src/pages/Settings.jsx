@@ -27,11 +27,24 @@ function Settings() {
   const [lumioDisplayName, setLumioDisplayName] = useState("");
   const [savingDisplayName, setSavingDisplayName] = useState(false);
   const [displayNameMessage, setDisplayNameMessage] = useState(null);
+  const [notificationPreferences, setNotificationPreferences] = useState({ new_offers: true, trade_updates: true });
+  const [savingNotificationPreferences, setSavingNotificationPreferences] = useState(false);
+  const [notificationPreferenceMessage, setNotificationPreferenceMessage] = useState(null);
   const displayNameFeatureEnabled = Object.hasOwn(profile || {}, "lumio_display_name");
+  const notificationPreferencesFeatureEnabled = Object.hasOwn(profile || {}, "notification_preferences");
 
   useEffect(() => {
     setLumioDisplayName(profile?.lumio_display_name || profile?.discord_display_name || profile?.discord_username || "");
   }, [profile?.discord_display_name, profile?.discord_username, profile?.lumio_display_name]);
+
+  useEffect(() => {
+    const savedPreferences = profile?.notification_preferences;
+    setNotificationPreferences({
+      ...savedPreferences,
+      new_offers: savedPreferences?.new_offers !== false,
+      trade_updates: savedPreferences?.trade_updates !== false,
+    });
+  }, [profile?.notification_preferences]);
 
   const syncDiscordRank = async () => {
     setSyncingRank(true);
@@ -79,6 +92,33 @@ function Settings() {
       setDisplayNameMessage({ type: "success", text: "Your Lumio display name has been updated." });
     }
     setSavingDisplayName(false);
+  };
+
+  const toggleNotificationPreference = async (preference) => {
+    if (!user || savingNotificationPreferences) return;
+
+    const nextPreferences = {
+      ...notificationPreferences,
+      [preference]: !notificationPreferences[preference],
+    };
+
+    setSavingNotificationPreferences(true);
+    setNotificationPreferenceMessage(null);
+    setNotificationPreferences(nextPreferences);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ notification_preferences: nextPreferences })
+      .eq("id", user.id);
+
+    if (error) {
+      setNotificationPreferences(notificationPreferences);
+      setNotificationPreferenceMessage({ type: "error", text: error.message || "Unable to update notification preferences." });
+    } else {
+      await refreshProfile();
+      setNotificationPreferenceMessage({ type: "success", text: "Notification preferences saved." });
+    }
+    setSavingNotificationPreferences(false);
   };
 
   return (
@@ -130,11 +170,25 @@ function Settings() {
           </div>
           {rankSyncMessage && <p className={rankSyncMessage.type === "success" ? "inline-success" : "inline-error"} role={rankSyncMessage.type === "success" ? "status" : "alert"}>{rankSyncMessage.text}</p>}
         </article>
-        <article className="settings-card">
+        <article className="settings-card notification-preferences-card">
           <span className="settings-card-label">Trading</span>
           <h2>Offer notifications</h2>
-          <p>Choose how Lumio Hub should alert you when your trade activity changes.</p>
-          <span className="coming-soon-label">Preference controls next</span>
+          <p>Choose which in-app alerts Lumio creates for your trading activity.</p>
+          {notificationPreferencesFeatureEnabled ? (
+            <div className="notification-preference-list">
+              <button aria-pressed={notificationPreferences.new_offers} className="notification-preference" disabled={savingNotificationPreferences} onClick={() => void toggleNotificationPreference("new_offers")} type="button">
+                <span><strong>New offers</strong><small>When another trader wants to trade with you.</small></span>
+                <span className={`preference-switch${notificationPreferences.new_offers ? " is-on" : ""}`} aria-hidden="true"><i /></span>
+              </button>
+              <button aria-pressed={notificationPreferences.trade_updates} className="notification-preference" disabled={savingNotificationPreferences} onClick={() => void toggleNotificationPreference("trade_updates")} type="button">
+                <span><strong>Trade updates</strong><small>Accepted, declined, withdrawn, and completed trades.</small></span>
+                <span className={`preference-switch${notificationPreferences.trade_updates ? " is-on" : ""}`} aria-hidden="true"><i /></span>
+              </button>
+              {notificationPreferenceMessage && <p className={notificationPreferenceMessage.type === "success" ? "inline-success" : "inline-error"} role={notificationPreferenceMessage.type === "success" ? "status" : "alert"}>{notificationPreferenceMessage.text}</p>}
+            </div>
+          ) : (
+            <small>Available as soon as the account settings update is applied.</small>
+          )}
         </article>
       </section>
     </Layout>

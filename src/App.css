@@ -1477,6 +1477,88 @@ a.trade-participant:hover {
   margin-top: 8px !important;
 }
 
+.notification-preferences-card {
+  min-height: 274px;
+}
+
+.notification-preference-list {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.notification-preference {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(5, 7, 13, 0.3);
+  color: #edf0fb;
+  cursor: pointer;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.notification-preference:hover:not(:disabled) {
+  border-color: rgba(137, 141, 255, 0.38);
+  background: rgba(111, 114, 241, 0.08);
+}
+
+.notification-preference:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.notification-preference > span:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.notification-preference strong {
+  font-size: 0.74rem;
+}
+
+.notification-preference small {
+  color: #858da4;
+  font-size: 0.66rem;
+  line-height: 1.35;
+}
+
+.preference-switch {
+  display: flex;
+  width: 30px;
+  height: 17px;
+  flex: 0 0 auto;
+  align-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  padding: 2px;
+  transition: background 160ms ease;
+}
+
+.preference-switch i {
+  display: block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #cdd1df;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.preference-switch.is-on {
+  background: #7075f4;
+}
+
+.preference-switch.is-on i {
+  transform: translateX(13px);
+  background: #fff;
+}
+
 .rank-sync-footer {
   display: grid;
   width: 100%;

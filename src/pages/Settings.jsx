@@ -268,11 +268,11 @@ function Settings() {
         <article className="settings-card direct-offer-preferences-card">
           <span className="settings-card-label">Trading availability</span>
           <h2>Direct offers</h2>
-          <p>Control whether licensed traders can send an open offer from your public profile. Your active Shelf listings stay offerable either way.</p>
+          <p>Control whether licensed traders can send a focused offer for one champion in your public Collection. Your active Shelf listings stay offerable either way.</p>
           {directOfferPreferenceFeatureEnabled ? (
             <div className="notification-preference-list">
               <button aria-pressed={directOffersEnabled} className="notification-preference" disabled={savingDirectOffers} onClick={() => void toggleDirectOffers()} type="button">
-                <span><strong>Accept direct offers</strong><small>{directOffersEnabled ? "Traders can start an open offer from your profile." : "Profile-based offers are paused until you turn this back on."}</small></span>
+                <span><strong>Accept direct offers</strong><small>{directOffersEnabled ? "Traders can select one public Collection champion before building their offer." : "Profile-based offers are paused until you turn this back on."}</small></span>
                 <span className={`preference-switch${directOffersEnabled ? " is-on" : ""}`} aria-hidden="true"><i /></span>
               </button>
               {directOfferMessage && <p className={directOfferMessage.type === "success" ? "inline-success" : "inline-error"} role={directOfferMessage.type === "success" ? "status" : "alert"}>{directOfferMessage.text}</p>}

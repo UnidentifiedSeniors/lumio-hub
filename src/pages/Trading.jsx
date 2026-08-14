@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import Layout from "../components/Layout";
+import ListingArtwork from "../components/ListingArtwork";
 import OfferComposer from "../components/OfferComposer";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
@@ -9,6 +10,11 @@ import { getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
 
 const hiddenListingsKey = (userId) => `lumio-market-hidden-listings:${userId}`;
 const blockedTradersKey = (userId) => `lumio-market-blocked-traders:${userId}`;
+
+function listingCode(listingId) {
+  const compactId = String(listingId || "").replaceAll("-", "").slice(0, 6).toUpperCase();
+  return compactId ? `L-${compactId}` : "L-PENDING";
+}
 
 function getSavedIds(storageKey) {
   try {
@@ -193,7 +199,7 @@ function Trading() {
     link.searchParams.set("listing", reportTarget.id);
     const reportReference = [
       "Lumio Market listing report",
-      `Listing: ${reportTarget.name} (${reportTarget.rarity})`,
+      `Listing: ${listingCode(reportTarget.id)} · ${reportTarget.name} (${reportTarget.rarity})`,
       `Trader: ${sellerName}`,
       `Link: ${link.toString()}`,
       "Reason:",
@@ -262,6 +268,8 @@ function Trading() {
                   <span className={`rarity-badge rarity-${listing.rarity.toLowerCase().replaceAll(" ", "-")}`}>{listing.rarity}</span>
                   <span className="listing-status listing-active">Live on Shelf</span>
                 </div>
+                <span className="listing-code">Listing {listingCode(listing.id)}</span>
+                <ListingArtwork imageUrl={listing.image_url} name={listing.name} rarity={listing.rarity} />
                 <h2>{listing.name}</h2>
                 <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
                 <p className="market-value">◈ {getOwnedChampionValue(listing).toLocaleString()}</p>

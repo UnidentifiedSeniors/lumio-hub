@@ -87,7 +87,7 @@ function OfferComposer({ target, onClose, onSent }) {
     ? recipientChampions.find((champion) => champion.id === requestedChampionId) || null
     : target.requestedChampion || null;
   const requestedChampion = selectedRequestedChampion ? toTradeChampion(selectedRequestedChampion) : null;
-  const canSubmit = selectedOffer.length > 0 && (!isDirectOffer || Boolean(selectedRequestedChampion));
+  const canSubmit = selectedOffer.length > 0;
 
   const toggleChampion = (championId) => {
     setOfferIds((current) => {
@@ -136,7 +136,7 @@ function OfferComposer({ target, onClose, onSent }) {
         <h2 id="offer-composer-title">{target.title}</h2>
 
         {isDirectOffer ? (
-          <p className="offer-flow-copy">Build a focused offer: choose one champion from this trader&apos;s public Collection, then choose the copies you want to offer from yours.</p>
+          <p className="offer-flow-copy">Build a private offer from your Collection. If this trader shares theirs publicly, you can also choose one optional champion to request.</p>
         ) : (
           <div className="offer-target">
             <span>You are requesting</span>
@@ -154,14 +154,14 @@ function OfferComposer({ target, onClose, onSent }) {
               <section className="offer-builder-section request-section">
                 <div className="offer-builder-heading">
                   <span className="offer-step" aria-hidden="true">1</span>
-                  <div><h3>Choose what you&apos;re requesting</h3><p>Select one public Collection copy from this trader.</p></div>
-                  <strong>{selectedRequestedChampion ? "1 selected" : "Required"}</strong>
+                  <div><h3>Choose what you&apos;re requesting</h3><p>Optionally select one public Collection copy from this trader.</p></div>
+                  <strong>{selectedRequestedChampion ? "1 selected" : "Optional"}</strong>
                 </div>
                 {recipientChampions.length === 0 ? (
-                  <div className="offer-builder-empty"><strong>No public Collection available</strong><span>This trader needs to share at least one Collection copy before a direct offer can be sent.</span></div>
+                  <div className="offer-builder-empty"><strong>Collection unavailable</strong><span>This trader&apos;s Collection is private or empty. You can still send a private offer without choosing a requested champion.</span></div>
                 ) : (
                   <div className="offer-champion-grid" aria-label="Champions to request">
-                    {recipientChampions.map((champion) => <OfferChampionChoice champion={champion} key={champion.id} kind="request" onSelect={() => setRequestedChampionId(champion.id)} selected={requestedChampionId === champion.id} />)}
+                    {recipientChampions.map((champion) => <OfferChampionChoice champion={champion} key={champion.id} kind="request" onSelect={() => setRequestedChampionId((current) => current === champion.id ? null : champion.id)} selected={requestedChampionId === champion.id} />)}
                   </div>
                 )}
               </section>

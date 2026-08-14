@@ -6,7 +6,7 @@ const TYPE_ICONS = {
   trade_completed: "✦",
 };
 
-function formatNotificationTime(timestamp) {
+function formatNotificationTime(timestamp, datePreferences) {
   if (!timestamp) return "Just now";
 
   const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000));
@@ -14,10 +14,10 @@ function formatNotificationTime(timestamp) {
   if (elapsedSeconds < 3600) return `${Math.floor(elapsedSeconds / 60)}m ago`;
   if (elapsedSeconds < 86400) return `${Math.floor(elapsedSeconds / 3600)}h ago`;
 
-  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(timestamp));
+  return formatLumioDate(timestamp, datePreferences);
 }
 
-function NotificationList({ emptyCopy, notifications, onOpen }) {
+function NotificationList({ emptyCopy, notifications, onOpen, datePreferences }) {
   if (!notifications.length) {
     return <p className="notification-empty">{emptyCopy}</p>;
   }
@@ -36,7 +36,7 @@ function NotificationList({ emptyCopy, notifications, onOpen }) {
             <strong>{notification.title}</strong>
             <span>{notification.body}</span>
           </span>
-          <time dateTime={notification.created_at}>{formatNotificationTime(notification.created_at)}</time>
+          <time dateTime={notification.created_at}>{formatNotificationTime(notification.created_at, datePreferences)}</time>
           {!notification.read_at && <span className="notification-unread-dot" aria-label="Unread" />}
         </button>
       ))}
@@ -45,3 +45,4 @@ function NotificationList({ emptyCopy, notifications, onOpen }) {
 }
 
 export default NotificationList;
+import { formatLumioDate } from "../utils/datePreferences";

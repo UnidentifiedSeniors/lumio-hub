@@ -9,6 +9,7 @@ import TradeDetailsModal, { TradeChampionList } from "../components/TradeDetails
 import { supabase } from "../lib/supabase";
 import useAuth from "../context/useAuth";
 import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
+import { getDatePreferences } from "../utils/datePreferences";
 import { formatDateTime } from "../utils/marketplace";
 import { hasTwoPartyConfirmation } from "../utils/tradeCompletion";
 
@@ -21,7 +22,8 @@ const STATUS_LABELS = {
 };
 
 function PendingTrades() {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  const datePreferences = getDatePreferences(profile);
 
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -196,7 +198,7 @@ function PendingTrades() {
 
               {trade.offer_note && <section className="trade-note-preview trade-note-inline"><span>Your note</span><p>{trade.offer_note}</p></section>}
 
-              <p className="trade-created">Sent {formatDateTime(trade.created_at)}</p>
+              <p className="trade-created">Sent {formatDateTime(trade.created_at, datePreferences)}</p>
 
               {trade.status === "accepted" && (
                 hasTwoPartyConfirmation(trade) ? (
@@ -210,7 +212,7 @@ function PendingTrades() {
                 )
               )}
 
-              {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}
+              {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at, datePreferences)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}
 
               {trade.status === "pending" && (
                 <div className="card-actions trade-card-actions">
@@ -236,6 +238,7 @@ function PendingTrades() {
           rightChampions={detailsTrade.offered_champions || []}
           rightLabel="You offered"
           trade={detailsTrade}
+          datePreferences={datePreferences}
         />
       )}
     </Layout>

@@ -5,6 +5,7 @@ import Layout from "../components/Layout";
 import TradeDetailsModal from "../components/TradeDetailsModal";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
+import { getDatePreferences } from "../utils/datePreferences";
 import { formatDateTime } from "../utils/marketplace";
 
 const ARCHIVED_STATUSES = ["completed", "declined", "cancelled"];
@@ -35,7 +36,8 @@ function historyTitle(trade, counterpartName, isSender) {
 }
 
 function History() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const datePreferences = getDatePreferences(profile);
   const [trades, setTrades] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
@@ -172,7 +174,7 @@ function History() {
                 </div>
 
                 <footer className="history-trade-footer">
-                  <span>{trade.status === "completed" ? "Completed" : "Closed"} {formatDateTime(archivedAt)}{trade.status === "completed" && trade.xp_awarded ? ` · +${trade.xp_awarded} XP` : ""}</span>
+                  <span>{trade.status === "completed" ? "Completed" : "Closed"} {formatDateTime(archivedAt, datePreferences)}{trade.status === "completed" && trade.xp_awarded ? ` · +${trade.xp_awarded} XP` : ""}</span>
                   <button className="secondary-action" onClick={() => setDetailsTrade(trade)} type="button">View details</button>
                 </footer>
               </article>
@@ -194,6 +196,7 @@ function History() {
           rightChampions={detailsTrade.offered_champions || []}
           rightLabel={isSender ? "You offered" : "They offered"}
           trade={detailsTrade}
+          datePreferences={datePreferences}
         />;
       })()}
     </Layout>

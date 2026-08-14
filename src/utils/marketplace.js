@@ -1,3 +1,4 @@
+import { formatLumioDate } from "./datePreferences";
 import { calculateChampionValue } from "./valueCalculator";
 
 export function getOwnedChampionValue(champion) {
@@ -27,9 +28,8 @@ export function toTradeChampion(champion) {
   };
 }
 
-export function formatDateTime(value) {
-  if (!value) return "—";
-  return new Date(value).toLocaleString();
+export function formatDateTime(value, preferences, options) {
+  return formatLumioDate(value, preferences, options);
 }
 
 export function getListingCode(listingId) {

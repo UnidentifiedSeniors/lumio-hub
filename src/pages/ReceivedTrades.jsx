@@ -7,6 +7,7 @@ import TradeDetailsModal, { TradeChampionList } from "../components/TradeDetails
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
+import { getDatePreferences } from "../utils/datePreferences";
 import { formatDateTime } from "../utils/marketplace";
 import { hasTwoPartyConfirmation } from "../utils/tradeCompletion";
 
@@ -24,7 +25,8 @@ function tradeRequestedChampions(trade) {
 }
 
 function ReceivedTrades() {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  const datePreferences = getDatePreferences(profile);
   const [trades, setTrades] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
@@ -182,7 +184,7 @@ function ReceivedTrades() {
                   </div>
                 </div>
                 <div className="trade-footer">
-                  <span>◈ {trade.offer_value?.toLocaleString() || "0"} offered · {formatDateTime(trade.created_at)}</span>
+                  <span>◈ {trade.offer_value?.toLocaleString() || "0"} offered · {formatDateTime(trade.created_at, datePreferences)}</span>
                   <div className="card-actions">
                     <button className="secondary-action" onClick={() => setDetailsTrade(trade)} type="button">View details</button>
                     {trade.status === "pending" && <><button className="secondary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "declined")} type="button">Decline</button><button className="primary-action" disabled={respondingId === trade.id} onClick={() => setAcceptingTrade(trade)} type="button">Accept offer</button></>}
@@ -200,7 +202,7 @@ function ReceivedTrades() {
                     </section>
                   )
                 )}
-                {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}
+                {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at, datePreferences)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}
               </article>
             );
           })}
@@ -231,6 +233,7 @@ function ReceivedTrades() {
           rightChampions={detailsTrade.offered_champions || []}
           rightLabel="They offered"
           trade={detailsTrade}
+          datePreferences={datePreferences}
         />
       )}
     </Layout>

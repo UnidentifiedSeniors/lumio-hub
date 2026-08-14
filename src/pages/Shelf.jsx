@@ -9,6 +9,7 @@ import ListingArtwork from "../components/ListingArtwork";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
+import { getDatePreferences } from "../utils/datePreferences";
 import { formatDateTime, getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
 
 const LISTING_STATUS_OPTIONS = [
@@ -17,7 +18,8 @@ const LISTING_STATUS_OPTIONS = [
 ];
 
 function Shelf() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const datePreferences = getDatePreferences(profile);
   const [searchParams, setSearchParams] = useSearchParams();
   const [listings, setListings] = useState([]);
   const [availableChampions, setAvailableChampions] = useState([]);
@@ -219,7 +221,7 @@ function Shelf() {
                 <div className="traits card-traits">{championTraits.length ? championTraits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
                 <p className="market-value">◈ {getOwnedChampionValue(champion).toLocaleString()}</p>
                 {listing.note && <p className="listing-note">“{listing.note}”</p>}
-                <p className="card-meta">Listed {formatDateTime(listing.created_at)}</p>
+                <p className="card-meta">Listed {formatDateTime(listing.created_at, datePreferences)}</p>
                 <div className="card-actions">
                   {listing.status === "active" ? <button className="secondary-action" disabled={busyId === listing.id} onClick={() => updateListingStatus(listing, "paused")} type="button">Pause</button> : listing.status === "paused" ? <button className="primary-action" disabled={busyId === listing.id} onClick={() => updateListingStatus(listing, "active")} type="button">Resume</button> : null}
                   {!["removed", "completed"].includes(listing.status) && <button className="secondary-action" disabled={busyId === listing.id} onClick={() => openListingEditor(listing)} type="button">Edit</button>}

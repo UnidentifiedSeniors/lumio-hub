@@ -27,7 +27,7 @@ export function TradeChampionList({ champions, emptyCopy }) {
   );
 }
 
-function TradeDetailsModal({ trade, counterpartName, leftLabel, leftChampions, rightLabel, rightChampions, onClose }) {
+function TradeDetailsModal({ trade, counterpartName, leftLabel, leftChampions, rightLabel, rightChampions, onClose, datePreferences }) {
   const tradeCode = trade.trade_code ? `#${trade.trade_code}` : "Trade details";
 
   return (
@@ -39,7 +39,7 @@ function TradeDetailsModal({ trade, counterpartName, leftLabel, leftChampions, r
 
         <div className="trade-detail-meta">
           <div><span>Status</span><strong className={`trade-status status-${trade.status}`}>{trade.status}</strong></div>
-          <div><span>Created</span><strong>{formatDateTime(trade.created_at)}</strong></div>
+          <div><span>Created</span><strong>{formatDateTime(trade.created_at, datePreferences, { forceTime: true })}</strong></div>
           <div><span>Offer value</span><strong>◈ {Number(trade.offer_value || 0).toLocaleString()}</strong></div>
         </div>
 

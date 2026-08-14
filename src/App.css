@@ -2125,6 +2125,21 @@ a.trade-participant:hover {
   min-height: 274px;
 }
 
+.date-preferences-card {
+  min-height: 300px;
+}
+
+.date-preference-controls {
+  display: grid;
+  width: 100%;
+  gap: 9px;
+  margin-top: auto;
+}
+
+.date-preference-controls .choice-menu {
+  width: 100%;
+}
+
 .notification-preference-list {
   display: grid;
   width: 100%;

@@ -5,6 +5,7 @@ import Layout from "../components/Layout";
 import NotificationList from "../components/NotificationList";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
+import { getDatePreferences } from "../utils/datePreferences";
 import getRank from "../utils/rankCalculator";
 import getXPProgress from "../utils/xpProgress";
 
@@ -21,6 +22,7 @@ function DashboardIcon({ name }) {
 
 function Dashboard() {
   const { user, profile } = useAuth();
+  const datePreferences = getDatePreferences(profile);
   const navigate = useNavigate();
   const [recentTrades, setRecentTrades] = useState([]);
   const [completedTradeCount, setCompletedTradeCount] = useState(0);
@@ -201,7 +203,7 @@ function Dashboard() {
           </div>
           <Link to="/received-trades">Open trade inbox</Link>
         </div>
-        <NotificationList emptyCopy="You are all caught up. New offers and trade updates will appear here." notifications={notifications} onOpen={openNotification} />
+        <NotificationList datePreferences={datePreferences} emptyCopy="You are all caught up. New offers and trade updates will appear here." notifications={notifications} onOpen={openNotification} />
       </section>
     </Layout>
   );

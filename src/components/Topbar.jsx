@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
+import { getDatePreferences } from "../utils/datePreferences";
 import { getDiscordIdentity } from "../utils/discordIdentity";
 import NotificationList from "./NotificationList";
 
@@ -55,6 +56,7 @@ function BellIcon() {
 
 function Topbar() {
   const { user, profile, logout } = useAuth();
+  const datePreferences = getDatePreferences(profile);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -296,7 +298,7 @@ function Topbar() {
                 <div><strong>Notifications</strong><span>{unreadCount ? `${unreadCount} unread` : "All caught up"}</span></div>
                 {unreadCount > 0 && <button onClick={() => void markAllRead()} type="button">Mark all read</button>}
               </div>
-              <NotificationList emptyCopy="Trade updates and offers will appear here." notifications={notifications} onOpen={openNotification} />
+              <NotificationList datePreferences={datePreferences} emptyCopy="Trade updates and offers will appear here." notifications={notifications} onOpen={openNotification} />
             </section>
           )}
         </div>

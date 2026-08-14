@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 
+import ChoiceMenu from "../components/ChoiceMenu";
 import Layout from "../components/Layout";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { formatDisplayNameChangeTime, getDisplayNameChangeState } from "../utils/displayNameCooldown";
+import { DATE_FORMAT_OPTIONS, getDatePreferences } from "../utils/datePreferences";
 import { LUMIO_DISPLAY_NAME_MAX_LENGTH, validateLumioDisplayName } from "../utils/lumioDisplayName";
 
 async function edgeFunctionErrorMessage(data, error, fallback) {
@@ -36,12 +38,16 @@ function Settings() {
   const [directOfferMessage, setDirectOfferMessage] = useState(null);
   const [savingCollectionVisibility, setSavingCollectionVisibility] = useState(false);
   const [collectionVisibilityMessage, setCollectionVisibilityMessage] = useState(null);
+  const [savingDatePreferences, setSavingDatePreferences] = useState(false);
+  const [datePreferencesMessage, setDatePreferencesMessage] = useState(null);
   const displayNameFeatureEnabled = Object.hasOwn(profile || {}, "lumio_display_name");
   const notificationPreferencesFeatureEnabled = Object.hasOwn(profile || {}, "notification_preferences");
   const directOfferPreferenceFeatureEnabled = Object.hasOwn(profile || {}, "direct_offers_enabled");
   const collectionVisibilityFeatureEnabled = Object.hasOwn(profile || {}, "collection_visibility");
+  const datePreferencesFeatureEnabled = Object.hasOwn(profile || {}, "date_format") && Object.hasOwn(profile || {}, "date_include_time");
   const directOffersEnabled = profile?.direct_offers_enabled !== false;
-  const collectionVisibility = profile?.collection_visibility === "public" ? "public" : "private";
+  const collectionVisibility = profile?.collection_visibility === "private" ? "private" : "public";
+  const datePreferences = getDatePreferences(profile);
   const displayNameChange = getDisplayNameChangeState(profile?.lumio_display_name_changed_at);
   const nextDisplayNameChange = formatDisplayNameChangeTime(displayNameChange.availableAt);
 
@@ -142,6 +148,31 @@ function Settings() {
       });
     }
     setSavingCollectionVisibility(false);
+  };
+
+  const saveDatePreferences = async (nextPreferences) => {
+    if (!user || savingDatePreferences) return;
+
+    const nextDateFormat = nextPreferences.dateFormat || datePreferences.dateFormat;
+    const nextIncludeTime = nextPreferences.includeTime ?? datePreferences.includeTime;
+    setSavingDatePreferences(true);
+    setDatePreferencesMessage(null);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        date_format: nextDateFormat,
+        date_include_time: nextIncludeTime,
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      setDatePreferencesMessage({ type: "error", text: error.message || "Unable to update date preferences." });
+    } else {
+      await refreshProfile();
+      setDatePreferencesMessage({ type: "success", text: "Date and time preferences saved." });
+    }
+    setSavingDatePreferences(false);
   };
 
   const toggleNotificationPreference = async (preference) => {
@@ -267,14 +298,31 @@ function Settings() {
             <small>Available as soon as the account settings update is applied.</small>
           )}
         </article>
+        <article className="settings-card date-preferences-card">
+          <span className="settings-card-label">Regional display</span>
+          <h2>Date &amp; time</h2>
+          <p>Choose how Lumio presents dates across your trades and account activity. Exact trade details always retain their time.</p>
+          {datePreferencesFeatureEnabled ? (
+            <div className="date-preference-controls">
+              <ChoiceMenu label="Date format" onChange={(dateFormat) => void saveDatePreferences({ dateFormat })} options={DATE_FORMAT_OPTIONS} value={datePreferences.dateFormat} />
+              <button aria-pressed={datePreferences.includeTime} className="notification-preference" disabled={savingDatePreferences} onClick={() => void saveDatePreferences({ includeTime: !datePreferences.includeTime })} type="button">
+                <span><strong>Include time with dates</strong><small>{datePreferences.includeTime ? "Dates include the local time when it is useful." : "Dates stay concise unless a screen requires exact timing."}</small></span>
+                <span className={`preference-switch${datePreferences.includeTime ? " is-on" : ""}`} aria-hidden="true"><i /></span>
+              </button>
+              {datePreferencesMessage && <p className={datePreferencesMessage.type === "success" ? "inline-success" : "inline-error"} role={datePreferencesMessage.type === "success" ? "status" : "alert"}>{datePreferencesMessage.text}</p>}
+            </div>
+          ) : (
+            <small>Available as soon as the date preferences update is applied.</small>
+          )}
+        </article>
         <article className="settings-card direct-offer-preferences-card">
           <span className="settings-card-label">Trading availability</span>
-          <h2>Direct offers</h2>
-          <p>Control whether licensed traders can send a focused offer for one champion in your public Collection. Your active Shelf listings stay offerable either way.</p>
+          <h2>Receive direct trades</h2>
+          <p>Control whether licensed traders can send you a private offer. Your active Shelf listings stay offerable either way.</p>
           {directOfferPreferenceFeatureEnabled ? (
             <div className="notification-preference-list">
               <button aria-pressed={directOffersEnabled} className="notification-preference" disabled={savingDirectOffers} onClick={() => void toggleDirectOffers()} type="button">
-                <span><strong>Accept direct offers</strong><small>{directOffersEnabled ? "Traders can select one public Collection champion before building their offer." : "Profile-based offers are paused until you turn this back on."}</small></span>
+                <span><strong>Receive direct trades</strong><small>{directOffersEnabled ? "Traders can send you a private offer even when your Collection is private." : "Private offers are paused until you turn this back on."}</small></span>
                 <span className={`preference-switch${directOffersEnabled ? " is-on" : ""}`} aria-hidden="true"><i /></span>
               </button>
               {directOfferMessage && <p className={directOfferMessage.type === "success" ? "inline-success" : "inline-error"} role={directOfferMessage.type === "success" ? "status" : "alert"}>{directOfferMessage.text}</p>}

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
+import { formatLumioDate, getDatePreferences } from "../utils/datePreferences";
 import { getDiscordIdentity } from "../utils/discordIdentity";
 import { formatDisplayNameChangeTime, getDisplayNameChangeState } from "../utils/displayNameCooldown";
 import { LUMIO_DISPLAY_NAME_MAX_LENGTH, validateLumioDisplayName } from "../utils/lumioDisplayName";
@@ -32,6 +33,7 @@ function Profile() {
   const [savingDisplayName, setSavingDisplayName] = useState(false);
   const [displayNameError, setDisplayNameError] = useState(null);
   const discordIdentity = getDiscordIdentity(user);
+  const datePreferences = getDatePreferences(profile);
 
   // Use profile data from the DB (not the hardcoded 0)
   const totalXP = profile?.xp ?? 0;
@@ -131,7 +133,7 @@ function Profile() {
           <p className="profile-handle">Discord · {discordDisplayName}</p>
           <div className="profile-meta">
             <span>{rank.title}</span>
-            {profile?.created_at && <span>Member since {new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" }).format(new Date(profile.created_at))}</span>}
+            {profile?.created_at && <span>Member since {formatLumioDate(profile.created_at, datePreferences)}</span>}
           </div>
         </div>
         <div className="profile-hero-actions">

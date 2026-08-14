@@ -1,12 +1,7 @@
-import Layout from "../components/Layout";
+import { Navigate } from "react-router-dom";
 
 function Market() {
-  return (
-    <Layout>
-      <h1>Market</h1>
-      <p>Coming soon.</p>
-    </Layout>
-  );
+  return <Navigate to="/trades" replace />;
 }
 
 export default Market;

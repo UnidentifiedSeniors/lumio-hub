@@ -17,6 +17,7 @@ function auditSummary(event) {
   }
   if (event.action === "market_listing_removed") return "A marketplace listing was removed.";
   if (event.action === "pending_trade_cancelled") return `Pending trade ${details.trade_code ? `#${details.trade_code}` : "offer"} cancelled by moderation.`;
+  if (event.action === "catalog_published") return `${Number(details.champion_rows || 0)} champions and ${Number(details.trait_rows || 0)} traits published (${details.mode || "merge"}).`;
   if (event.action === "campaign_created") return `Campaign “${details.title || details.slug || "Untitled"}” created.`;
   if (event.action === "campaign_updated") return `Campaign “${details.title || details.slug || "Untitled"}” updated.`;
   if (event.action === "campaign_deleted") return `Campaign “${details.title || details.slug || "Untitled"}” deleted.`;

@@ -1,11 +1,13 @@
 import { useParams, Link } from "react-router-dom";
 
 import Layout from "../components/Layout";
-import champions, { championStatLabels } from "../data/gameCatalog";
+import { championStatLabels } from "../data/gameCatalog";
+import useCatalog from "../context/useCatalog";
 import { calculateChampionValue } from "../utils/valueCalculator";
 
 function Champion() {
   const { id } = useParams();
+  const { champions, traitsByName } = useCatalog();
   const champion = champions.find((item) => item.id === Number(id));
 
   if (!champion) {
@@ -20,7 +22,7 @@ function Champion() {
     );
   }
 
-  const catalogScore = calculateChampionValue(champion);
+  const catalogScore = calculateChampionValue(champion, traitsByName);
 
   return (
     <Layout>

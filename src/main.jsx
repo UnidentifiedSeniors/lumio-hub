@@ -6,12 +6,15 @@ import App from "./App";
 import "./App.css";
 
 import { AuthProvider } from "./context/AuthContext";
+import { CatalogProvider } from "./context/CatalogContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <CatalogProvider>
+          <App />
+        </CatalogProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

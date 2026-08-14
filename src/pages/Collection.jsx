@@ -6,9 +6,8 @@ import ChoiceMenu from "../components/ChoiceMenu";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
-import champions from "../data/champions";
-import traits from "../data/traits";
 import useAuth from "../context/useAuth";
+import useCatalog from "../context/useCatalog";
 import { supabase } from "../lib/supabase";
 import { calculateChampionValue, getRarityValue } from "../utils/valueCalculator";
 import { getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
@@ -24,6 +23,7 @@ function championSourceSummary(champion) {
 
 function Collection() {
   const { user } = useAuth();
+  const { champions, traits, traitsByName } = useCatalog();
   const [searchParams] = useSearchParams();
   const [ownedChampions, setOwnedChampions] = useState([]);
   const [listingsByChampion, setListingsByChampion] = useState(new Map());
@@ -162,7 +162,7 @@ function Collection() {
       image_url: selectedChampion.image_url || null,
       rarity: selectedChampion.rarity,
       trait: selectedTrait,
-      base_value: calculateChampionValue(championWithTrait),
+      base_value: calculateChampionValue(championWithTrait, traitsByName),
       market_adjustment: 1,
     });
 
@@ -313,7 +313,7 @@ function Collection() {
               {selectedTraitData?.notes && <p className="collection-source-note">{selectedTraitData.notes}</p>}
             </div>
 
-            {selectedChampion && <div className="form-value-preview"><span>Catalog score · {championSourceSummary(selectedChampion)}</span><strong>◈ {calculateChampionValue({ ...selectedChampion, traits: selectedTrait === "Standard" ? [] : [selectedTrait] }).toLocaleString()}</strong></div>}
+            {selectedChampion && <div className="form-value-preview"><span>Catalog score · {championSourceSummary(selectedChampion)}</span><strong>◈ {calculateChampionValue({ ...selectedChampion, traits: selectedTrait === "Standard" ? [] : [selectedTrait] }, traitsByName).toLocaleString()}</strong></div>}
 
             <div className="modal-buttons">
               <button className="secondary-action" onClick={() => setShowAddChampion(false)} type="button">Cancel</button>

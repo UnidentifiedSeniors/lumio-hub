@@ -23,11 +23,11 @@ function getStatTotal(champion) {
   return 0;
 }
 
-function getTraitBonus(traits) {
-  return traits.reduce((total, traitName) => total + (traitsByName.get(traitName)?.bonusTotal || 0), 0);
+function getTraitBonus(traits, traitLookup = traitsByName) {
+  return traits.reduce((total, traitName) => total + (traitLookup.get(traitName)?.bonusTotal || 0), 0);
 }
 
-function calculateChampionValue(champion) {
+function calculateChampionValue(champion, traitLookup = traitsByName) {
   const statTotal = getStatTotal(champion);
   const clanPoints = Number(champion?.clanPoints);
   let value = statTotal > 0
@@ -35,15 +35,15 @@ function calculateChampionValue(champion) {
     : getRarityValue(champion?.rarity) * 50;
 
   const traits = Array.isArray(champion?.traits) ? champion.traits : champion?.trait && champion.trait !== "Standard" ? [champion.trait] : [];
-  const sourceTraitBonus = getTraitBonus(traits);
+  const sourceTraitBonus = getTraitBonus(traits, traitLookup);
   value += sourceTraitBonus > 0 ? sourceTraitBonus * TRAIT_PERCENT_VALUE : traits.length * TRAIT_BONUS;
 
   return Math.round(value);
 }
 
-function calculateTradeValue(champions = []) {
+function calculateTradeValue(champions = [], traitLookup = traitsByName) {
   return champions.reduce((total, champion) => {
-    const v = calculateChampionValue(champion);
+    const v = calculateChampionValue(champion, traitLookup);
     return total + (v > 0 ? v : 0);
   }, 0);
 }

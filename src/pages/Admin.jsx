@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import AdminCatalogControls from "../components/AdminCatalogControls";
 import AdminMemberControls from "../components/AdminMemberControls";
 import AdminTradeControls from "../components/AdminTradeControls";
 import ChoiceMenu from "../components/ChoiceMenu";
@@ -303,6 +304,7 @@ function Admin() {
         </aside>
       </section>
 
+      <AdminCatalogControls onUpdated={loadAdminData} />
       <AdminMemberControls auditEvents={auditEvents} datePreferences={datePreferences} members={members} onUpdated={loadAdminData} />
       <AdminTradeControls datePreferences={datePreferences} onUpdated={loadAdminData} trades={trades} />
 

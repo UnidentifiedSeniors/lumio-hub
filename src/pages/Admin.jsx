@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import AdminMemberControls from "../components/AdminMemberControls";
+import AdminTradeControls from "../components/AdminTradeControls";
 import ChoiceMenu from "../components/ChoiceMenu";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
@@ -82,6 +83,7 @@ function Admin() {
   const [ads, setAds] = useState([]);
   const [marketListings, setMarketListings] = useState([]);
   const [members, setMembers] = useState([]);
+  const [trades, setTrades] = useState([]);
   const [auditEvents, setAuditEvents] = useState([]);
   const [form, setForm] = useState(emptyAd);
   const [editingId, setEditingId] = useState(null);
@@ -99,21 +101,23 @@ function Admin() {
       return;
     }
 
-    const [metricsResult, adsResult, marketResult, memberResult, auditResult] = await Promise.all([
+    const [metricsResult, adsResult, marketResult, memberResult, tradeResult, auditResult] = await Promise.all([
       supabase.rpc("get_admin_dashboard_metrics"),
       supabase.from("site_ads").select(AD_FIELDS).order("priority", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("marketplace_listings").select("id, name, rarity, trait, note, updated_at, discord_username, discord_display_name").order("updated_at", { ascending: false }).limit(8),
       supabase.rpc("get_admin_member_directory"),
+      supabase.rpc("get_admin_trade_activity"),
       supabase.from("admin_audit_events").select("id, action, details, created_at").order("created_at", { ascending: false }).limit(12),
     ]);
 
-    if (metricsResult.error || adsResult.error || marketResult.error || memberResult.error || auditResult.error) {
-      setMessage({ type: "error", text: metricsResult.error?.message || adsResult.error?.message || marketResult.error?.message || memberResult.error?.message || auditResult.error?.message || "Unable to load the administrator console." });
+    if (metricsResult.error || adsResult.error || marketResult.error || memberResult.error || tradeResult.error || auditResult.error) {
+      setMessage({ type: "error", text: metricsResult.error?.message || adsResult.error?.message || marketResult.error?.message || memberResult.error?.message || tradeResult.error?.message || auditResult.error?.message || "Unable to load the administrator console." });
     } else {
       setMetrics(metricsResult.data);
       setAds(adsResult.data || []);
       setMarketListings(marketResult.data || []);
       setMembers(memberResult.data || []);
+      setTrades(tradeResult.data || []);
       setAuditEvents(auditResult.data || []);
     }
     setAccess("allowed");
@@ -300,6 +304,7 @@ function Admin() {
       </section>
 
       <AdminMemberControls auditEvents={auditEvents} datePreferences={datePreferences} members={members} onUpdated={loadAdminData} />
+      <AdminTradeControls datePreferences={datePreferences} onUpdated={loadAdminData} trades={trades} />
 
       {deleteTarget && <ConfirmDialog busy={deleting} cancelLabel="Keep campaign" confirmLabel="Delete campaign" danger description={`Permanently delete “${deleteTarget.title || "this campaign"}”? It will disappear from Lumio immediately.`} onCancel={() => setDeleteTarget(null)} onConfirm={() => void deleteAd()} title="Delete this campaign?" />}
       {moderationTarget && <ConfirmDialog busy={moderating} cancelLabel="Keep listing" confirmLabel="Remove listing" danger description={`Remove ${moderationTarget.name} from the live marketplace? The owner will keep the champion in their Collection.`} onCancel={() => setModerationTarget(null)} onConfirm={() => void removeMarketListing()} title="Remove marketplace listing?" />}

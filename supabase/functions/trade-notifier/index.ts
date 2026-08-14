@@ -73,6 +73,8 @@ type TradeRecord = {
   discord_message_id?: string | null;
   sender_confirmed_at?: string | null;
   recipient_confirmed_at?: string | null;
+  admin_note?: string | null;
+  admin_cancelled_at?: string | null;
 };
 
 type ProfileRecord = {
@@ -120,10 +122,11 @@ function championField(champions: ChampionSnapshot[], emptyCopy: string) {
 
 function traderIdentity(profile?: ProfileRecord) {
   const accountName = profile?.lumio_display_name || profile?.discord_display_name || "Licensed trader";
-  const discordName = profile?.discord_display_name;
+  const discordName = profile?.discord_display_name || "Discord member";
+  const handle = profile?.discord_username ? `@${profile.discord_username}` : null;
 
-  return truncate(discordName && discordName !== accountName
-    ? `**${accountName}**\nDiscord · ${discordName}`
+  return truncate(discordName !== accountName || handle
+    ? `**${accountName}**\nDiscord · ${discordName}${handle ? ` (${handle})` : ""}`
     : `**${accountName}**`);
 }
 
@@ -142,19 +145,33 @@ function statusValue(trade: TradeRecord) {
   return `Accepted · sender ${sender} · recipient ${recipient}`;
 }
 
-function buildEmbed(trade: TradeRecord, sender?: ProfileRecord) {
+function buildEmbed(trade: TradeRecord, sender?: ProfileRecord, recipient?: ProfileRecord) {
   const requested = tradeChampions(trade);
   const offered = Array.isArray(trade.offered_champions) ? trade.offered_champions : [];
   const status = trade.status || "pending";
-  const statusMeta = STATUS_META[status] || {
-    title: "Trade updated",
-    description: "This Lumio trade was updated.",
-  };
+  const statusMeta = status === "cancelled" && trade.admin_cancelled_at
+    ? {
+      title: "Trade cancelled by Lumio",
+      description: "A Lumio administrator closed this pending offer. No champions were moved and no XP was awarded.",
+    }
+    : STATUS_META[status] || {
+      title: "Trade updated",
+      description: "This Lumio trade was updated.",
+    };
   const requestedRarity = requested[0]?.rarity;
   const progressionField = status === "completed" && trade.xp_awarded
     ? [{
       name: "Progression",
       value: `Both traders earned **${trade.xp_awarded} XP**.`,
+      inline: false,
+    }]
+    : [];
+  const resolutionField = trade.admin_cancelled_at
+    ? [{
+      name: "Resolution",
+      value: truncate(trade.admin_note
+        ? `Cancelled by Lumio moderation · ${trade.admin_note}`
+        : "Cancelled by Lumio moderation."),
       inline: false,
     }]
     : [];
@@ -166,12 +183,14 @@ function buildEmbed(trade: TradeRecord, sender?: ProfileRecord) {
       color: RARITY_COLOR[requestedRarity || ""] || 0x6f72f1,
       thumbnail: sender?.discord_avatar ? { url: sender.discord_avatar } : undefined,
       fields: [
-        { name: "Trader", value: traderIdentity(sender), inline: false },
+        { name: "Proposed by", value: traderIdentity(sender), inline: false },
+        ...(recipient ? [{ name: "For", value: traderIdentity(recipient), inline: false }] : []),
         { name: "Requested champions", value: championField(requested, "Open direct offer — no specific champion requested."), inline: false },
         { name: "Offering", value: championField(offered, "No champions were included in this offer."), inline: false },
         { name: "Trade code", value: tradeCode(trade), inline: true },
         { name: "Status", value: statusValue(trade), inline: true },
         ...progressionField,
+        ...resolutionField,
       ],
       footer: { text: "Lumio Hub · Trade coordination" },
       timestamp: trade.created_at || new Date().toISOString(),
@@ -227,15 +246,16 @@ serve(async (request) => {
     if (!supabaseUrl || !serviceKey || !webhookUrl) throw new Error("Trade notifier secrets are not fully configured");
 
     const supabase = createClient(supabaseUrl, serviceKey);
+    const profileIds = [...new Set([trade.sender_id, trade.recipient_id].filter((id): id is string => Boolean(id)))];
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", trade.sender_id)
-      .limit(1);
+      .in("id", profileIds);
 
     if (profileError) throw new Error(`Unable to load trader profile: ${profileError.message}`);
-    const sender = profiles?.[0] as ProfileRecord | undefined;
-    const message = buildEmbed(trade, sender);
+    const sender = profiles?.find((profile) => profile.id === trade.sender_id) as ProfileRecord | undefined;
+    const recipient = profiles?.find((profile) => profile.id === trade.recipient_id) as ProfileRecord | undefined;
+    const message = buildEmbed(trade, sender, recipient);
 
     if (eventType === "INSERT") {
       const discordMessage = await sendDiscordMessage(webhookUrl, message);

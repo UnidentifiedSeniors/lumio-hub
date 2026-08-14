@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import AdminCatalogControls from "../components/AdminCatalogControls";
 import AdminMemberControls from "../components/AdminMemberControls";
+import AdminOfficialMarketControls from "../components/AdminOfficialMarketControls";
 import AdminTradeControls from "../components/AdminTradeControls";
 import ChoiceMenu from "../components/ChoiceMenu";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -266,12 +267,12 @@ function Admin() {
   return (
     <Layout>
       <section className="page-heading admin-page-heading">
-        <div><p className="eyebrow">Lumio operations</p><h1>Admin Console</h1><p>Control live community announcements and review the marketplace from one secure workspace.</p></div>
+        <div><p className="eyebrow">Lumio operations</p><h1>Admin Console</h1><p>Run live campaigns, official drops, the catalog, and community operations from one secure workspace.</p></div>
         <button className="success-action" onClick={beginNewAd} type="button">Create campaign</button>
       </section>
 
       <section className="admin-metrics" aria-label="Lumio operational summary">
-        {[{ label: "Members", value: metrics?.members }, { label: "Champion copies", value: metrics?.champion_copies }, { label: "Live Shelf listings", value: metrics?.active_listings }, { label: "Pending trades", value: metrics?.pending_trades }, { label: "Live campaigns", value: metrics?.active_ads }].map((metric) => <article key={metric.label}><span>{metric.label}</span><strong>{Number(metric.value || 0).toLocaleString()}</strong></article>)}
+        {[{ label: "Members", value: metrics?.members }, { label: "Champion copies", value: metrics?.champion_copies }, { label: "Live Shelf listings", value: metrics?.active_listings }, { label: "Official drops", value: metrics?.official_drops }, { label: "Pending trades", value: metrics?.pending_trades }, { label: "Live campaigns", value: metrics?.active_ads }].map((metric) => <article key={metric.label}><span>{metric.label}</span><strong>{Number(metric.value || 0).toLocaleString()}</strong></article>)}
       </section>
 
       <section className="admin-console-grid">
@@ -305,6 +306,7 @@ function Admin() {
       </section>
 
       <AdminCatalogControls onUpdated={loadAdminData} />
+      <AdminOfficialMarketControls onUpdated={loadAdminData} />
       <AdminMemberControls auditEvents={auditEvents} datePreferences={datePreferences} members={members} onUpdated={loadAdminData} />
       <AdminTradeControls datePreferences={datePreferences} onUpdated={loadAdminData} trades={trades} />
 

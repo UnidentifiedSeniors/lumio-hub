@@ -8,6 +8,7 @@ import NotificationList from "./NotificationList";
 
 const EMPTY_SEARCH_RESULTS = {
   collection: [],
+  official: [],
   market: [],
   traders: [],
   trades: [],
@@ -155,8 +156,9 @@ function Topbar() {
         setSearchLoading(true);
         setSearchError(null);
 
-        const [collectionResult, marketResult, traderResult, tradeResult] = await Promise.all([
+        const [collectionResult, officialResult, marketResult, traderResult, tradeResult] = await Promise.all([
           supabase.from("user_champions").select("id, name, rarity, trait, updated_at").eq("owner_id", user.id).order("updated_at", { ascending: false }).limit(120),
+          supabase.from("official_marketplace_listings").select("id, name, rarity, trait, badge_label, event_title, description, created_at").order("is_featured", { ascending: false }).order("display_order", { ascending: false }).limit(120),
           supabase.from("marketplace_listings").select("id, owner_id, name, rarity, trait, lumio_display_name, discord_display_name, discord_username, created_at").order("created_at", { ascending: false }).limit(120),
           supabase.from("public_profiles").select("id, lumio_display_name, discord_display_name, discord_username, rank, xp").order("xp", { ascending: false }).limit(120),
           supabase.from("trades").select("id, trade_code, status, sender_id, recipient_id, requested_champion, requested_champions, offered_champions, updated_at").or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`).order("updated_at", { ascending: false }).limit(120),
@@ -164,11 +166,12 @@ function Topbar() {
 
         if (!active) return;
 
-        const sourceError = [collectionResult, marketResult, traderResult, tradeResult].find((result) => result.error)?.error;
+        const sourceError = [collectionResult, officialResult, marketResult, traderResult, tradeResult].find((result) => result.error)?.error;
         if (sourceError) setSearchError(sourceError.message || "Unable to search every Lumio area right now.");
 
         setSearchResults({
           collection: (collectionResult.data || []).filter((champion) => matchesSearch(champion, ["name", "rarity", "trait"], query)).slice(0, 3),
+          official: (officialResult.data || []).filter((drop) => matchesSearch(drop, ["name", "rarity", "trait", "badge_label", "event_title", "description"], query)).slice(0, 3),
           market: (marketResult.data || []).filter((listing) => listing.owner_id !== user.id && matchesSearch(listing, ["name", "rarity", "trait", "lumio_display_name", "discord_display_name", "discord_username"], query)).slice(0, 3),
           traders: (traderResult.data || []).filter((trader) => trader.id !== user.id && matchesSearch(trader, ["lumio_display_name", "discord_display_name", "discord_username", "rank"], query)).slice(0, 3),
           trades: (tradeResult.data || []).filter((trade) => tradeMatchesSearch(trade, query)).slice(0, 3),
@@ -255,7 +258,7 @@ function Topbar() {
             aria-label="Search Lumio Hub"
             onChange={(event) => { setSearch(event.target.value); setSearchOpen(true); }}
             onFocus={() => setSearchOpen(true)}
-            placeholder="Search champions, traders, and trades"
+            placeholder="Search champions, drops, traders, and trades"
             ref={searchInputRef}
             type="search"
             value={search}
@@ -265,7 +268,7 @@ function Topbar() {
         {searchOpen && (
           <section aria-label="Lumio search results" className="global-search-panel" id="global-search-results" role="dialog">
             {search.trim().length < 2 ? (
-              <p className="global-search-empty">Type at least two characters to search your Collection, the Market, traders, and your trade activity.</p>
+              <p className="global-search-empty">Type at least two characters to search your Collection, Official Drops, the Market, traders, and trade activity.</p>
             ) : searchLoading ? (
               <p className="global-search-empty">Searching Lumio...</p>
             ) : (
@@ -274,6 +277,7 @@ function Topbar() {
                 {hasSearchResults ? (
                   <div className="global-search-groups">
                     {searchResults.collection.length > 0 && <section className="global-search-group"><p>Your Collection</p>{searchResults.collection.map((champion) => <button className="global-search-result" key={champion.id} onClick={() => openSearchResult(`/collection?search=${encodeURIComponent(champion.name)}`)} type="button"><span className="global-search-result-kind">Collection</span><span><strong>{champion.name}</strong><small>{champion.rarity} · {champion.trait || "Standard"}</small></span></button>)}</section>}
+                    {searchResults.official.length > 0 && <section className="global-search-group"><p>Official Drops</p>{searchResults.official.map((drop) => <button className="global-search-result" key={drop.id} onClick={() => openSearchResult(`/trades?drop=${drop.id}`)} type="button"><span className="global-search-result-kind">Official</span><span><strong>{drop.name}</strong><small>{drop.rarity} · {drop.trait || "Standard"}{drop.event_title ? ` · ${drop.event_title}` : ""}</small></span></button>)}</section>}
                     {searchResults.market.length > 0 && <section className="global-search-group"><p>Live Market</p>{searchResults.market.map((listing) => <button className="global-search-result" key={listing.id} onClick={() => openSearchResult(`/trades?listing=${listing.id}`)} type="button"><span className="global-search-result-kind">Market</span><span><strong>{listing.name}</strong><small>{listing.rarity} · {listing.trait || "Standard"} · {listing.lumio_display_name || listing.discord_display_name || listing.discord_username || "Licensed trader"}</small></span></button>)}</section>}
                     {searchResults.traders.length > 0 && <section className="global-search-group"><p>Traders</p>{searchResults.traders.map((trader) => { const name = trader.lumio_display_name || trader.discord_display_name || trader.discord_username || "Licensed trader"; return <button className="global-search-result" key={trader.id} onClick={() => openSearchResult(`/trader/${trader.id}`)} type="button"><span className="global-search-result-kind">Trader</span><span><strong>{name}</strong><small>{trader.rank || "Rookie Trader"} · {Number(trader.xp || 0).toLocaleString()} XP</small></span></button>; })}</section>}
                     {searchResults.trades.length > 0 && <section className="global-search-group"><p>Your Trade Activity</p>{searchResults.trades.map((trade) => { const isSender = trade.sender_id === user?.id; const path = ["pending", "accepted"].includes(trade.status) ? (isSender ? "/sent-trades" : "/received-trades") : "/history"; return <button className="global-search-result" key={trade.id} onClick={() => openSearchResult(path)} type="button"><span className="global-search-result-kind">Trade</span><span><strong>{trade.trade_code ? `#${trade.trade_code}` : "Trade offer"} · {trade.status}</strong><small>{requestedTradeLabel(trade)}</small></span></button>; })}</section>}

@@ -6,7 +6,8 @@ import ListingArtwork from "../components/ListingArtwork";
 import OfferComposer from "../components/OfferComposer";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
-import { getChampionTraits, getListingCode, getOwnedChampionValue } from "../utils/marketplace";
+import { getDatePreferences } from "../utils/datePreferences";
+import { formatDateTime, getChampionTraits, getListingCode, getOwnedChampionValue } from "../utils/marketplace";
 
 const hiddenListingsKey = (userId) => `lumio-market-hidden-listings:${userId}`;
 const blockedTradersKey = (userId) => `lumio-market-blocked-traders:${userId}`;
@@ -46,9 +47,11 @@ async function copyText(value) {
 }
 
 function Trading() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const datePreferences = getDatePreferences(profile);
   const [searchParams] = useSearchParams();
   const [listings, setListings] = useState([]);
+  const [officialDrops, setOfficialDrops] = useState([]);
   const [ownedChampions, setOwnedChampions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,6 +66,7 @@ function Trading() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const menuRef = useRef(null);
   const sharedListingId = searchParams.get("listing");
+  const sharedDropId = searchParams.get("drop");
   const discordInviteUrl = import.meta.env.VITE_DISCORD_INVITE_URL?.trim();
 
   useEffect(() => {
@@ -97,15 +101,17 @@ function Trading() {
     setLoading(true);
     setError(null);
 
-    const [listingsResult, ownedResult] = await Promise.all([
+    const [listingsResult, officialDropsResult, ownedResult] = await Promise.all([
       supabase.from("marketplace_listings").select("*").order("created_at", { ascending: false }),
+      supabase.from("official_marketplace_listings").select("*").order("is_featured", { ascending: false }).order("event_is_featured", { ascending: false }).order("display_order", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("user_champions").select("*").eq("owner_id", user.id).order("updated_at", { ascending: false }),
     ]);
 
-    if (listingsResult.error || ownedResult.error) {
-      setError(listingsResult.error?.message || ownedResult.error?.message || "Unable to load the marketplace.");
+    if (listingsResult.error || officialDropsResult.error || ownedResult.error) {
+      setError(listingsResult.error?.message || officialDropsResult.error?.message || ownedResult.error?.message || "Unable to load the marketplace.");
     } else {
       setListings(listingsResult.data || []);
+      setOfficialDrops(officialDropsResult.data || []);
       setOwnedChampions(ownedResult.data || []);
     }
     setLoading(false);
@@ -142,11 +148,25 @@ function Trading() {
     return [...traders.values()];
   }, [blockedTraderIds, listings]);
 
+  const visibleOfficialDrops = useMemo(() => {
+    const normalizedQuery = search.trim().toLowerCase();
+    if (!normalizedQuery) return officialDrops;
+    return officialDrops.filter((drop) => [drop.name, drop.rarity, drop.trait, drop.badge_label, drop.event_title, drop.event_summary, drop.description]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(normalizedQuery)));
+  }, [officialDrops, search]);
+
   useEffect(() => {
     if (!sharedListingId || loading || !visibleListings.some((listing) => listing.id === sharedListingId)) return;
     const listingCard = document.getElementById(`listing-${sharedListingId}`);
     listingCard?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [loading, sharedListingId, visibleListings]);
+
+  useEffect(() => {
+    if (!sharedDropId || loading || !visibleOfficialDrops.some((drop) => drop.id === sharedDropId)) return;
+    const dropCard = document.getElementById(`official-drop-${sharedDropId}`);
+    dropCard?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [loading, sharedDropId, visibleOfficialDrops]);
 
   const openOffer = (listing) => {
     setError(null);
@@ -236,9 +256,9 @@ function Trading() {
     <Layout>
       <section className="page-heading page-heading-split">
         <div>
-          <p className="eyebrow">Live community listings</p>
+          <p className="eyebrow">Official drops & community listings</p>
           <h1>Market</h1>
-          <p>Browse champions other licensed members have placed on Shelf, then send a private multi-champion offer.</p>
+          <p>Discover Lumio’s official releases, then browse champions licensed members have placed on Shelf for private offers.</p>
         </div>
         <label className="market-search">
           <span>Search</span>
@@ -247,6 +267,7 @@ function Trading() {
       </section>
 
       <section className="marketplace-summary">
+        <span><strong>{officialDrops.length}</strong> official drops</span>
         <span><strong>{listings.length}</strong> active community listings</span>
         <span><strong>{ownedChampions.length}</strong> champions ready to offer</span>
         <span>Offers are private until accepted</span>
@@ -258,55 +279,21 @@ function Trading() {
 
       {loading ? (
         <p className="loading-copy">Loading live listings...</p>
-      ) : visibleListings.length === 0 ? (
-        <section className="empty-state marketplace-empty-state">
-          <span className="empty-state-icon">⇄</span>
-          <h2>{listings.length ? "No listings match that search" : "The marketplace is quiet right now"}</h2>
-          <p>{listings.length ? "Try a different champion, trait, or trader name." : "Create your own Shelf listing to be ready when other licensed traders arrive."}</p>
-        </section>
       ) : (
-        <section className="marketplace-grid">
-          {visibleListings.map((listing) => {
+        <>
+          {visibleOfficialDrops.length > 0 && <section className="official-market-section" aria-labelledby="official-drops-heading"><header className="official-market-heading"><div><p className="eyebrow">Lumio official</p><h2 id="official-drops-heading">Official Drops</h2><p>Rare releases and event opportunities curated by Lumio—not player-owned Shelf listings.</p></div><span>{visibleOfficialDrops.length} live</span></header><div className="official-market-grid">{visibleOfficialDrops.map((drop) => {
+            const isSoldOut = drop.quantity_total !== null && Number(drop.quantity_remaining ?? drop.quantity_total) <= 0;
+            const accent = drop.accent_color || drop.event_accent_color || "#777cff";
+            const ctaIsExternal = drop.cta_url?.startsWith("http");
+            return <article className={`official-drop-card${drop.is_featured || drop.event_is_featured ? " is-featured" : ""}${isSoldOut ? " is-sold-out" : ""}`} id={`official-drop-${drop.id}`} key={drop.id} style={{ "--official-accent": accent }}><div className="card-topline"><span className="official-drop-label">Lumio official</span><span className="listing-status official-drop-status">{isSoldOut ? "Allocated" : drop.badge_label}</span></div>{drop.event_title && <span className="official-event-name">{drop.event_title}</span>}<span className="listing-code">Official · {drop.slug.toUpperCase()}</span><ListingArtwork imageUrl={drop.image_url} name={drop.name} rarity={drop.rarity} trait={drop.trait || "Standard"} /><h2>{drop.name}</h2><div className="traits card-traits"><span className="trait">✦ {drop.trait || "Standard"}</span></div>{drop.description && <p className="listing-note">{drop.description}</p>}{!drop.description && drop.event_summary && <p className="listing-note">{drop.event_summary}</p>}<div className="official-drop-details">{drop.quantity_total !== null && <span><strong>{Number(drop.quantity_remaining ?? drop.quantity_total).toLocaleString()}</strong> of {Number(drop.quantity_total).toLocaleString()} remaining</span>}{drop.availability_note && <span>{drop.availability_note}</span>}{drop.ends_at && <span>Ends {formatDateTime(drop.ends_at, datePreferences)}</span>}</div><div className="official-drop-footer"><span>{drop.reference_value > 0 ? `◈ ${Number(drop.reference_value).toLocaleString()} reference value` : "Official release"}</span>{drop.cta_url && !isSoldOut ? <a className="success-action" href={drop.cta_url} rel={ctaIsExternal ? "noreferrer" : undefined} target={ctaIsExternal ? "_blank" : undefined}>{drop.cta_label}</a> : <span className="official-drop-unavailable">{isSoldOut ? "All available copies allocated" : "Details coming soon"}</span>}</div></article>;
+          })}</div></section>}
+
+          <section className="community-market-section" aria-labelledby="community-listings-heading"><header className="community-market-heading"><div><p className="eyebrow">Trader marketplace</p><h2 id="community-listings-heading">Community listings</h2><p>Private offers stay between licensed traders until accepted.</p></div></header>{visibleListings.length === 0 ? <section className="empty-state marketplace-empty-state"><span className="empty-state-icon">⇄</span><h2>{listings.length ? "No community listings match that search" : officialDrops.length ? "No community listings yet" : "The marketplace is quiet right now"}</h2><p>{listings.length ? "Try a different champion, trait, or trader name." : "Create your own Shelf listing to be ready when other licensed traders arrive."}</p></section> : <section className="marketplace-grid">{visibleListings.map((listing) => {
             const traits = getChampionTraits(listing);
             const sellerName = listing.lumio_display_name || listing.discord_display_name || listing.discord_username || "Licensed trader";
-            return (
-              <article className={`marketplace-card${sharedListingId === listing.id ? " shared-listing" : ""}`} id={`listing-${listing.id}`} key={listing.id}>
-                <div className="card-topline">
-                  <span className={`rarity-badge rarity-${listing.rarity.toLowerCase().replaceAll(" ", "-")}`}>{listing.rarity}</span>
-                  <span className="listing-status listing-active">Live on Shelf</span>
-                </div>
-                <span className="listing-code">Listing {getListingCode(listing.id)}</span>
-                <ListingArtwork imageUrl={listing.image_url} name={listing.name} rarity={listing.rarity} trait={traits[0] || "Standard"} />
-                <h2>{listing.name}</h2>
-                <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
-                <p className="market-value">◈ {getOwnedChampionValue(listing).toLocaleString()}</p>
-                {listing.note && <p className="listing-note">“{listing.note}”</p>}
-                <Link className="seller-row" to={`/trader/${listing.owner_id}`}>
-                  {listing.discord_avatar ? <img alt="" src={listing.discord_avatar} /> : <span>{sellerName.charAt(0).toUpperCase()}</span>}
-                  <div><small>Listed by</small><strong>{sellerName}</strong>{listing.discord_display_name && <em>Discord · {listing.discord_display_name}</em>}</div>
-                </Link>
-                <div className="listing-card-actions">
-                  <button className="primary-action" onClick={() => openOffer(listing)} type="button">Make an offer</button>
-                  <div className="listing-menu-wrap" ref={openMenuId === listing.id ? menuRef : null}>
-                    <button aria-controls={`listing-menu-${listing.id}`} aria-expanded={openMenuId === listing.id} aria-haspopup="menu" className="listing-menu-trigger" onClick={() => setOpenMenuId((current) => current === listing.id ? null : listing.id)} type="button">
-                      <span className="sr-only">More actions for {listing.name}</span>
-                      <span aria-hidden="true">•••</span>
-                    </button>
-                    {openMenuId === listing.id && (
-                      <div className="listing-action-menu" id={`listing-menu-${listing.id}`} role="menu">
-                        <button onClick={() => hideListing(listing)} role="menuitem" type="button">Don&apos;t show again</button>
-                        <button onClick={() => { setOpenMenuId(null); setReportTarget(listing); }} role="menuitem" type="button">Report listing</button>
-                        <button onClick={() => { setOpenMenuId(null); setBlockTarget(listing); }} role="menuitem" type="button">Block trader</button>
-                        <button onClick={() => void copyListingLink(listing)} role="menuitem" type="button">Copy listing link</button>
-                        <Link onClick={() => setOpenMenuId(null)} role="menuitem" to={`/trader/${listing.owner_id}`}>View trader profile</Link>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </section>
+            return <article className={`marketplace-card${sharedListingId === listing.id ? " shared-listing" : ""}`} id={`listing-${listing.id}`} key={listing.id}><div className="card-topline"><span className={`rarity-badge rarity-${listing.rarity.toLowerCase().replaceAll(" ", "-")}`}>{listing.rarity}</span><span className="listing-status listing-active">Live on Shelf</span></div><span className="listing-code">Listing {getListingCode(listing.id)}</span><ListingArtwork imageUrl={listing.image_url} name={listing.name} rarity={listing.rarity} trait={traits[0] || "Standard"} /><h2>{listing.name}</h2><div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div><p className="market-value">◈ {getOwnedChampionValue(listing).toLocaleString()}</p>{listing.note && <p className="listing-note">“{listing.note}”</p>}<Link className="seller-row" to={`/trader/${listing.owner_id}`}>{listing.discord_avatar ? <img alt="" src={listing.discord_avatar} /> : <span>{sellerName.charAt(0).toUpperCase()}</span>}<div><small>Listed by</small><strong>{sellerName}</strong>{listing.discord_display_name && <em>Discord · {listing.discord_display_name}</em>}</div></Link><div className="listing-card-actions"><button className="primary-action" onClick={() => openOffer(listing)} type="button">Make an offer</button><div className="listing-menu-wrap" ref={openMenuId === listing.id ? menuRef : null}><button aria-controls={`listing-menu-${listing.id}`} aria-expanded={openMenuId === listing.id} aria-haspopup="menu" className="listing-menu-trigger" onClick={() => setOpenMenuId((current) => current === listing.id ? null : listing.id)} type="button"><span className="sr-only">More actions for {listing.name}</span><span aria-hidden="true">•••</span></button>{openMenuId === listing.id && <div className="listing-action-menu" id={`listing-menu-${listing.id}`} role="menu"><button onClick={() => hideListing(listing)} role="menuitem" type="button">Don&apos;t show again</button><button onClick={() => { setOpenMenuId(null); setReportTarget(listing); }} role="menuitem" type="button">Report listing</button><button onClick={() => { setOpenMenuId(null); setBlockTarget(listing); }} role="menuitem" type="button">Block trader</button><button onClick={() => void copyListingLink(listing)} role="menuitem" type="button">Copy listing link</button><Link onClick={() => setOpenMenuId(null)} role="menuitem" to={`/trader/${listing.owner_id}`}>View trader profile</Link></div>}</div></div></article>;
+          })}</section>}</section>
+        </>
       )}
 
       {offerTarget && <OfferComposer onClose={() => setOfferTarget(null)} onSent={(code) => { setOfferTarget(null); setSuccessMessage(`Offer ${code ? `#${code}` : "sent"} is now in the trader’s Received Trades.`); }} target={offerTarget} />}

@@ -18,6 +18,7 @@ function TraderProfile() {
   const { user } = useAuth();
   const [trader, setTrader] = useState(null);
   const [listings, setListings] = useState([]);
+  const [publicCollection, setPublicCollection] = useState([]);
   const [traderStats, setTraderStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,12 +51,32 @@ function TraderProfile() {
     if (profileResult.error || listingsResult.error) {
       setError(profileResult.error?.message || listingsResult.error?.message || "Unable to load this trader profile.");
     } else {
-      setTrader(profileResult.data);
+      const profileData = profileResult.data;
+      const canViewCollection = profileData?.collection_visibility === "public" || profileData?.id === user?.id;
+
+      if (canViewCollection) {
+        const { data: collectionData, error: collectionError } = await supabase
+          .from("user_champions")
+          .select("id, name, image_url, rarity, trait, base_value, market_adjustment, updated_at")
+          .eq("owner_id", traderId)
+          .order("updated_at", { ascending: false });
+
+        if (collectionError) {
+          setError(collectionError.message || "Unable to load this trader's Collection.");
+          setLoading(false);
+          return;
+        }
+        setPublicCollection(collectionData || []);
+      } else {
+        setPublicCollection([]);
+      }
+
+      setTrader(profileData);
       setListings(listingsResult.data || []);
       setTraderStats(statsResult.data || null);
     }
     setLoading(false);
-  }, [traderId]);
+  }, [traderId, user?.id]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -83,6 +104,8 @@ function TraderProfile() {
 
   const displayName = trader.lumio_display_name || trader.discord_display_name || trader.discord_username || "Licensed trader";
   const isOwnProfile = user?.id === trader.id;
+  const collectionIsPublic = trader.collection_visibility === "public";
+  const canViewCollection = isOwnProfile || collectionIsPublic;
   const directOffersEnabled = trader.direct_offers_enabled !== false;
   const openDirectOffer = () => {
     setSuccessMessage(null);
@@ -122,14 +145,14 @@ function TraderProfile() {
 
       <section className="trader-profile-stats" aria-label={`${displayName}'s public trading summary`}>
         <article><span>Completed trades</span><strong>{formatCount(traderStats?.completed_trade_count)}</strong><small>Confirmed in-game exchanges</small></article>
-        <article><span>Collection</span><strong>{formatCount(traderStats?.collection_count)}</strong><small>Private champion copies</small></article>
+        <article><span>Collection</span><strong>{canViewCollection ? formatCount(traderStats?.collection_count) : "Private"}</strong><small>{collectionIsPublic ? "Champion copies shared publicly" : isOwnProfile ? "Private to other traders" : "This trader keeps it private"}</small></article>
         <article><span>Active listings</span><strong>{formatCount(traderStats?.active_listing_count ?? listings.length)}</strong><small>Available on Shelf</small></article>
       </section>
 
       <section className="page-heading profile-listings-heading">
         <p className="eyebrow">Public Shelf</p>
         <h2>{isOwnProfile ? "Your active listings" : `${displayName}'s active listings`}</h2>
-        <p>Only champions this trader chose to list are visible here. Their private Collection remains private.</p>
+        <p>Only champions this trader chose to list are visible here. Collection visibility is managed separately.</p>
       </section>
 
       {successMessage && <p className="form-success" role="status">{successMessage}</p>}
@@ -155,6 +178,43 @@ function TraderProfile() {
                 <p className="market-value">◈ {getOwnedChampionValue(listing).toLocaleString()}</p>
                 {listing.note && <p className="listing-note">“{listing.note}”</p>}
                 {!isOwnProfile && <button className="primary-action card-action" onClick={() => openListingOffer(listing)} type="button">Make an offer</button>}
+              </article>
+            );
+          })}
+        </section>
+      )}
+
+      <section className="public-collection-heading">
+        <div>
+          <p className="eyebrow">Collection</p>
+          <h2>{isOwnProfile ? "Your recorded champions" : `${displayName}'s recorded champions`}</h2>
+          <p>{canViewCollection ? "Champion copies recorded in Lumio, including their trait and current calculated value." : "This trader has chosen not to share their recorded champions publicly."}</p>
+        </div>
+        <span className={`collection-visibility-badge${collectionIsPublic ? " is-public" : " is-private"}`}>{collectionIsPublic ? "Public Collection" : isOwnProfile ? "Private to others" : "Private Collection"}</span>
+      </section>
+
+      {!canViewCollection ? (
+        <section className="collection-privacy-panel">
+          <span className="collection-privacy-icon" aria-hidden="true">⌾</span>
+          <div><h3>Collection is private</h3><p>{displayName} has kept their recorded champion copies private. Their live Shelf listings remain available above.</p></div>
+        </section>
+      ) : publicCollection.length === 0 ? (
+        <section className="collection-privacy-panel">
+          <span className="collection-privacy-icon" aria-hidden="true">⌁</span>
+          <div><h3>No champions recorded yet</h3><p>{isOwnProfile ? "Add champions in Collection to build the inventory other traders can see when you make it public." : "This trader has not recorded any champion copies yet."}</p></div>
+        </section>
+      ) : (
+        <section className="public-collection-grid">
+          {publicCollection.map((champion) => {
+            const traits = getChampionTraits(champion);
+            const rarity = champion.rarity || "AFS Champion";
+            return (
+              <article className="public-collection-card" key={champion.id}>
+                <div className="card-topline"><span className={`rarity-badge rarity-${rarity.toLowerCase().replaceAll(" ", "-")}`}>{rarity}</span><span className="collection-copy-label">Collection copy</span></div>
+                <ListingArtwork imageUrl={champion.image_url} name={champion.name} rarity={rarity} trait={traits[0] || "Standard"} />
+                <h3>{champion.name}</h3>
+                <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
+                <p className="market-value">◈ {getOwnedChampionValue(champion).toLocaleString()}</p>
               </article>
             );
           })}

@@ -5,6 +5,7 @@ import Layout from "../components/Layout";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { getDiscordIdentity } from "../utils/discordIdentity";
+import { formatDisplayNameChangeTime, getDisplayNameChangeState } from "../utils/displayNameCooldown";
 import getRank from "../utils/rankCalculator";
 import getXPProgress from "../utils/xpProgress";
 
@@ -15,6 +16,7 @@ function ProfileIcon({ name }) {
     collection: <><rect x="4" y="5" width="16" height="14" rx="2" /><path d="M8 5V3h8v2" /><path d="M8 10h8" /><path d="M8 14h5" /></>,
     discord: <><path d="M8 7.5a15 15 0 0 1 8 0l1.5 8.5-3.1 1.9-1.4-1.1h-2l-1.4 1.1L6.5 16z" /><path d="M9.5 12h.01" /><path d="M14.5 12h.01" /></>,
     badge: <><circle cx="12" cy="10" r="6" /><path d="m8.5 15.1-1 5 4.5-2.4 4.5 2.4-1-5" /></>,
+    edit: <><path d="m14.5 5.5 4 4" /><path d="M5 19l3.2-.7L19 7.5a2.8 2.8 0 0 0-4-4L4.2 14.3z" /><path d="M4 20h16" /></>,
   };
 
   return <svg aria-hidden="true" className="profile-icon" viewBox="0 0 24 24">{paths[name]}</svg>;
@@ -48,8 +50,11 @@ function Profile() {
 
   const avatar = profile?.discord_avatar || discordIdentity.avatar;
   const displayNameFeatureEnabled = Object.hasOwn(profile || {}, "lumio_display_name");
+  const displayNameChange = getDisplayNameChangeState(profile?.lumio_display_name_changed_at);
+  const nextDisplayNameChange = formatDisplayNameChangeTime(displayNameChange.availableAt);
 
   const openDisplayNameEditor = () => {
+    if (!displayNameChange.canChange) return;
     setDisplayNameDraft(displayName);
     setDisplayNameError(null);
     setDisplayNameEditorOpen(true);
@@ -58,6 +63,11 @@ function Profile() {
   const saveDisplayName = async (event) => {
     event.preventDefault();
     if (!user) return;
+
+    if (!displayNameChange.canChange) {
+      setDisplayNameError(`Your next display-name change is available ${nextDisplayNameChange}.`);
+      return;
+    }
 
     const nextName = displayNameDraft.trim().replace(/\s+/g, " ");
     if (nextName.length < 2 || nextName.length > 32) {
@@ -124,7 +134,10 @@ function Profile() {
         </div>
         <div className="profile-hero-actions">
           {user && <Link className="secondary-action" to={`/trader/${user.id}`}>View public profile</Link>}
-          {displayNameFeatureEnabled ? <button className="profile-settings-link" onClick={openDisplayNameEditor} type="button">Edit display name</button> : <Link className="profile-settings-link" to="/settings">Account settings</Link>}
+          {displayNameFeatureEnabled ? <>
+            <button aria-label="Edit Lumio display name" className="profile-edit-display-name" disabled={!displayNameChange.canChange} onClick={openDisplayNameEditor} title={displayNameChange.canChange ? "Edit Lumio display name" : `Available ${nextDisplayNameChange}`} type="button"><ProfileIcon name="edit" /><span>Edit display name</span></button>
+            {!displayNameChange.canChange && <small className="profile-name-cooldown">Available {nextDisplayNameChange}</small>}
+          </> : <Link className="profile-settings-link" to="/settings">Account settings</Link>}
         </div>
       </section>
 
@@ -144,7 +157,7 @@ function Profile() {
         <article className="profile-metric">
           <div className="profile-metric-heading"><span className="profile-metric-icon"><ProfileIcon name="collection" /></span><span>Collection</span></div>
           <strong>{collectionCount.toLocaleString()}</strong>
-          <p>Champion copies available in your private inventory.</p>
+          <p>Champion copies you have recorded in Lumio.</p>
         </article>
       </section>
 
@@ -179,7 +192,7 @@ function Profile() {
             {displayNameError && <p className="inline-error" role="alert">{displayNameError}</p>}
             <div className="modal-buttons">
               <button className="secondary-action" disabled={savingDisplayName} onClick={() => setDisplayNameEditorOpen(false)} type="button">Cancel</button>
-              <button className="primary-action" disabled={savingDisplayName || !displayNameDraft.trim()} type="submit">{savingDisplayName ? "Saving…" : "Save display name"}</button>
+              <button className="primary-action" disabled={savingDisplayName || !displayNameDraft.trim() || !displayNameChange.canChange} type="submit">{savingDisplayName ? "Saving…" : "Save display name"}</button>
             </div>
           </form>
         </div>

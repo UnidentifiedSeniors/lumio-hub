@@ -2081,6 +2081,10 @@ a.trade-participant:hover {
   line-height: 1.45;
 }
 
+.display-name-card > .display-name-cooldown {
+  color: #d9b56b;
+}
+
 .display-name-card .inline-success,
 .display-name-card .inline-error {
   margin-top: 8px !important;
@@ -2136,6 +2140,16 @@ a.trade-participant:hover {
   color: #858da4;
   font-size: 0.66rem;
   line-height: 1.35;
+}
+
+.collection-privacy-card {
+  min-height: 274px;
+}
+
+.collection-privacy-note {
+  color: #7e879e;
+  font-size: 0.66rem;
+  line-height: 1.45;
 }
 
 .preference-switch {
@@ -4038,6 +4052,138 @@ a.trade-participant:hover {
   margin-top: 6px;
 }
 
+.public-collection-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 38px 0 14px;
+}
+
+.public-collection-heading .eyebrow {
+  margin-bottom: 6px;
+}
+
+.public-collection-heading h2 {
+  margin: 0;
+  color: #f2f4fc;
+  font-size: 1.2rem;
+}
+
+.public-collection-heading p:last-child {
+  max-width: 620px;
+  margin: 6px 0 0;
+  color: #9199b0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.collection-visibility-badge,
+.collection-copy-label {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #aeb6cc;
+  font-size: 0.64rem;
+  font-weight: 760;
+  letter-spacing: 0.045em;
+  padding: 5px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.collection-visibility-badge.is-public {
+  border-color: rgba(81, 215, 169, 0.26);
+  background: rgba(66, 212, 160, 0.08);
+  color: #7ce3b7;
+}
+
+.collection-visibility-badge.is-private {
+  border-color: rgba(224, 184, 99, 0.22);
+  background: rgba(211, 164, 71, 0.08);
+  color: #dcbb77;
+}
+
+.public-collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.public-collection-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 15px;
+  background: rgba(19, 22, 34, 0.76);
+  padding: 13px;
+}
+
+.public-collection-card .card-topline {
+  margin-bottom: 9px;
+}
+
+.collection-copy-label {
+  border-color: rgba(116, 125, 255, 0.18);
+  background: rgba(102, 108, 238, 0.07);
+  color: #aeb3ff;
+}
+
+.public-collection-card .listing-artwork {
+  height: 122px;
+  margin-bottom: 13px;
+}
+
+.public-collection-card h3 {
+  overflow: hidden;
+  margin: 0 0 9px;
+  color: #f2f4fb;
+  font-size: 0.93rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-collection-card .market-value {
+  margin: 12px 0 0;
+}
+
+.collection-privacy-panel {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid rgba(224, 184, 99, 0.18);
+  border-radius: 15px;
+  background: linear-gradient(120deg, rgba(69, 55, 36, 0.34), rgba(19, 22, 34, 0.72));
+  padding: 19px;
+}
+
+.collection-privacy-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(229, 189, 107, 0.26);
+  border-radius: 11px;
+  color: #e1bd76;
+  font-size: 1.1rem;
+}
+
+.collection-privacy-panel h3 {
+  margin: 0 0 4px;
+  color: #eff1fa;
+  font-size: 0.92rem;
+}
+
+.collection-privacy-panel p {
+  margin: 0;
+  color: #9ba2b6;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
 .seller-row {
   text-decoration: none;
 }
@@ -4132,6 +4278,42 @@ a.trade-participant:hover {
 
 .profile-hero-actions .secondary-action {
   white-space: nowrap;
+}
+
+.profile-edit-display-name {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  border: 0;
+  background: transparent;
+  color: #b8bcff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.73rem;
+  font-weight: 720;
+  padding: 2px 0;
+  text-align: inherit;
+}
+
+.profile-edit-display-name .profile-icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.9;
+}
+
+.profile-edit-display-name:hover:not(:disabled) {
+  color: #fff;
+}
+
+.profile-edit-display-name:disabled {
+  color: #737b91;
+  cursor: not-allowed;
+}
+
+.profile-name-cooldown {
+  color: #c9a866;
+  font-size: 0.64rem;
 }
 
 .profile-settings-link,
@@ -4622,6 +4804,7 @@ hr {
   .champion-grid,
   .profile-grid,
   .collection-grid,
+  .public-collection-grid,
   .shelf-grid,
   .marketplace-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4868,6 +5051,11 @@ hr {
 
   .trader-profile-stats {
     grid-template-columns: 1fr;
+  }
+
+  .public-collection-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .profile-hero {

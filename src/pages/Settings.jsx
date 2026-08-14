@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
+import { formatDisplayNameChangeTime, getDisplayNameChangeState } from "../utils/displayNameCooldown";
 
 async function edgeFunctionErrorMessage(data, error, fallback) {
   if (data?.error) return data.error;
@@ -32,10 +33,16 @@ function Settings() {
   const [notificationPreferenceMessage, setNotificationPreferenceMessage] = useState(null);
   const [savingDirectOffers, setSavingDirectOffers] = useState(false);
   const [directOfferMessage, setDirectOfferMessage] = useState(null);
+  const [savingCollectionVisibility, setSavingCollectionVisibility] = useState(false);
+  const [collectionVisibilityMessage, setCollectionVisibilityMessage] = useState(null);
   const displayNameFeatureEnabled = Object.hasOwn(profile || {}, "lumio_display_name");
   const notificationPreferencesFeatureEnabled = Object.hasOwn(profile || {}, "notification_preferences");
   const directOfferPreferenceFeatureEnabled = Object.hasOwn(profile || {}, "direct_offers_enabled");
+  const collectionVisibilityFeatureEnabled = Object.hasOwn(profile || {}, "collection_visibility");
   const directOffersEnabled = profile?.direct_offers_enabled !== false;
+  const collectionVisibility = profile?.collection_visibility === "public" ? "public" : "private";
+  const displayNameChange = getDisplayNameChangeState(profile?.lumio_display_name_changed_at);
+  const nextDisplayNameChange = formatDisplayNameChangeTime(displayNameChange.availableAt);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -82,6 +89,11 @@ function Settings() {
     event.preventDefault();
     const nextName = lumioDisplayName.trim().replace(/\s+/g, " ");
 
+    if (!displayNameChange.canChange) {
+      setDisplayNameMessage({ type: "error", text: `Your next display-name change is available ${nextDisplayNameChange}.` });
+      return;
+    }
+
     if (nextName.length < 2 || nextName.length > 32) {
       setDisplayNameMessage({ type: "error", text: "Use a display name between 2 and 32 characters." });
       return;
@@ -102,6 +114,32 @@ function Settings() {
       setDisplayNameMessage({ type: "success", text: "Your Lumio display name has been updated." });
     }
     setSavingDisplayName(false);
+  };
+
+  const toggleCollectionVisibility = async () => {
+    if (!user || savingCollectionVisibility) return;
+
+    const nextVisibility = collectionVisibility === "public" ? "private" : "public";
+    setSavingCollectionVisibility(true);
+    setCollectionVisibilityMessage(null);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ collection_visibility: nextVisibility })
+      .eq("id", user.id);
+
+    if (error) {
+      setCollectionVisibilityMessage({ type: "error", text: error.message || "Unable to update collection visibility." });
+    } else {
+      await refreshProfile();
+      setCollectionVisibilityMessage({
+        type: "success",
+        text: nextVisibility === "public"
+          ? "Your Collection is now visible on your public trader profile."
+          : "Your Collection is now private. Active Shelf listings stay public.",
+      });
+    }
+    setSavingCollectionVisibility(false);
   };
 
   const toggleNotificationPreference = async (preference) => {
@@ -175,15 +213,16 @@ function Settings() {
               <form className="display-name-form" onSubmit={saveDisplayName}>
                 <label className="sr-only" htmlFor="lumio-display-name">Lumio display name</label>
                 <input
-                  disabled={savingDisplayName}
+                  disabled={savingDisplayName || !displayNameChange.canChange}
                   id="lumio-display-name"
                   maxLength="32"
                   onChange={(event) => setLumioDisplayName(event.target.value)}
                   value={lumioDisplayName}
                 />
-                <button className="secondary-action" disabled={savingDisplayName || !lumioDisplayName.trim()} type="submit">{savingDisplayName ? "Saving…" : "Save display name"}</button>
+                <button className="secondary-action" disabled={savingDisplayName || !lumioDisplayName.trim() || !displayNameChange.canChange} type="submit">{savingDisplayName ? "Saving…" : "Save display name"}</button>
               </form>
               <small>Your Discord display name stays underneath and is not changed here.</small>
+              {!displayNameChange.canChange && <small className="display-name-cooldown">Next change available {nextDisplayNameChange}.</small>}
               {displayNameMessage && <p className={displayNameMessage.type === "success" ? "inline-success" : "inline-error"} role={displayNameMessage.type === "success" ? "status" : "alert"}>{displayNameMessage.text}</p>}
             </>
           ) : (
@@ -240,6 +279,23 @@ function Settings() {
             </div>
           ) : (
             <small>Available as soon as the trading availability update is applied.</small>
+          )}
+        </article>
+        <article className="settings-card collection-privacy-card">
+          <span className="settings-card-label">Profile privacy</span>
+          <h2>Collection visibility</h2>
+          <p>Choose whether traders can browse the champions you have recorded in Lumio from your public profile.</p>
+          {collectionVisibilityFeatureEnabled ? (
+            <div className="notification-preference-list">
+              <button aria-pressed={collectionVisibility === "public"} className="notification-preference" disabled={savingCollectionVisibility} onClick={() => void toggleCollectionVisibility()} type="button">
+                <span><strong>Share my Collection publicly</strong><small>{collectionVisibility === "public" ? "Traders can view your recorded champion copies, traits, and values." : "Only you can view your recorded champion copies."}</small></span>
+                <span className={`preference-switch${collectionVisibility === "public" ? " is-on" : ""}`} aria-hidden="true"><i /></span>
+              </button>
+              <small className="collection-privacy-note">Your active Shelf listings are always public while they are live.</small>
+              {collectionVisibilityMessage && <p className={collectionVisibilityMessage.type === "success" ? "inline-success" : "inline-error"} role={collectionVisibilityMessage.type === "success" ? "status" : "alert"}>{collectionVisibilityMessage.text}</p>}
+            </div>
+          ) : (
+            <small>Available as soon as the profile privacy update is applied.</small>
           )}
         </article>
       </section>

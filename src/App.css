@@ -3115,6 +3115,72 @@ a.trade-participant:hover {
   box-shadow: 0 0 0 3px rgba(105, 108, 241, 0.1);
 }
 
+.listing-editor-modal {
+  display: grid;
+  width: min(100%, 540px);
+  gap: 11px;
+}
+
+.listing-editor-modal .eyebrow,
+.listing-editor-modal h2,
+.listing-editor-modal .modal-copy {
+  margin: 0;
+}
+
+.listing-editor-modal textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  outline: none;
+  background: rgba(5, 7, 13, 0.55);
+  color: #edf0fb;
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 10px 11px;
+}
+
+.listing-editor-modal textarea:focus {
+  border-color: rgba(143, 146, 255, 0.58);
+  box-shadow: 0 0 0 3px rgba(105, 108, 241, 0.1);
+}
+
+.listing-editor-preview {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  align-items: center;
+  gap: 13px;
+  border: 1px solid rgba(150, 155, 255, 0.13);
+  border-radius: 13px;
+  background: rgba(105, 108, 241, 0.06);
+  padding: 10px;
+}
+
+.listing-editor-preview .listing-artwork {
+  height: 80px;
+  margin: 0;
+}
+
+.listing-editor-preview > div {
+  display: grid;
+  gap: 6px;
+}
+
+.listing-editor-preview .rarity-badge {
+  justify-self: start;
+}
+
+.listing-editor-preview strong {
+  color: #f0f2ff;
+  font-size: 0.86rem;
+}
+
+.listing-editor-preview small {
+  color: #9aa2b8;
+  font-size: 0.69rem;
+  line-height: 1.45;
+}
+
 .champion-catalog-hero,
 .champion-catalog-summary,
 .champion-catalog-layout {
@@ -4468,6 +4534,14 @@ hr {
 
   .collection-details-heading {
     grid-template-columns: 1fr;
+  }
+
+  .listing-editor-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-editor-preview .listing-artwork {
+    height: 112px;
   }
 
   .collection-details-heading .listing-artwork {

@@ -14,6 +14,14 @@ import { calculateChampionValue, getRarityValue } from "../utils/valueCalculator
 import { getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
 import traitEffectSummary from "../utils/traitEffectSummary";
 
+function championSourceSummary(champion) {
+  if (!champion) return "";
+  if (champion.statTotal > 0 || champion.clanPoints > 0) {
+    return `+${champion.statTotal}% combined bonus · ${champion.clanPoints} Clan Points`;
+  }
+  return "Base stats not recorded in source";
+}
+
 function Collection() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
@@ -290,7 +298,7 @@ function Collection() {
             <div className="catalog-field">
               <span className="field-label">Champion</span>
               <button className={`catalog-selection${selectedChampion ? " has-selection" : ""}`} onClick={() => setPicker("champion")} type="button">
-                {selectedChampion ? <><span className="rarity-badge">{selectedChampion.rarity}</span><strong>{selectedChampion.name}</strong><small>+{selectedChampion.statTotal}% combined bonus · {selectedChampion.clanPoints} Clan Points</small><em>Change</em></> : <><strong>Choose a champion</strong><small>Browse the live catalog by name, rarity, and base stats.</small><em>Browse catalog</em></>}
+                {selectedChampion ? <><span className="rarity-badge">{selectedChampion.rarity}</span><strong>{selectedChampion.name}</strong><small>{championSourceSummary(selectedChampion)}</small><em>Change</em></> : <><strong>Choose a champion</strong><small>Browse the live catalog by name, rarity, and base stats.</small><em>Browse catalog</em></>}
               </button>
             </div>
 
@@ -302,7 +310,7 @@ function Collection() {
               {selectedTraitData?.notes && <p className="collection-source-note">{selectedTraitData.notes}</p>}
             </div>
 
-            {selectedChampion && <div className="form-value-preview"><span>Catalog score · {selectedChampion.statTotal}% total bonus · {selectedChampion.clanPoints} Clan Points</span><strong>◈ {calculateChampionValue({ ...selectedChampion, traits: selectedTrait === "Standard" ? [] : [selectedTrait] }).toLocaleString()}</strong></div>}
+            {selectedChampion && <div className="form-value-preview"><span>Catalog score · {championSourceSummary(selectedChampion)}</span><strong>◈ {calculateChampionValue({ ...selectedChampion, traits: selectedTrait === "Standard" ? [] : [selectedTrait] }).toLocaleString()}</strong></div>}
 
             <div className="modal-buttons">
               <button className="secondary-action" onClick={() => setShowAddChampion(false)} type="button">Cancel</button>

@@ -2,12 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import CatalogPickerDialog from "../components/CatalogPickerDialog";
+import ChoiceMenu from "../components/ChoiceMenu";
+import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
 import { formatDateTime, getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
+
+const LISTING_STATUS_OPTIONS = [
+  { value: "active", label: "Live on Market" },
+  { value: "paused", label: "Paused" },
+];
 
 function Shelf() {
   const { user } = useAuth();
@@ -21,6 +28,10 @@ function Shelf() {
   const [selectedChampionId, setSelectedChampionId] = useState(searchParams.get("list") || "");
   const [showChampionPicker, setShowChampionPicker] = useState(false);
   const [note, setNote] = useState("");
+  const [editingListing, setEditingListing] = useState(null);
+  const [editingNote, setEditingNote] = useState("");
+  const [editingStatus, setEditingStatus] = useState("active");
+  const [removalTarget, setRemovalTarget] = useState(null);
   const completedPreferenceKey = user?.id ? `lumio-shelf-hide-completed:${user.id}` : "";
   const [hideCompleted, setHideCompleted] = useState(() => readBooleanPreference(completedPreferenceKey));
 
@@ -126,6 +137,40 @@ function Shelf() {
     setBusyId(null);
   };
 
+  const openListingEditor = (listing) => {
+    setError(null);
+    setEditingListing(listing);
+    setEditingNote(listing.note || "");
+    setEditingStatus(listing.status === "paused" ? "paused" : "active");
+  };
+
+  const saveListing = async (event) => {
+    event.preventDefault();
+    if (!editingListing || !user) return;
+
+    setBusyId(editingListing.id);
+    setError(null);
+    const { error: updateError } = await supabase
+      .from("shelf_listings")
+      .update({ note: editingNote.trim() || null, status: editingStatus })
+      .eq("id", editingListing.id)
+      .eq("owner_id", user.id);
+
+    if (updateError) {
+      setError(updateError.message || "Unable to update that Shelf listing.");
+    } else {
+      setEditingListing(null);
+      await loadShelf();
+    }
+    setBusyId(null);
+  };
+
+  const removeListing = async () => {
+    if (!removalTarget) return;
+    await updateListingStatus(removalTarget, "removed");
+    setRemovalTarget(null);
+  };
+
   return (
     <Layout>
       <section className="page-heading page-heading-split">
@@ -177,7 +222,8 @@ function Shelf() {
                 <p className="card-meta">Listed {formatDateTime(listing.created_at)}</p>
                 <div className="card-actions">
                   {listing.status === "active" ? <button className="secondary-action" disabled={busyId === listing.id} onClick={() => updateListingStatus(listing, "paused")} type="button">Pause</button> : listing.status === "paused" ? <button className="primary-action" disabled={busyId === listing.id} onClick={() => updateListingStatus(listing, "active")} type="button">Resume</button> : null}
-                  {!["removed", "completed"].includes(listing.status) && <button className="quiet-action" disabled={busyId === listing.id} onClick={() => updateListingStatus(listing, "removed")} type="button">Remove</button>}
+                  {!["removed", "completed"].includes(listing.status) && <button className="secondary-action" disabled={busyId === listing.id} onClick={() => openListingEditor(listing)} type="button">Edit</button>}
+                  {!["removed", "completed"].includes(listing.status) && <button className="quiet-action" disabled={busyId === listing.id} onClick={() => setRemovalTarget(listing)} type="button">Remove</button>}
                 </div>
               </article>
             );
@@ -208,6 +254,26 @@ function Shelf() {
       )}
 
       {showChampionPicker && <CatalogPickerDialog getItemMeta={(champion) => `${champion.trait || "Standard"} trait · ◈ ${getOwnedChampionValue(champion).toLocaleString()}`} items={availableChampions} kind="champion" onChoose={(champion) => setSelectedChampionId(champion.id)} onClose={() => setShowChampionPicker(false)} selectedValue={selectedChampionId} title="Choose a champion copy" />}
+
+      {editingListing && (
+        <div className="modal-overlay" role="presentation">
+          <form aria-modal="true" className="trade-modal listing-editor-modal" onSubmit={saveListing} role="dialog" aria-labelledby="listing-editor-title">
+            <p className="eyebrow">Public Shelf</p>
+            <h2 id="listing-editor-title">Edit listing</h2>
+            <p className="modal-copy">Update the listing note or make the exact champion copy live or paused. Its champion and trait stay unchanged.</p>
+            {editingListing.user_champions && <div className="listing-editor-preview"><ListingArtwork imageUrl={editingListing.user_champions.image_url} name={editingListing.user_champions.name} rarity={editingListing.user_champions.rarity} trait={editingListing.user_champions.trait || "Standard"} /><div><span className="rarity-badge">{editingListing.user_champions.rarity}</span><strong>{editingListing.user_champions.name}</strong><small>{editingListing.user_champions.trait || "Standard"} trait · ◈ {getOwnedChampionValue(editingListing.user_champions).toLocaleString()}</small></div></div>}
+            <ChoiceMenu label="Listing visibility" onChange={setEditingStatus} options={LISTING_STATUS_OPTIONS} value={editingStatus} />
+            <label className="field-label" htmlFor="edit-listing-note">Note <span>optional</span></label>
+            <textarea id="edit-listing-note" maxLength="280" onChange={(event) => setEditingNote(event.target.value)} placeholder="What kind of offers are you open to?" rows="4" value={editingNote} />
+            <div className="modal-buttons">
+              <button className="secondary-action" disabled={busyId === editingListing.id} onClick={() => setEditingListing(null)} type="button">Cancel</button>
+              <button className="primary-action" disabled={busyId === editingListing.id} type="submit">{busyId === editingListing.id ? "Saving…" : "Save listing"}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {removalTarget && <ConfirmDialog busy={busyId === removalTarget.id} cancelLabel="Keep listing" confirmLabel="Remove listing" danger description={`Remove ${removalTarget.user_champions?.name || "this champion"} from your public Shelf? The champion stays in your private Collection and can be listed again later.`} onCancel={() => setRemovalTarget(null)} onConfirm={() => void removeListing()} title="Remove this Shelf listing?" />}
     </Layout>
   );
 }

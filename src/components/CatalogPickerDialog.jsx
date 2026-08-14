@@ -23,6 +23,13 @@ function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, sele
     onClose();
   };
 
+  const defaultChampionMeta = (champion) => {
+    if (champion.statTotal > 0 || champion.clanPoints > 0) {
+      return `+${champion.statTotal}% total bonus · ${champion.clanPoints} Clan Points`;
+    }
+    return "Base stats not recorded in source";
+  };
+
   return (
     <div className="modal-overlay catalog-picker-overlay" role="presentation">
       <section aria-modal="true" className="trade-modal catalog-picker-modal" role="dialog" aria-labelledby="catalog-picker-title">
@@ -54,7 +61,7 @@ function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, sele
                   <ListingArtwork imageUrl={item.image_url} name={item.name} rarity={item.rarity} trait={item.trait} />
                   <span className="catalog-picker-card-top"><span className="rarity-badge">{item.rarity}</span>{selected && <span className="picker-selected-label">Selected</span>}</span>
                   <strong>{item.name}</strong>
-                  <span>{getItemMeta ? getItemMeta(item) : `+${item.statTotal}% total bonus · ${item.clanPoints} Clan Points`}</span>
+                  <span>{getItemMeta ? getItemMeta(item) : defaultChampionMeta(item)}</span>
                 </button>
               );
             })}

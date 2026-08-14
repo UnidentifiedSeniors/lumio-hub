@@ -88,7 +88,15 @@ export const traitsByName = new Map(traits.map((trait) => [trait.name, trait]));
 export const traitNames = traits.map((trait) => trait.name);
 
 export const champions = parseCsv(championsCsv)
-  .filter((record) => record.Champions && record["Clan Points"] && Number.isFinite(Number(record["Clan Points"])))
+  .filter((record) => {
+    if (!record.Champions) return false;
+    // Current exports label every champion with a rarity, including entries
+    // where the base-stat columns have not yet been filled in. Ranking rows
+    // use "/" in the Rarity column and are not catalog entries.
+    if (record.Rarity) return record.Rarity !== "/";
+    // Preserve compatibility with the earlier stat-only source export.
+    return Boolean(record["Clan Points"]) && Number.isFinite(Number(record["Clan Points"]));
+  })
   .map((record, index) => {
     const statBonuses = Object.fromEntries(CHAMPION_STAT_COLUMNS.map(([key, header]) => [key, percentage(record[header])]));
     return {

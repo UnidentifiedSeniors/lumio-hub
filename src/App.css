@@ -1564,6 +1564,63 @@ a.trade-participant:hover {
   font-size: 1rem;
 }
 
+.collection-controls {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.4fr) repeat(3, minmax(130px, 0.7fr)) auto;
+  align-items: end;
+  gap: 10px;
+  margin: 0 0 23px;
+}
+
+.collection-search,
+.collection-control-select {
+  display: grid;
+  gap: 5px;
+  color: #8991a8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.collection-search input,
+.collection-control-select select {
+  width: 100%;
+  min-height: 41px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  outline: none;
+  background: rgba(5, 7, 13, 0.55);
+  color: #edf0fb;
+  padding: 10px 11px;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.collection-search input:focus,
+.collection-control-select select:focus {
+  border-color: rgba(143, 146, 255, 0.58);
+  box-shadow: 0 0 0 3px rgba(105, 108, 241, 0.1);
+}
+
+.collection-clear-controls {
+  min-height: 41px;
+  border: 0;
+  background: transparent;
+  color: #b2b7ff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.collection-clear-controls:hover {
+  color: #fff;
+}
+
 .shelf-summary,
 .marketplace-summary {
   flex-wrap: wrap;
@@ -1633,6 +1690,83 @@ a.trade-participant:hover {
   color: #f8f9ff;
   font-size: 1.05rem;
   letter-spacing: -0.025em;
+}
+
+.owned-champion-card {
+  min-height: 373px;
+}
+
+.owned-champion-card .listing-artwork {
+  height: 88px;
+  margin-top: 14px;
+}
+
+.owned-card-actions {
+  margin-top: 16px;
+}
+
+.owned-card-actions > * {
+  flex: 1 1 0;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+}
+
+.collection-details-modal {
+  width: min(100%, 560px);
+}
+
+.collection-details-heading {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.collection-details-heading .listing-artwork {
+  height: 108px;
+  margin: 0;
+}
+
+.collection-details-heading h2 {
+  margin: 10px 0 4px;
+  color: #f3f5fc;
+  font-size: 1.25rem;
+}
+
+.collection-details-heading p {
+  margin: 0;
+  color: #98a1b8;
+  font-size: 0.76rem;
+}
+
+.collection-detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.collection-detail-metrics > div {
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(132, 136, 255, 0.13);
+  border-radius: 10px;
+  background: rgba(105, 108, 241, 0.06);
+  padding: 11px;
+}
+
+.collection-detail-metrics span {
+  color: #929bb3;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.collection-detail-metrics strong {
+  color: #e9ecfa;
+  font-size: 0.78rem;
 }
 
 .listing-code {
@@ -3005,6 +3139,10 @@ hr {
   .quick-actions {
     grid-template-columns: 1fr;
   }
+
+  .collection-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 780px) {
@@ -3129,6 +3267,19 @@ hr {
 
   .collection-summary {
     grid-template-columns: 1fr;
+  }
+
+  .collection-controls,
+  .collection-detail-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .collection-details-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .collection-details-heading .listing-artwork {
+    height: 130px;
   }
 
   .market-search {

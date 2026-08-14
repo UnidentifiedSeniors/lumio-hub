@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import Layout from "../components/Layout";
+import ListingArtwork from "../components/ListingArtwork";
 import champions from "../data/champions";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
-import { calculateChampionValue } from "../utils/valueCalculator";
+import { calculateChampionValue, getRarityValue } from "../utils/valueCalculator";
 import { getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
 
 function Collection() {
@@ -19,9 +20,18 @@ function Collection() {
   const [selectedChampionId, setSelectedChampionId] = useState(champions[0]?.id);
   const [selectedTrait, setSelectedTrait] = useState(champions[0]?.traits?.[0] || "Standard");
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
+  const [rarityFilter, setRarityFilter] = useState("all");
+  const [traitFilter, setTraitFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("recent");
+  const [detailsChampion, setDetailsChampion] = useState(null);
 
-  const query = searchParams.get("search")?.trim().toLowerCase() || "";
+  const query = search.trim().toLowerCase();
   const selectedChampion = champions.find((champion) => champion.id === Number(selectedChampionId));
+
+  useEffect(() => {
+    setSearch(searchParams.get("search") || "");
+  }, [searchParams]);
 
   const loadCollection = useCallback(async () => {
     if (!user) return;
@@ -62,10 +72,46 @@ function Collection() {
     return () => window.clearTimeout(timer);
   }, [loadCollection]);
 
-  const filteredOwnedChampions = useMemo(
-    () => ownedChampions.filter((champion) => champion.name.toLowerCase().includes(query)),
-    [ownedChampions, query]
+  const availableTraits = useMemo(
+    () => [...new Set(ownedChampions.flatMap((champion) => {
+      const traits = getChampionTraits(champion);
+      return traits.length ? traits : ["Standard"];
+    }))].sort((left, right) => left.localeCompare(right)),
+    [ownedChampions],
   );
+
+  const availableRarities = useMemo(
+    () => [...new Set(ownedChampions.map((champion) => champion.rarity).filter(Boolean))].sort((left, right) => getRarityValue(right) - getRarityValue(left)),
+    [ownedChampions],
+  );
+
+  const filteredOwnedChampions = useMemo(() => {
+    const championsToShow = ownedChampions.filter((champion) => {
+      const traits = getChampionTraits(champion);
+      const searchableDetails = [champion.name, champion.rarity, ...traits].filter(Boolean).join(" ").toLowerCase();
+      const matchesSearch = !query || searchableDetails.includes(query);
+      const matchesRarity = rarityFilter === "all" || champion.rarity === rarityFilter;
+      const matchesTrait = traitFilter === "all" || (traitFilter === "Standard" ? traits.length === 0 : traits.includes(traitFilter));
+      return matchesSearch && matchesRarity && matchesTrait;
+    });
+
+    return [...championsToShow].sort((left, right) => {
+      if (sortBy === "value-desc") return getOwnedChampionValue(right) - getOwnedChampionValue(left);
+      if (sortBy === "value-asc") return getOwnedChampionValue(left) - getOwnedChampionValue(right);
+      if (sortBy === "name") return left.name.localeCompare(right.name);
+      if (sortBy === "rarity") return getRarityValue(right.rarity) - getRarityValue(left.rarity) || left.name.localeCompare(right.name);
+      return new Date(right.updated_at || right.created_at || 0) - new Date(left.updated_at || left.created_at || 0);
+    });
+  }, [ownedChampions, query, rarityFilter, sortBy, traitFilter]);
+
+  const clearControls = () => {
+    setSearch("");
+    setRarityFilter("all");
+    setTraitFilter("all");
+    setSortBy("recent");
+  };
+
+  const hasActiveControls = Boolean(search || rarityFilter !== "all" || traitFilter !== "all" || sortBy !== "recent");
 
   const addChampion = async (event) => {
     event.preventDefault();
@@ -78,6 +124,7 @@ function Collection() {
     const { error: insertError } = await supabase.from("user_champions").insert({
       owner_id: user.id,
       name: selectedChampion.name,
+      image_url: selectedChampion.image_url || null,
       rarity: selectedChampion.rarity,
       trait: selectedTrait || "Standard",
       base_value: calculateChampionValue(championWithTrait),
@@ -123,6 +170,38 @@ function Collection() {
         </div>
       </section>
 
+      <section className="collection-controls" aria-label="Collection controls">
+        <label className="collection-search">
+          <span>Search</span>
+          <input onChange={(event) => setSearch(event.target.value)} placeholder="Champion, rarity, or trait" type="search" value={search} />
+        </label>
+        <label className="collection-control-select">
+          <span>Rarity</span>
+          <select onChange={(event) => setRarityFilter(event.target.value)} value={rarityFilter}>
+            <option value="all">All rarities</option>
+            {availableRarities.map((rarity) => <option key={rarity} value={rarity}>{rarity}</option>)}
+          </select>
+        </label>
+        <label className="collection-control-select">
+          <span>Trait</span>
+          <select onChange={(event) => setTraitFilter(event.target.value)} value={traitFilter}>
+            <option value="all">All traits</option>
+            {availableTraits.map((trait) => <option key={trait} value={trait}>{trait}</option>)}
+          </select>
+        </label>
+        <label className="collection-control-select">
+          <span>Sort by</span>
+          <select onChange={(event) => setSortBy(event.target.value)} value={sortBy}>
+            <option value="recent">Recently updated</option>
+            <option value="value-desc">Value: high to low</option>
+            <option value="value-asc">Value: low to high</option>
+            <option value="rarity">Rarity</option>
+            <option value="name">Champion name</option>
+          </select>
+        </label>
+        {hasActiveControls && <button className="collection-clear-controls" onClick={clearControls} type="button">Clear controls</button>}
+      </section>
+
       {error && <p className="form-error" role="alert">{error}</p>}
 
       {loading ? (
@@ -150,6 +229,7 @@ function Collection() {
                   <span className={`rarity-badge rarity-${champion.rarity.toLowerCase().replaceAll(" ", "-")}`}>{champion.rarity}</span>
                   {listing && <span className={`listing-status listing-${listing.status}`}>{listing.status === "active" ? "On Shelf" : "Shelf paused"}</span>}
                 </div>
+                <ListingArtwork imageUrl={champion.image_url} name={champion.name} rarity={champion.rarity} />
                 <h2>{champion.name}</h2>
                 <div className="traits card-traits">
                   {traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}
@@ -158,15 +238,38 @@ function Collection() {
                   <span>Market value</span>
                   <strong>◈ {getOwnedChampionValue(champion).toLocaleString()}</strong>
                 </div>
-                {listing ? (
-                  <Link className="secondary-action card-action" to="/shelf">Manage listing</Link>
-                ) : (
-                  <Link className="primary-action card-action" to={`/shelf?list=${champion.id}`}>List on Shelf</Link>
-                )}
+                <div className="card-actions owned-card-actions">
+                  <button className="secondary-action" onClick={() => setDetailsChampion(champion)} type="button">View details</button>
+                  {listing ? <Link className="secondary-action" to="/shelf">Manage listing</Link> : <Link className="primary-action" to={`/shelf?list=${champion.id}`}>List on Shelf</Link>}
+                </div>
               </article>
             );
           })}
         </section>
+      )}
+
+      {detailsChampion && (
+        <div className="modal-overlay" role="presentation">
+          <section aria-modal="true" className="trade-modal collection-details-modal" role="dialog" aria-labelledby="collection-details-title">
+            <div className="collection-details-heading">
+              <ListingArtwork imageUrl={detailsChampion.image_url} name={detailsChampion.name} rarity={detailsChampion.rarity} />
+              <div>
+                <span className={`rarity-badge rarity-${detailsChampion.rarity.toLowerCase().replaceAll(" ", "-")}`}>{detailsChampion.rarity}</span>
+                <h2 id="collection-details-title">{detailsChampion.name}</h2>
+                <p>{getChampionTraits(detailsChampion).length ? getChampionTraits(detailsChampion).join(" · ") : "Standard trait"}</p>
+              </div>
+            </div>
+            <div className="collection-detail-metrics">
+              <div><span>Market value</span><strong>◈ {getOwnedChampionValue(detailsChampion).toLocaleString()}</strong></div>
+              <div><span>Shelf status</span><strong>{listingsByChampion.get(detailsChampion.id)?.status === "active" ? "Listed publicly" : listingsByChampion.get(detailsChampion.id)?.status === "paused" ? "Listing paused" : "Private to you"}</strong></div>
+            </div>
+            <p className="modal-copy">This is one exact copy in your Collection. Listing it on Shelf makes only its champion details visible to other licensed traders.</p>
+            <div className="modal-buttons">
+              <button className="secondary-action" onClick={() => setDetailsChampion(null)} type="button">Done</button>
+              {listingsByChampion.has(detailsChampion.id) ? <Link className="primary-action" to="/shelf">Manage on Shelf</Link> : <Link className="primary-action" to={`/shelf?list=${detailsChampion.id}`}>List on Shelf</Link>}
+            </div>
+          </section>
+        </div>
       )}
 
       {showAddChampion && (

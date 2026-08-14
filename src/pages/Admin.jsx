@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import AdminMemberControls from "../components/AdminMemberControls";
 import ChoiceMenu from "../components/ChoiceMenu";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
+import { getDatePreferences } from "../utils/datePreferences";
 
 const AD_FIELDS = "id, slug, title, body, accent_color, placement, audience, primary_button_label, primary_button_url, secondary_button_label, secondary_button_url, dismiss_label, show_once, is_dismissible, is_active, priority, starts_at, ends_at, created_at, updated_at";
 const PLACEMENT_OPTIONS = [{ value: "modal", label: "Focused modal" }, { value: "banner", label: "Global banner" }];
@@ -73,11 +75,14 @@ function AdPreview({ ad }) {
 }
 
 function Admin() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const datePreferences = getDatePreferences(profile);
   const [access, setAccess] = useState("checking");
   const [metrics, setMetrics] = useState(null);
   const [ads, setAds] = useState([]);
   const [marketListings, setMarketListings] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [auditEvents, setAuditEvents] = useState([]);
   const [form, setForm] = useState(emptyAd);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -94,18 +99,22 @@ function Admin() {
       return;
     }
 
-    const [metricsResult, adsResult, marketResult] = await Promise.all([
+    const [metricsResult, adsResult, marketResult, memberResult, auditResult] = await Promise.all([
       supabase.rpc("get_admin_dashboard_metrics"),
       supabase.from("site_ads").select(AD_FIELDS).order("priority", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("marketplace_listings").select("id, name, rarity, trait, note, updated_at, discord_username, discord_display_name").order("updated_at", { ascending: false }).limit(8),
+      supabase.rpc("get_admin_member_directory"),
+      supabase.from("admin_audit_events").select("id, action, details, created_at").order("created_at", { ascending: false }).limit(12),
     ]);
 
-    if (metricsResult.error || adsResult.error || marketResult.error) {
-      setMessage({ type: "error", text: metricsResult.error?.message || adsResult.error?.message || marketResult.error?.message || "Unable to load the administrator console." });
+    if (metricsResult.error || adsResult.error || marketResult.error || memberResult.error || auditResult.error) {
+      setMessage({ type: "error", text: metricsResult.error?.message || adsResult.error?.message || marketResult.error?.message || memberResult.error?.message || auditResult.error?.message || "Unable to load the administrator console." });
     } else {
       setMetrics(metricsResult.data);
       setAds(adsResult.data || []);
       setMarketListings(marketResult.data || []);
+      setMembers(memberResult.data || []);
+      setAuditEvents(auditResult.data || []);
     }
     setAccess("allowed");
   }, []);
@@ -289,6 +298,8 @@ function Admin() {
           <section className="admin-panel admin-market-moderation"><div className="admin-panel-heading"><div><p className="eyebrow">Marketplace safety</p><h2>Latest live listings</h2></div><span className="admin-market-count">{Number(metrics?.active_listings || 0)} live</span></div><p className="admin-panel-copy">Remove a listing when it breaks marketplace rules. This never removes the owner’s champion.</p>{marketListings.length ? <div className="admin-market-list">{marketListings.map((listing) => <article key={listing.id}><div><strong>{listing.name}</strong><span>{listing.rarity} · {listing.trait}</span><small>Listed by {listing.discord_display_name || listing.discord_username || "Unknown trader"}</small>{listing.note && <p>{listing.note}</p>}</div><button className="danger-action" onClick={() => setModerationTarget(listing)} type="button">Remove</button></article>)}</div> : <p className="admin-empty-copy">No live listings need review right now.</p>}</section>
         </aside>
       </section>
+
+      <AdminMemberControls auditEvents={auditEvents} datePreferences={datePreferences} members={members} onUpdated={loadAdminData} />
 
       {deleteTarget && <ConfirmDialog busy={deleting} cancelLabel="Keep campaign" confirmLabel="Delete campaign" danger description={`Permanently delete “${deleteTarget.title || "this campaign"}”? It will disappear from Lumio immediately.`} onCancel={() => setDeleteTarget(null)} onConfirm={() => void deleteAd()} title="Delete this campaign?" />}
       {moderationTarget && <ConfirmDialog busy={moderating} cancelLabel="Keep listing" confirmLabel="Remove listing" danger description={`Remove ${moderationTarget.name} from the live marketplace? The owner will keep the champion in their Collection.`} onCancel={() => setModerationTarget(null)} onConfirm={() => void removeMarketListing()} title="Remove marketplace listing?" />}

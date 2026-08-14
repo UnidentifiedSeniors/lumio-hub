@@ -4915,6 +4915,93 @@ button.profile-settings-link {
   backdrop-filter: blur(7px);
 }
 
+.community-prompt-overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 5, 11, 0.72);
+  padding: 24px;
+  animation: community-prompt-enter 220ms ease-out;
+  backdrop-filter: blur(10px);
+}
+
+.community-prompt {
+  width: min(100%, 474px);
+  overflow: hidden;
+  border: 1px solid rgba(139, 144, 255, 0.3);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 87% 8%, rgba(102, 106, 241, 0.25), transparent 39%),
+    linear-gradient(145deg, rgba(27, 30, 53, 0.99), rgba(13, 16, 27, 0.99));
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.48);
+  padding: 31px;
+}
+
+.community-prompt-mark {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 1px solid rgba(175, 179, 255, 0.32);
+  border-radius: 14px;
+  background: rgba(118, 123, 246, 0.16);
+  color: #dfe1ff;
+}
+
+.community-prompt-mark svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.community-prompt .eyebrow {
+  margin: 22px 0 0;
+}
+
+.community-prompt h2 {
+  margin: 9px 0 0;
+  color: #fff;
+  font-size: 1.72rem;
+  letter-spacing: -0.045em;
+}
+
+.community-prompt > p:not(.eyebrow) {
+  max-width: 360px;
+  margin: 11px 0 0;
+  color: #aeb4ca;
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.community-prompt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 27px;
+}
+
+.community-prompt-actions a {
+  text-decoration: none;
+}
+
+.community-prompt-actions .success-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+@keyframes community-prompt-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .trade-modal {
   width: min(100%, 470px);
   background: #171a27;
@@ -5314,6 +5401,27 @@ hr {
   .landing-login,
   .landing-login > button,
   .landing-discord-button {
+    width: 100%;
+  }
+
+  .community-prompt-overlay {
+    align-items: end;
+    padding: 14px;
+  }
+
+  .community-prompt {
+    width: 100%;
+    border-radius: 20px;
+    padding: 25px 21px;
+  }
+
+  .community-prompt-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .community-prompt-actions > * {
+    justify-content: center;
     width: 100%;
   }
 

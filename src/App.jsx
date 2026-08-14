@@ -1,6 +1,7 @@
 import { Navigate, Routes, Route } from "react-router-dom";
 
 import Champion from "./pages/Champion";
+import DiscordCommunityPrompt from "./components/DiscordCommunityPrompt";
 
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
@@ -34,53 +35,56 @@ function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={user ? <Dashboard /> : <Landing />} />
+    <>
+      <Routes>
+        <Route path="/" element={user ? <Dashboard /> : <Landing />} />
 
-      <Route path="/dashboard" element={user ? <Dashboard /> : <Landing />} />
+        <Route path="/dashboard" element={user ? <Dashboard /> : <Landing />} />
 
-      <Route path="/market" element={user ? <Market /> : <Landing />} />
+        <Route path="/market" element={user ? <Market /> : <Landing />} />
 
-      <Route path="/champion/:id" element={user ? <Champion /> : <Landing />} />
+        <Route path="/champion/:id" element={user ? <Champion /> : <Landing />} />
 
-      <Route path="/trades" element={user ? <Trading /> : <Landing />} />
+        <Route path="/trades" element={user ? <Trading /> : <Landing />} />
 
-      <Route path="/trading" element={<Navigate to="/trades" replace />} />
+        <Route path="/trading" element={<Navigate to="/trades" replace />} />
 
-      <Route path="/history" element={user ? <History /> : <Landing />} />
+        <Route path="/history" element={user ? <History /> : <Landing />} />
 
-      <Route path="/collection" element={user ? <Collection /> : <Landing />} />
+        <Route path="/collection" element={user ? <Collection /> : <Landing />} />
 
-      <Route path="/shelf" element={user ? <Shelf /> : <Landing />} />
+        <Route path="/shelf" element={user ? <Shelf /> : <Landing />} />
 
-      <Route path="/received-trades" element={user ? <ReceivedTrades /> : <Landing />} />
+        <Route path="/received-trades" element={user ? <ReceivedTrades /> : <Landing />} />
 
-      <Route path="/sent-trades" element={user ? <PendingTrades /> : <Landing />} />
+        <Route path="/sent-trades" element={user ? <PendingTrades /> : <Landing />} />
 
-      <Route path="/pending-trades" element={<Navigate to="/sent-trades" replace />} />
+        <Route path="/pending-trades" element={<Navigate to="/sent-trades" replace />} />
 
-      <Route path="/profile" element={user ? <Profile /> : <Landing />} />
+        <Route path="/profile" element={user ? <Profile /> : <Landing />} />
 
-      <Route path="/trader/:traderId" element={user ? <TraderProfile /> : <Landing />} />
+        <Route path="/trader/:traderId" element={user ? <TraderProfile /> : <Landing />} />
 
-      <Route path="/missions" element={user ? <Missions /> : <Landing />} />
+        <Route path="/missions" element={user ? <Missions /> : <Landing />} />
 
-      <Route
-        path="/leaderboard"
-        element={user ? <Leaderboard /> : <Landing />}
-      />
+        <Route
+          path="/leaderboard"
+          element={user ? <Leaderboard /> : <Landing />}
+        />
 
-      <Route
-        path="/competitions"
-        element={user ? <Competitions /> : <Landing />}
-      />
+        <Route
+          path="/competitions"
+          element={user ? <Competitions /> : <Landing />}
+        />
 
-      <Route path="/settings" element={user ? <Settings /> : <Landing />} />
+        <Route path="/settings" element={user ? <Settings /> : <Landing />} />
 
-      <Route path="/admin" element={user ? <Admin /> : <Landing />} />
+        <Route path="/admin" element={user ? <Admin /> : <Landing />} />
 
-      <Route path="*" element={<Navigate replace to={user ? "/dashboard" : "/"} />} />
-    </Routes>
+        <Route path="*" element={<Navigate replace to={user ? "/dashboard" : "/"} />} />
+      </Routes>
+      <DiscordCommunityPrompt />
+    </>
   );
 }
 

@@ -1,54 +1,81 @@
 import { useParams, Link } from "react-router-dom";
+
 import Layout from "../components/Layout";
-import champions from "../data/champions";
+import champions, { championStatLabels } from "../data/gameCatalog";
 import { calculateChampionValue } from "../utils/valueCalculator";
 
 function Champion() {
   const { id } = useParams();
-
   const champion = champions.find((item) => item.id === Number(id));
 
   if (!champion) {
     return (
       <Layout>
-        <h1>Champion not found</h1>
+        <section className="empty-state">
+          <h1>Champion not found</h1>
+          <p>That catalog entry is no longer available.</p>
+          <Link className="secondary-action" to="/collection">Open Collection</Link>
+        </section>
       </Layout>
     );
   }
 
-  const value = calculateChampionValue(champion);
+  const catalogScore = calculateChampionValue(champion);
 
   return (
     <Layout>
-      <div className="champion-details">
-        <div className="rarity-badge">{champion.rarity}</div>
-
-        <div className="traits">
-          {champion.traits.map((trait, i) => (
-            <span key={i} className="trait">
-              ✨ {trait}
-            </span>
-          ))}
+      <section className="champion-catalog-hero">
+        <div>
+          <p className="eyebrow">AFS source catalog</p>
+          <h1>{champion.name}</h1>
+          <p>Base champion bonuses from the supplied game data. Choose a trait when you add an exact copy to your Collection.</p>
         </div>
+        <span className="rarity-badge">{champion.rarity}</span>
+      </section>
 
-        <h1>{champion.name}</h1>
+      <section className="champion-catalog-summary" aria-label={`${champion.name} summary`}>
+        <article>
+          <span>Combined stat bonus</span>
+          <strong>+{champion.statTotal}%</strong>
+        </article>
+        <article>
+          <span>Clan Points</span>
+          <strong>{champion.clanPoints}</strong>
+        </article>
+        <article>
+          <span>Lumio catalog score</span>
+          <strong>◈ {catalogScore.toLocaleString()}</strong>
+        </article>
+      </section>
 
-        <div className="details-grid">
-          <div className="dashboard-card">
-            <h2>💎 Value</h2>
-            <p className="big-number">{value}</p>
+      <section className="champion-catalog-layout">
+        <article className="champion-stat-card">
+          <div className="section-title-row">
+            <div>
+              <p className="eyebrow">Base bonuses</p>
+              <h2>Champion stats</h2>
+            </div>
+            <span>+{champion.statTotal}% total</span>
           </div>
+          <dl className="champion-stat-grid">
+            {Object.entries(champion.statBonuses).map(([stat, bonus]) => (
+              <div key={stat}>
+                <dt>{championStatLabels[stat]}</dt>
+                <dd>{bonus > 0 ? `+${bonus}%` : "—"}</dd>
+              </div>
+            ))}
+          </dl>
+        </article>
 
-          <div className="dashboard-card">
-            <h2>📦 Stock</h2>
-            <p className="big-number">{champion.stock}</p>
-          </div>
-        </div>
+        <aside className="champion-catalog-note">
+          <p className="eyebrow">Traits</p>
+          <h2>Applied per copy</h2>
+          <p>Traits are a shared catalog, not fixed to one champion in the source data. Add the copy you own to select its actual trait and see its effect.</p>
+          <Link className="primary-action" to="/collection">Add to Collection</Link>
+        </aside>
+      </section>
 
-        <Link to="/trading">
-          <button>Go to Trade Terminal</button>
-        </Link>
-      </div>
+      <p className="champion-catalog-disclaimer">Lumio catalog scores are an in-app comparison aid based on the supplied bonuses and Clan Points. They are not a live market price.</p>
     </Layout>
   );
 }

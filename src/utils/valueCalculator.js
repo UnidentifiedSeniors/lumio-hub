@@ -1,18 +1,44 @@
 import rarities from "../data/rarities";
+import { traitsByName } from "../data/traits";
 
 const TRAIT_BONUS = 20;
+const CLAN_POINT_VALUE = 75;
+const TRAIT_PERCENT_VALUE = 3;
 
 function getRarityValue(rarity) {
   return rarities[rarity] || 0;
 }
 
+function getStatTotal(champion) {
+  const suppliedTotal = Number(champion?.statTotal);
+  if (Number.isFinite(suppliedTotal) && suppliedTotal > 0) return suppliedTotal;
+
+  if (champion?.statBonuses && typeof champion.statBonuses === "object") {
+    return Object.values(champion.statBonuses).reduce((total, statBonus) => {
+      const value = Number(statBonus);
+      return total + (Number.isFinite(value) ? value : 0);
+    }, 0);
+  }
+
+  return 0;
+}
+
+function getTraitBonus(traits) {
+  return traits.reduce((total, traitName) => total + (traitsByName.get(traitName)?.bonusTotal || 0), 0);
+}
+
 function calculateChampionValue(champion) {
-  let value = getRarityValue(champion.rarity) * 50;
+  const statTotal = getStatTotal(champion);
+  const clanPoints = Number(champion?.clanPoints);
+  let value = statTotal > 0
+    ? statTotal + (Number.isFinite(clanPoints) ? clanPoints * CLAN_POINT_VALUE : 0)
+    : getRarityValue(champion?.rarity) * 50;
 
-  const traits = champion.traits || [];
-  value += traits.length * TRAIT_BONUS;
+  const traits = Array.isArray(champion?.traits) ? champion.traits : champion?.trait && champion.trait !== "Standard" ? [champion.trait] : [];
+  const sourceTraitBonus = getTraitBonus(traits);
+  value += sourceTraitBonus > 0 ? sourceTraitBonus * TRAIT_PERCENT_VALUE : traits.length * TRAIT_BONUS;
 
-  return value;
+  return Math.round(value);
 }
 
 function calculateTradeValue(champions = []) {
@@ -22,4 +48,4 @@ function calculateTradeValue(champions = []) {
   }, 0);
 }
 
-export { calculateChampionValue, calculateTradeValue, getRarityValue };
+export { calculateChampionValue, calculateTradeValue, getRarityValue, getStatTotal, getTraitBonus };

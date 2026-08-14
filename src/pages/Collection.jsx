@@ -4,10 +4,34 @@ import { Link, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
 import champions from "../data/champions";
+import traits from "../data/traits";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { calculateChampionValue, getRarityValue } from "../utils/valueCalculator";
 import { getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
+
+const TRAIT_BONUS_LABELS = {
+  chakra: "Chakra",
+  strength: "Strength",
+  trainingSpeed: "Training speed",
+  statsGain: "Stats gain",
+  sword: "Sword",
+  lootChance: "Loot chance",
+  cooldownReduction: "Cooldown reduction",
+  chikara: "Chikara",
+  yen: "Yen",
+  speed: "Speed",
+  defense: "Defense",
+  allDamage: "All damage",
+};
+
+function traitEffectSummary(trait) {
+  if (!trait) return null;
+  const bonuses = Object.entries(trait.bonuses)
+    .filter(([, bonus]) => bonus > 0)
+    .map(([key, bonus]) => `${TRAIT_BONUS_LABELS[key]} +${bonus}%`);
+  return bonuses.join(" · ") || "No bonus recorded";
+}
 
 function Collection() {
   const { user } = useAuth();
@@ -18,7 +42,7 @@ function Collection() {
   const [error, setError] = useState(null);
   const [showAddChampion, setShowAddChampion] = useState(false);
   const [selectedChampionId, setSelectedChampionId] = useState(champions[0]?.id);
-  const [selectedTrait, setSelectedTrait] = useState(champions[0]?.traits?.[0] || "Standard");
+  const [selectedTrait, setSelectedTrait] = useState("Standard");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState(() => searchParams.get("search") || "");
   const [rarityFilter, setRarityFilter] = useState("all");
@@ -28,6 +52,7 @@ function Collection() {
 
   const query = search.trim().toLowerCase();
   const selectedChampion = champions.find((champion) => champion.id === Number(selectedChampionId));
+  const selectedTraitData = traits.find((trait) => trait.name === selectedTrait);
 
   useEffect(() => {
     setSearch(searchParams.get("search") || "");
@@ -120,7 +145,7 @@ function Collection() {
     setSaving(true);
     setError(null);
 
-    const championWithTrait = { ...selectedChampion, traits: [selectedTrait] };
+    const championWithTrait = { ...selectedChampion, traits: selectedTrait === "Standard" ? [] : [selectedTrait] };
     const { error: insertError } = await supabase.from("user_champions").insert({
       owner_id: user.id,
       name: selectedChampion.name,
@@ -283,21 +308,22 @@ function Collection() {
             <select
               id="champion-select"
               onChange={(event) => {
-                const nextChampion = champions.find((champion) => champion.id === Number(event.target.value));
                 setSelectedChampionId(event.target.value);
-                setSelectedTrait(nextChampion?.traits?.[0] || "Standard");
+                setSelectedTrait("Standard");
               }}
               value={selectedChampionId}
             >
-              {champions.map((champion) => <option key={champion.id} value={champion.id}>{champion.name} · {champion.rarity}</option>)}
+              {champions.map((champion) => <option key={champion.id} value={champion.id}>{champion.name} · {champion.clanPoints} clan points</option>)}
             </select>
 
             <label className="field-label" htmlFor="trait-select">Trait</label>
             <select id="trait-select" onChange={(event) => setSelectedTrait(event.target.value)} value={selectedTrait}>
-              {(selectedChampion?.traits || ["Standard"]).map((trait) => <option key={trait} value={trait}>{trait}</option>)}
+              <option value="Standard">Standard</option>
+              {traits.map((trait) => <option key={trait.name} value={trait.name}>{trait.name} · {trait.rarity}</option>)}
             </select>
+            {selectedTraitData && <p className="collection-source-note"><strong>{selectedTraitData.rarity}</strong> · {traitEffectSummary(selectedTraitData)}{selectedTraitData.notes ? ` · ${selectedTraitData.notes}` : ""}</p>}
 
-            {selectedChampion && <div className="form-value-preview"><span>Starting market value</span><strong>◈ {calculateChampionValue({ ...selectedChampion, traits: [selectedTrait] }).toLocaleString()}</strong></div>}
+            {selectedChampion && <div className="form-value-preview"><span>Catalog score · {selectedChampion.statTotal}% total bonus · {selectedChampion.clanPoints} clan points</span><strong>◈ {calculateChampionValue({ ...selectedChampion, traits: selectedTrait === "Standard" ? [] : [selectedTrait] }).toLocaleString()}</strong></div>}
 
             <div className="modal-buttons">
               <button className="secondary-action" onClick={() => setShowAddChampion(false)} type="button">Cancel</button>

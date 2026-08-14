@@ -4,6 +4,7 @@
   Higher number = rarer.
 */
 const rarities = {
+  "AFS Champion": 1,
   Common:        1,
   Uncommon:      2,
   Rare:          3,

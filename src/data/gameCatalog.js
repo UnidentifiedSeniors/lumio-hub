@@ -94,9 +94,9 @@ export const champions = parseCsv(championsCsv)
     return {
       id: index + 1,
       name: record.Champions,
-      // The supplied source has no rarity or image fields. Keep the catalog
-      // honest rather than inventing that game data.
-      rarity: "AFS Champion",
+      // Older source exports did not include Rarity. Keep those entries
+      // usable, while preferring the actual value whenever the column exists.
+      rarity: record.Rarity || "AFS Champion",
       statBonuses,
       statTotal: Object.values(statBonuses).reduce((total, bonus) => total + bonus, 0),
       clanPoints: number(record["Clan Points"]),

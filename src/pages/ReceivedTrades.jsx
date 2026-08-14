@@ -6,6 +6,7 @@ import TradeCompletionConfirmation, { hasTwoPartyConfirmation } from "../compone
 import TradeDetailsModal, { TradeChampionList } from "../components/TradeDetailsModal";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
+import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
 import { formatDateTime } from "../utils/marketplace";
 
 const STATUS_LABELS = {
@@ -31,6 +32,8 @@ function ReceivedTrades() {
   const [acceptingTrade, setAcceptingTrade] = useState(null);
   const [detailsTrade, setDetailsTrade] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
+  const completedPreferenceKey = user?.id ? `lumio-received-trades-hide-completed:${user.id}` : "";
+  const [hideCompleted, setHideCompleted] = useState(() => readBooleanPreference(completedPreferenceKey));
 
   const loadTrades = useCallback(async () => {
     if (!user) return;
@@ -115,6 +118,15 @@ function ReceivedTrades() {
     setConfirmingId(null);
   };
 
+  const visibleTrades = hideCompleted ? trades.filter((trade) => trade.status !== "completed") : trades;
+  const completedTradeCount = trades.filter((trade) => trade.status === "completed").length;
+
+  const toggleCompletedVisibility = () => {
+    const next = !hideCompleted;
+    setHideCompleted(next);
+    saveBooleanPreference(completedPreferenceKey, next);
+  };
+
   return (
     <Layout>
       <section className="page-heading">
@@ -123,19 +135,27 @@ function ReceivedTrades() {
         <p>Review every champion offered to you, then accept or decline from one secure place.</p>
       </section>
 
+      {completedTradeCount > 0 && (
+        <section className="activity-visibility-bar">
+          <span>{hideCompleted ? `${completedTradeCount} completed exchange${completedTradeCount === 1 ? " is" : "s are"} hidden on this device.` : "Completed exchanges stay in your history and can be hidden here whenever you want a cleaner inbox."}</span>
+          <button aria-pressed={hideCompleted} className="activity-visibility-control" onClick={toggleCompletedVisibility} type="button">{hideCompleted ? "Show completed trades" : "Hide completed trades"}</button>
+        </section>
+      )}
+
       {error && <p className="form-error" role="alert">{error}</p>}
 
       {loading ? (
         <p className="loading-copy">Loading received trades...</p>
-      ) : trades.length === 0 ? (
+      ) : visibleTrades.length === 0 ? (
         <section className="empty-state">
           <span className="empty-state-icon">↓</span>
-          <h2>No incoming offers</h2>
-          <p>When a trader chooses <strong>Make an offer</strong> from one of your Shelf listings, their proposal appears here with every requested and offered champion.</p>
+          <h2>{trades.length && hideCompleted ? "Completed trades are hidden" : "No incoming offers"}</h2>
+          <p>{trades.length && hideCompleted ? "Show completed trades whenever you want to revisit an earlier exchange." : <>When a trader chooses <strong>Make an offer</strong> from one of your Shelf listings, their proposal appears here with every requested and offered champion.</>}</p>
+          {trades.length && hideCompleted && <button className="secondary-action" onClick={toggleCompletedVisibility} type="button">Show completed trades</button>}
         </section>
       ) : (
         <section className="trade-list">
-          {trades.map((trade) => {
+          {visibleTrades.map((trade) => {
             const sender = profiles[trade.sender_id];
             const senderName = sender?.lumio_display_name || sender?.discord_display_name || sender?.discord_username || "Licensed trader";
             const requested = tradeRequestedChampions(trade);

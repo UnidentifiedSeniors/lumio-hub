@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+
+import CatalogPickerDialog from "../components/CatalogPickerDialog";
 import Layout from "../components/Layout";
+import ListingArtwork from "../components/ListingArtwork";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
+import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
 import { formatDateTime, getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
 
 function Shelf() {
@@ -15,7 +19,10 @@ function Shelf() {
   const [busyId, setBusyId] = useState(null);
   const [showListingForm, setShowListingForm] = useState(Boolean(searchParams.get("list")));
   const [selectedChampionId, setSelectedChampionId] = useState(searchParams.get("list") || "");
+  const [showChampionPicker, setShowChampionPicker] = useState(false);
   const [note, setNote] = useState("");
+  const completedPreferenceKey = user?.id ? `lumio-shelf-hide-completed:${user.id}` : "";
+  const [hideCompleted, setHideCompleted] = useState(() => readBooleanPreference(completedPreferenceKey));
 
   const loadShelf = useCallback(async () => {
     if (!user) return;
@@ -60,9 +67,26 @@ function Shelf() {
     return () => window.clearTimeout(timer);
   }, [loadShelf]);
 
+  const selectedChampion = availableChampions.find((champion) => champion.id === selectedChampionId);
+  const completedListings = listings.filter((listing) => listing.status === "completed");
+  const visibleListings = useMemo(
+    () => hideCompleted ? listings.filter((listing) => listing.status !== "completed") : listings,
+    [hideCompleted, listings],
+  );
+
+  const toggleCompletedVisibility = () => {
+    const next = !hideCompleted;
+    setHideCompleted(next);
+    saveBooleanPreference(completedPreferenceKey, next);
+  };
+
   const createListing = async (event) => {
     event.preventDefault();
-    if (!selectedChampionId || !user) return;
+    if (!user) return;
+    if (!selectedChampionId) {
+      setError("Choose a champion before publishing your Shelf listing.");
+      return;
+    }
 
     setBusyId("new");
     setError(null);
@@ -117,25 +141,27 @@ function Shelf() {
         <span><strong>{listings.filter((listing) => listing.status === "active").length}</strong> active listings</span>
         <span><strong>{listings.filter((listing) => listing.status === "paused").length}</strong> paused</span>
         <span>Only you can edit this Shelf</span>
+        {completedListings.length > 0 && <button aria-pressed={hideCompleted} className="activity-visibility-control" onClick={toggleCompletedVisibility} type="button">{hideCompleted ? "Show completed listings" : "Hide completed listings"}</button>}
       </section>
 
       {error && <p className="form-error" role="alert">{error}</p>}
 
       {loading ? (
         <p className="loading-copy">Loading your Shelf...</p>
-      ) : listings.length === 0 ? (
+      ) : visibleListings.length === 0 ? (
         <section className="empty-state shelf-empty-state">
           <span className="empty-state-icon">⌁</span>
-          <h2>Your Shelf is waiting</h2>
-          <p>Select a champion from your Collection to create a public listing. Active listings appear in Market, while every offer stays private.</p>
-          {availableChampions.length ? <button className="secondary-action" onClick={() => setShowListingForm(true)} type="button">Create first listing</button> : <Link className="secondary-action" to="/collection">Open Collection</Link>}
+          <h2>{listings.length && hideCompleted ? "Completed listings are hidden" : "Your Shelf is waiting"}</h2>
+          <p>{listings.length && hideCompleted ? "Show completed listings whenever you want to review your previous exchanges." : "Select a champion from your Collection to create a public listing. Active listings appear in Market, while every offer stays private."}</p>
+          {listings.length && hideCompleted ? <button className="secondary-action" onClick={toggleCompletedVisibility} type="button">Show completed listings</button> : availableChampions.length ? <button className="secondary-action" onClick={() => setShowListingForm(true)} type="button">Create first listing</button> : <Link className="secondary-action" to="/collection">Open Collection</Link>}
         </section>
       ) : (
         <section className="shelf-grid">
-          {listings.map((listing) => {
+          {visibleListings.map((listing) => {
             const champion = listing.user_champions;
             if (!champion) return null;
-            const traits = getChampionTraits(champion);
+            const championTraits = getChampionTraits(champion);
+            const traitLabel = championTraits[0] || "Standard";
 
             return (
               <article className="shelf-card" key={listing.id}>
@@ -143,8 +169,9 @@ function Shelf() {
                   <span className={`rarity-badge rarity-${champion.rarity.toLowerCase().replaceAll(" ", "-")}`}>{champion.rarity}</span>
                   <span className={`listing-status listing-${listing.status}`}>{listing.status}</span>
                 </div>
+                <ListingArtwork imageUrl={champion.image_url} name={champion.name} rarity={champion.rarity} trait={traitLabel} />
                 <h2>{champion.name}</h2>
-                <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
+                <div className="traits card-traits">{championTraits.length ? championTraits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
                 <p className="market-value">◈ {getOwnedChampionValue(champion).toLocaleString()}</p>
                 {listing.note && <p className="listing-note">“{listing.note}”</p>}
                 <p className="card-meta">Listed {formatDateTime(listing.created_at)}</p>
@@ -160,24 +187,27 @@ function Shelf() {
 
       {showListingForm && (
         <div className="modal-overlay" role="presentation">
-          <form className="trade-modal collection-modal" onSubmit={createListing}>
+          <form className="trade-modal collection-modal collection-add-modal" onSubmit={createListing}>
             <p className="eyebrow">Public Shelf</p>
             <h2>Create listing</h2>
             <p className="modal-copy">Your champion name, rarity, trait, market value, and trader card become visible to licensed members.</p>
-            <label className="field-label" htmlFor="listing-champion">Champion copy</label>
-            <select id="listing-champion" onChange={(event) => setSelectedChampionId(event.target.value)} required value={selectedChampionId}>
-              <option value="">Choose a champion</option>
-              {availableChampions.map((champion) => <option key={champion.id} value={champion.id}>{champion.name} · {champion.trait || "Standard"}</option>)}
-            </select>
+            <div className="catalog-field">
+              <span className="field-label">Champion copy</span>
+              <button className={`catalog-selection${selectedChampion ? " has-selection" : ""}`} onClick={() => setShowChampionPicker(true)} type="button">
+                {selectedChampion ? <><span className="rarity-badge">{selectedChampion.rarity}</span><strong>{selectedChampion.name}</strong><small>{selectedChampion.trait || "Standard"} trait · ◈ {getOwnedChampionValue(selectedChampion).toLocaleString()}</small><em>Change</em></> : <><strong>Choose a champion copy</strong><small>Browse your private Collection before publishing.</small><em>Browse Collection</em></>}
+              </button>
+            </div>
             <label className="field-label" htmlFor="listing-note">Note <span>optional</span></label>
             <textarea id="listing-note" maxLength="280" onChange={(event) => setNote(event.target.value)} placeholder="What kind of offers are you open to?" rows="4" value={note} />
             <div className="modal-buttons">
               <button className="secondary-action" onClick={() => setShowListingForm(false)} type="button">Cancel</button>
-              <button className="primary-action" disabled={busyId === "new"} type="submit">{busyId === "new" ? "Publishing…" : "Publish listing"}</button>
+              <button className="primary-action" disabled={busyId === "new" || !selectedChampion} type="submit">{busyId === "new" ? "Publishing…" : "Publish listing"}</button>
             </div>
           </form>
         </div>
       )}
+
+      {showChampionPicker && <CatalogPickerDialog getItemMeta={(champion) => `${champion.trait || "Standard"} trait · ◈ ${getOwnedChampionValue(champion).toLocaleString()}`} items={availableChampions} kind="champion" onChoose={(champion) => setSelectedChampionId(champion.id)} onClose={() => setShowChampionPicker(false)} selectedValue={selectedChampionId} title="Choose a champion copy" />}
     </Layout>
   );
 }

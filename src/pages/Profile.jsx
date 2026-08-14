@@ -21,9 +21,13 @@ function ProfileIcon({ name }) {
 }
 
 function Profile() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [completedTradeCount, setCompletedTradeCount] = useState(0);
   const [collectionCount, setCollectionCount] = useState(0);
+  const [displayNameEditorOpen, setDisplayNameEditorOpen] = useState(false);
+  const [displayNameDraft, setDisplayNameDraft] = useState("");
+  const [savingDisplayName, setSavingDisplayName] = useState(false);
+  const [displayNameError, setDisplayNameError] = useState(null);
   const discordIdentity = getDiscordIdentity(user);
 
   // Use profile data from the DB (not the hardcoded 0)
@@ -43,6 +47,39 @@ function Profile() {
     "Discord member";
 
   const avatar = profile?.discord_avatar || discordIdentity.avatar;
+  const displayNameFeatureEnabled = Object.hasOwn(profile || {}, "lumio_display_name");
+
+  const openDisplayNameEditor = () => {
+    setDisplayNameDraft(displayName);
+    setDisplayNameError(null);
+    setDisplayNameEditorOpen(true);
+  };
+
+  const saveDisplayName = async (event) => {
+    event.preventDefault();
+    if (!user) return;
+
+    const nextName = displayNameDraft.trim().replace(/\s+/g, " ");
+    if (nextName.length < 2 || nextName.length > 32) {
+      setDisplayNameError("Use a display name between 2 and 32 characters.");
+      return;
+    }
+
+    setSavingDisplayName(true);
+    setDisplayNameError(null);
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ lumio_display_name: nextName })
+      .eq("id", user.id);
+
+    if (updateError) {
+      setDisplayNameError(updateError.message || "Unable to update your Lumio display name.");
+    } else {
+      await refreshProfile();
+      setDisplayNameEditorOpen(false);
+    }
+    setSavingDisplayName(false);
+  };
 
   useEffect(() => {
     if (!user) return undefined;
@@ -87,7 +124,7 @@ function Profile() {
         </div>
         <div className="profile-hero-actions">
           {user && <Link className="secondary-action" to={`/trader/${user.id}`}>View public profile</Link>}
-          <Link className="profile-settings-link" to="/settings">Account settings</Link>
+          {displayNameFeatureEnabled ? <button className="profile-settings-link" onClick={openDisplayNameEditor} type="button">Edit display name</button> : <Link className="profile-settings-link" to="/settings">Account settings</Link>}
         </div>
       </section>
 
@@ -130,6 +167,23 @@ function Profile() {
           )}
         </article>
       </section>
+
+      {displayNameEditorOpen && (
+        <div className="modal-overlay" role="presentation">
+          <form aria-modal="true" className="trade-modal display-name-editor-modal" onSubmit={saveDisplayName} role="dialog" aria-labelledby="profile-display-name-title">
+            <p className="eyebrow">Lumio identity</p>
+            <h2 id="profile-display-name-title">Edit display name</h2>
+            <p className="modal-copy">This name appears across Lumio. Your Discord display name remains below it and is never changed here.</p>
+            <label className="field-label" htmlFor="profile-display-name">Lumio display name</label>
+            <input autoFocus disabled={savingDisplayName} id="profile-display-name" maxLength="32" onChange={(event) => setDisplayNameDraft(event.target.value)} value={displayNameDraft} />
+            {displayNameError && <p className="inline-error" role="alert">{displayNameError}</p>}
+            <div className="modal-buttons">
+              <button className="secondary-action" disabled={savingDisplayName} onClick={() => setDisplayNameEditorOpen(false)} type="button">Cancel</button>
+              <button className="primary-action" disabled={savingDisplayName || !displayNameDraft.trim()} type="submit">{savingDisplayName ? "Saving…" : "Save display name"}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </Layout>
   );
 }

@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
 import TradeCompletionConfirmation, { hasTwoPartyConfirmation } from "../components/TradeCompletionConfirmation";
 import TradeDetailsModal, { TradeChampionList } from "../components/TradeDetailsModal";
 
 import { supabase } from "../lib/supabase";
 import useAuth from "../context/useAuth";
+import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
 import { formatDateTime } from "../utils/marketplace";
+
+const STATUS_LABELS = {
+  pending: "Pending",
+  accepted: "Accepted",
+  declined: "Declined",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
 
 function PendingTrades() {
   const { user, refreshProfile } = useAuth();
@@ -19,6 +29,9 @@ function PendingTrades() {
   const [detailsTrade, setDetailsTrade] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
   const [error, setError] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const cancelledPreferenceKey = user?.id ? `lumio-sent-trades-hide-cancelled:${user.id}` : "";
+  const [hideCancelled, setHideCancelled] = useState(() => readBooleanPreference(cancelledPreferenceKey));
 
   useEffect(() => {
     if (!user) return undefined;
@@ -55,11 +68,11 @@ function PendingTrades() {
     };
   }, [user]);
 
-  const cancelTrade = async (tradeId) => {
-    const confirmCancel = window.confirm("Cancel this trade request?");
-    if (!confirmCancel) return;
-
+  const cancelTrade = async () => {
+    if (!cancelTarget) return;
+    const tradeId = cancelTarget.id;
     setCancelling(tradeId);
+    setError(null);
 
     const { error } = await supabase
       .from("trades")
@@ -68,7 +81,7 @@ function PendingTrades() {
       .eq("status", "pending"); // only pending trades can be cancelled
 
     if (error) {
-      console.error("CANCEL ERROR:", error);
+      setError(error.message || "Unable to cancel that trade request.");
     } else {
       // Edge function (UPDATE trigger) edits the Discord message.
       setTrades((prev) =>
@@ -76,6 +89,7 @@ function PendingTrades() {
           t.id === tradeId ? { ...t, status: "cancelled" } : t
         )
       );
+      setCancelTarget(null);
     }
     setCancelling(null);
   };
@@ -103,12 +117,13 @@ function PendingTrades() {
     setConfirmingId(null);
   };
 
-  const statusEmoji = {
-    pending: "🟡 Pending",
-    accepted: "🔵 Accepted",
-    declined: "⚪ Declined",
-    completed: "✅ Completed",
-    cancelled: "❌ Cancelled",
+  const visibleTrades = hideCancelled ? trades.filter((trade) => trade.status !== "cancelled") : trades;
+  const cancelledTradeCount = trades.filter((trade) => trade.status === "cancelled").length;
+
+  const toggleCancelledVisibility = () => {
+    const next = !hideCancelled;
+    setHideCancelled(next);
+    saveBooleanPreference(cancelledPreferenceKey, next);
   };
 
   return (
@@ -119,19 +134,27 @@ function PendingTrades() {
         <p>Track the offers you have sent directly to other traders.</p>
       </section>
 
+      {cancelledTradeCount > 0 && (
+        <section className="activity-visibility-bar">
+          <span>{hideCancelled ? `${cancelledTradeCount} cancelled offer${cancelledTradeCount === 1 ? " is" : "s are"} hidden on this device.` : "Keep completed activity tidy without deleting your trade history."}</span>
+          <button aria-pressed={hideCancelled} className="activity-visibility-control" onClick={toggleCancelledVisibility} type="button">{hideCancelled ? "Show cancelled offers" : "Hide cancelled offers"}</button>
+        </section>
+      )}
+
       {error && <p className="form-error" role="alert">{error}</p>}
 
       {loading ? (
         <p className="loading-copy">Loading sent trades...</p>
-      ) : trades.length === 0 ? (
+      ) : visibleTrades.length === 0 ? (
         <section className="empty-state">
           <span className="empty-state-icon">↑</span>
-          <h2>No sent trades yet</h2>
-          <p>Your direct offers and their current status will appear here.</p>
+          <h2>{trades.length && hideCancelled ? "Cancelled offers are hidden" : "No sent trades yet"}</h2>
+          <p>{trades.length && hideCancelled ? "Show cancelled offers whenever you need to review them." : "Your direct offers and their current status will appear here."}</p>
+          {trades.length && hideCancelled && <button className="secondary-action" onClick={toggleCancelledVisibility} type="button">Show cancelled offers</button>}
         </section>
       ) : (
         <section className="trade-list">
-          {trades.map((trade) => {
+          {visibleTrades.map((trade) => {
           const requested = trade.requested_champions?.length
             ? trade.requested_champions
             : (trade.requested_champion ? [trade.requested_champion] : []);
@@ -148,7 +171,7 @@ function PendingTrades() {
                   <h2>{requested[0]?.name || "Open direct offer"}</h2>
                 </div>
                 <span className={`trade-status status-${trade.status}`}>
-                  {statusEmoji[trade.status] || trade.status}
+                  {STATUS_LABELS[trade.status] || trade.status}
                 </span>
               </div>
 
@@ -189,7 +212,7 @@ function PendingTrades() {
               {trade.status === "pending" && (
                 <div className="card-actions trade-card-actions">
                   <button className="secondary-action" onClick={() => setDetailsTrade(trade)} type="button">View details</button>
-                  <button className="danger-action" onClick={() => cancelTrade(trade.id)} disabled={cancelling === trade.id} type="button">{cancelling === trade.id ? "Cancelling…" : "Cancel trade"}</button>
+                  <button className="danger-action" onClick={() => setCancelTarget(trade)} disabled={cancelling === trade.id} type="button">{cancelling === trade.id ? "Cancelling…" : "Cancel trade"}</button>
                 </div>
               )}
               {trade.status !== "pending" && <button className="secondary-action trade-details-button" onClick={() => setDetailsTrade(trade)} type="button">View details</button>}
@@ -198,6 +221,8 @@ function PendingTrades() {
           })}
         </section>
       )}
+
+      {cancelTarget && <ConfirmDialog busy={cancelling === cancelTarget.id} cancelLabel="Keep trade" confirmLabel="Cancel trade" danger description="Cancel this pending offer? The recipient will no longer be able to accept it, and Lumio will update the associated Discord trade message." onCancel={() => setCancelTarget(null)} onConfirm={() => void cancelTrade()} title="Cancel this trade request?" />}
 
       {detailsTrade && (
         <TradeDetailsModal

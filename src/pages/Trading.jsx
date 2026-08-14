@@ -264,7 +264,7 @@ function Trading() {
                   <span className="listing-status listing-active">Live on Shelf</span>
                 </div>
                 <span className="listing-code">Listing {getListingCode(listing.id)}</span>
-                <ListingArtwork imageUrl={listing.image_url} name={listing.name} rarity={listing.rarity} />
+                <ListingArtwork imageUrl={listing.image_url} name={listing.name} rarity={listing.rarity} trait={traits[0] || "Standard"} />
                 <h2>{listing.name}</h2>
                 <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
                 <p className="market-value">◈ {getOwnedChampionValue(listing).toLocaleString()}</p>

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
+import CatalogPickerDialog from "../components/CatalogPickerDialog";
+import ChoiceMenu from "../components/ChoiceMenu";
+import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
 import champions from "../data/champions";
@@ -9,29 +12,7 @@ import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { calculateChampionValue, getRarityValue } from "../utils/valueCalculator";
 import { getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
-
-const TRAIT_BONUS_LABELS = {
-  chakra: "Chakra",
-  strength: "Strength",
-  trainingSpeed: "Training speed",
-  statsGain: "Stats gain",
-  sword: "Sword",
-  lootChance: "Loot chance",
-  cooldownReduction: "Cooldown reduction",
-  chikara: "Chikara",
-  yen: "Yen",
-  speed: "Speed",
-  defense: "Defense",
-  allDamage: "All damage",
-};
-
-function traitEffectSummary(trait) {
-  if (!trait) return null;
-  const bonuses = Object.entries(trait.bonuses)
-    .filter(([, bonus]) => bonus > 0)
-    .map(([key, bonus]) => `${TRAIT_BONUS_LABELS[key]} +${bonus}%`);
-  return bonuses.join(" · ") || "No bonus recorded";
-}
+import traitEffectSummary from "../utils/traitEffectSummary";
 
 function Collection() {
   const { user } = useAuth();
@@ -41,14 +22,17 @@ function Collection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddChampion, setShowAddChampion] = useState(false);
-  const [selectedChampionId, setSelectedChampionId] = useState(champions[0]?.id);
+  const [selectedChampionId, setSelectedChampionId] = useState(null);
   const [selectedTrait, setSelectedTrait] = useState("Standard");
+  const [picker, setPicker] = useState(null);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState(() => searchParams.get("search") || "");
   const [rarityFilter, setRarityFilter] = useState("all");
   const [traitFilter, setTraitFilter] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
   const [detailsChampion, setDetailsChampion] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const query = search.trim().toLowerCase();
   const selectedChampion = champions.find((champion) => champion.id === Number(selectedChampionId));
@@ -99,8 +83,8 @@ function Collection() {
 
   const availableTraits = useMemo(
     () => [...new Set(ownedChampions.flatMap((champion) => {
-      const traits = getChampionTraits(champion);
-      return traits.length ? traits : ["Standard"];
+      const championTraits = getChampionTraits(champion);
+      return championTraits.length ? championTraits : ["Standard"];
     }))].sort((left, right) => left.localeCompare(right)),
     [ownedChampions],
   );
@@ -112,11 +96,11 @@ function Collection() {
 
   const filteredOwnedChampions = useMemo(() => {
     const championsToShow = ownedChampions.filter((champion) => {
-      const traits = getChampionTraits(champion);
-      const searchableDetails = [champion.name, champion.rarity, ...traits].filter(Boolean).join(" ").toLowerCase();
+      const championTraits = getChampionTraits(champion);
+      const searchableDetails = [champion.name, champion.rarity, ...championTraits].filter(Boolean).join(" ").toLowerCase();
       const matchesSearch = !query || searchableDetails.includes(query);
       const matchesRarity = rarityFilter === "all" || champion.rarity === rarityFilter;
-      const matchesTrait = traitFilter === "all" || (traitFilter === "Standard" ? traits.length === 0 : traits.includes(traitFilter));
+      const matchesTrait = traitFilter === "all" || (traitFilter === "Standard" ? championTraits.length === 0 : championTraits.includes(traitFilter));
       return matchesSearch && matchesRarity && matchesTrait;
     });
 
@@ -129,6 +113,16 @@ function Collection() {
     });
   }, [ownedChampions, query, rarityFilter, sortBy, traitFilter]);
 
+  const rarityOptions = [{ value: "all", label: "All rarities" }, ...availableRarities.map((rarity) => ({ value: rarity, label: rarity }))];
+  const traitOptions = [{ value: "all", label: "All traits" }, ...availableTraits.map((trait) => ({ value: trait, label: trait }))];
+  const sortOptions = [
+    { value: "recent", label: "Recently updated" },
+    { value: "value-desc", label: "Value: high to low" },
+    { value: "value-asc", label: "Value: low to high" },
+    { value: "rarity", label: "Rarity" },
+    { value: "name", label: "Champion name" },
+  ];
+
   const clearControls = () => {
     setSearch("");
     setRarityFilter("all");
@@ -136,7 +130,12 @@ function Collection() {
     setSortBy("recent");
   };
 
-  const hasActiveControls = Boolean(search || rarityFilter !== "all" || traitFilter !== "all" || sortBy !== "recent");
+  const openAddChampion = () => {
+    setError(null);
+    setSelectedChampionId(null);
+    setSelectedTrait("Standard");
+    setShowAddChampion(true);
+  };
 
   const addChampion = async (event) => {
     event.preventDefault();
@@ -151,7 +150,7 @@ function Collection() {
       name: selectedChampion.name,
       image_url: selectedChampion.image_url || null,
       rarity: selectedChampion.rarity,
-      trait: selectedTrait || "Standard",
+      trait: selectedTrait,
       base_value: calculateChampionValue(championWithTrait),
       market_adjustment: 1,
     });
@@ -167,6 +166,29 @@ function Collection() {
     await loadCollection();
   };
 
+  const removeChampion = async () => {
+    if (!deleteTarget || !user) return;
+
+    setDeletingId(deleteTarget.id);
+    setError(null);
+    const { error: deleteError } = await supabase
+      .from("user_champions")
+      .delete()
+      .eq("id", deleteTarget.id)
+      .eq("owner_id", user.id);
+
+    if (deleteError) {
+      setError(deleteError.message || "Unable to remove that champion from your Collection.");
+    } else {
+      setDetailsChampion(null);
+      setDeleteTarget(null);
+      await loadCollection();
+    }
+    setDeletingId(null);
+  };
+
+  const hasActiveControls = Boolean(search || rarityFilter !== "all" || traitFilter !== "all" || sortBy !== "recent");
+
   return (
     <Layout>
       <section className="page-heading page-heading-split">
@@ -175,24 +197,13 @@ function Collection() {
           <h1>Collection</h1>
           <p>Keep your champions organized, then put the exact copy you own on your public Shelf.</p>
         </div>
-        <button className="primary-action" onClick={() => setShowAddChampion(true)} type="button">
-          Add champion
-        </button>
+        <button className="primary-action" onClick={openAddChampion} type="button">Add champion</button>
       </section>
 
       <section className="collection-summary" aria-label="Collection summary">
-        <div>
-          <span>Owned champions</span>
-          <strong>{ownedChampions.length}</strong>
-        </div>
-        <div>
-          <span>On Shelf</span>
-          <strong>{[...listingsByChampion.values()].filter((listing) => listing.status === "active").length}</strong>
-        </div>
-        <div>
-          <span>Collection value</span>
-          <strong>◈ {ownedChampions.reduce((total, champion) => total + getOwnedChampionValue(champion), 0).toLocaleString()}</strong>
-        </div>
+        <div><span>Owned champions</span><strong>{ownedChampions.length}</strong></div>
+        <div><span>On Shelf</span><strong>{[...listingsByChampion.values()].filter((listing) => listing.status === "active").length}</strong></div>
+        <div><span>Collection value</span><strong>◈ {ownedChampions.reduce((total, champion) => total + getOwnedChampionValue(champion), 0).toLocaleString()}</strong></div>
       </section>
 
       <section className="collection-controls" aria-label="Collection controls">
@@ -200,30 +211,9 @@ function Collection() {
           <span>Search</span>
           <input onChange={(event) => setSearch(event.target.value)} placeholder="Champion, rarity, or trait" type="search" value={search} />
         </label>
-        <label className="collection-control-select">
-          <span>Rarity</span>
-          <select onChange={(event) => setRarityFilter(event.target.value)} value={rarityFilter}>
-            <option value="all">All rarities</option>
-            {availableRarities.map((rarity) => <option key={rarity} value={rarity}>{rarity}</option>)}
-          </select>
-        </label>
-        <label className="collection-control-select">
-          <span>Trait</span>
-          <select onChange={(event) => setTraitFilter(event.target.value)} value={traitFilter}>
-            <option value="all">All traits</option>
-            {availableTraits.map((trait) => <option key={trait} value={trait}>{trait}</option>)}
-          </select>
-        </label>
-        <label className="collection-control-select">
-          <span>Sort by</span>
-          <select onChange={(event) => setSortBy(event.target.value)} value={sortBy}>
-            <option value="recent">Recently updated</option>
-            <option value="value-desc">Value: high to low</option>
-            <option value="value-asc">Value: low to high</option>
-            <option value="rarity">Rarity</option>
-            <option value="name">Champion name</option>
-          </select>
-        </label>
+        <ChoiceMenu label="Rarity" onChange={setRarityFilter} options={rarityOptions} value={rarityFilter} />
+        <ChoiceMenu label="Trait" onChange={setTraitFilter} options={traitOptions} value={traitFilter} />
+        <ChoiceMenu label="Sort by" onChange={setSortBy} options={sortOptions} value={sortBy} />
         {hasActiveControls && <button className="collection-clear-controls" onClick={clearControls} type="button">Clear controls</button>}
       </section>
 
@@ -235,18 +225,15 @@ function Collection() {
         <section className="empty-state collection-empty-state">
           <span className="empty-state-icon">✦</span>
           <h2>{query ? "No champions match that search" : "Start your Collection"}</h2>
-          <p>
-            {query
-              ? "Try another champion name, or clear the search to see every copy you own."
-              : "Add a champion you own first. Each copy stays uniquely yours, so traits and listings are always clear."}
-          </p>
-          {!query && <button className="secondary-action" onClick={() => setShowAddChampion(true)} type="button">Add your first champion</button>}
+          <p>{query ? "Try another champion name, or clear the search to see every copy you own." : "Add a champion you own first. Each copy stays uniquely yours, so traits and listings are always clear."}</p>
+          {!query && <button className="secondary-action" onClick={openAddChampion} type="button">Add your first champion</button>}
         </section>
       ) : (
         <section className="collection-grid">
           {filteredOwnedChampions.map((champion) => {
             const listing = listingsByChampion.get(champion.id);
-            const traits = getChampionTraits(champion);
+            const championTraits = getChampionTraits(champion);
+            const traitLabel = championTraits[0] || "Standard";
 
             return (
               <article className="owned-champion-card" key={champion.id}>
@@ -254,15 +241,10 @@ function Collection() {
                   <span className={`rarity-badge rarity-${champion.rarity.toLowerCase().replaceAll(" ", "-")}`}>{champion.rarity}</span>
                   {listing && <span className={`listing-status listing-${listing.status}`}>{listing.status === "active" ? "On Shelf" : "Shelf paused"}</span>}
                 </div>
-                <ListingArtwork imageUrl={champion.image_url} name={champion.name} rarity={champion.rarity} />
+                <ListingArtwork imageUrl={champion.image_url} name={champion.name} rarity={champion.rarity} trait={traitLabel} />
                 <h2>{champion.name}</h2>
-                <div className="traits card-traits">
-                  {traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}
-                </div>
-                <div className="owned-champion-value">
-                  <span>Market value</span>
-                  <strong>◈ {getOwnedChampionValue(champion).toLocaleString()}</strong>
-                </div>
+                <div className="traits card-traits">{championTraits.length ? championTraits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
+                <div className="owned-champion-value"><span>Market value</span><strong>◈ {getOwnedChampionValue(champion).toLocaleString()}</strong></div>
                 <div className="card-actions owned-card-actions">
                   <button className="secondary-action" onClick={() => setDetailsChampion(champion)} type="button">View details</button>
                   {listing ? <Link className="secondary-action" to="/shelf">Manage listing</Link> : <Link className="primary-action" to={`/shelf?list=${champion.id}`}>List on Shelf</Link>}
@@ -277,7 +259,7 @@ function Collection() {
         <div className="modal-overlay" role="presentation">
           <section aria-modal="true" className="trade-modal collection-details-modal" role="dialog" aria-labelledby="collection-details-title">
             <div className="collection-details-heading">
-              <ListingArtwork imageUrl={detailsChampion.image_url} name={detailsChampion.name} rarity={detailsChampion.rarity} />
+              <ListingArtwork imageUrl={detailsChampion.image_url} name={detailsChampion.name} rarity={detailsChampion.rarity} trait={getChampionTraits(detailsChampion)[0] || "Standard"} />
               <div>
                 <span className={`rarity-badge rarity-${detailsChampion.rarity.toLowerCase().replaceAll(" ", "-")}`}>{detailsChampion.rarity}</span>
                 <h2 id="collection-details-title">{detailsChampion.name}</h2>
@@ -289,7 +271,8 @@ function Collection() {
               <div><span>Shelf status</span><strong>{listingsByChampion.get(detailsChampion.id)?.status === "active" ? "Listed publicly" : listingsByChampion.get(detailsChampion.id)?.status === "paused" ? "Listing paused" : "Private to you"}</strong></div>
             </div>
             <p className="modal-copy">This is one exact copy in your Collection. Listing it on Shelf makes only its champion details visible to other licensed traders.</p>
-            <div className="modal-buttons">
+            <div className="modal-buttons collection-details-actions">
+              <button className="danger-action" onClick={() => setDeleteTarget(detailsChampion)} type="button">Remove from Collection</button>
               <button className="secondary-action" onClick={() => setDetailsChampion(null)} type="button">Done</button>
               {listingsByChampion.has(detailsChampion.id) ? <Link className="primary-action" to="/shelf">Manage on Shelf</Link> : <Link className="primary-action" to={`/shelf?list=${detailsChampion.id}`}>List on Shelf</Link>}
             </div>
@@ -299,39 +282,39 @@ function Collection() {
 
       {showAddChampion && (
         <div className="modal-overlay" role="presentation">
-          <form className="trade-modal collection-modal" onSubmit={addChampion}>
+          <form className="trade-modal collection-modal collection-add-modal" onSubmit={addChampion}>
             <p className="eyebrow">Add to Collection</p>
-            <h2>Which copy do you own?</h2>
-            <p className="modal-copy">This creates a private inventory record. You can list it publicly whenever you are ready.</p>
+            <h2>Choose your exact copy</h2>
+            <p className="modal-copy">Select the champion and trait you own. Lumio keeps that combination as one private, tradeable copy.</p>
 
-            <label className="field-label" htmlFor="champion-select">Champion</label>
-            <select
-              id="champion-select"
-              onChange={(event) => {
-                setSelectedChampionId(event.target.value);
-                setSelectedTrait("Standard");
-              }}
-              value={selectedChampionId}
-            >
-              {champions.map((champion) => <option key={champion.id} value={champion.id}>{champion.name} · {champion.clanPoints} clan points</option>)}
-            </select>
+            <div className="catalog-field">
+              <span className="field-label">Champion</span>
+              <button className={`catalog-selection${selectedChampion ? " has-selection" : ""}`} onClick={() => setPicker("champion")} type="button">
+                {selectedChampion ? <><span className="rarity-badge">{selectedChampion.rarity}</span><strong>{selectedChampion.name}</strong><small>+{selectedChampion.statTotal}% combined bonus · {selectedChampion.clanPoints} Clan Points</small><em>Change</em></> : <><strong>Choose a champion</strong><small>Browse the live catalog by name, rarity, and base stats.</small><em>Browse catalog</em></>}
+              </button>
+            </div>
 
-            <label className="field-label" htmlFor="trait-select">Trait</label>
-            <select id="trait-select" onChange={(event) => setSelectedTrait(event.target.value)} value={selectedTrait}>
-              <option value="Standard">Standard</option>
-              {traits.map((trait) => <option key={trait.name} value={trait.name}>{trait.name} · {trait.rarity}</option>)}
-            </select>
-            {selectedTraitData && <p className="collection-source-note"><strong>{selectedTraitData.rarity}</strong> · {traitEffectSummary(selectedTraitData)}{selectedTraitData.notes ? ` · ${selectedTraitData.notes}` : ""}</p>}
+            <div className="catalog-field">
+              <span className="field-label">Trait</span>
+              <button className="catalog-selection has-selection" onClick={() => setPicker("trait")} type="button">
+                <span className="rarity-badge">{selectedTraitData?.rarity || "Base"}</span><strong>{selectedTrait}</strong><small>{selectedTraitData ? traitEffectSummary(selectedTraitData) : "No trait modifiers"}</small><em>Change</em>
+              </button>
+              {selectedTraitData?.notes && <p className="collection-source-note">{selectedTraitData.notes}</p>}
+            </div>
 
-            {selectedChampion && <div className="form-value-preview"><span>Catalog score · {selectedChampion.statTotal}% total bonus · {selectedChampion.clanPoints} clan points</span><strong>◈ {calculateChampionValue({ ...selectedChampion, traits: selectedTrait === "Standard" ? [] : [selectedTrait] }).toLocaleString()}</strong></div>}
+            {selectedChampion && <div className="form-value-preview"><span>Catalog score · {selectedChampion.statTotal}% total bonus · {selectedChampion.clanPoints} Clan Points</span><strong>◈ {calculateChampionValue({ ...selectedChampion, traits: selectedTrait === "Standard" ? [] : [selectedTrait] }).toLocaleString()}</strong></div>}
 
             <div className="modal-buttons">
               <button className="secondary-action" onClick={() => setShowAddChampion(false)} type="button">Cancel</button>
-              <button className="primary-action" disabled={saving} type="submit">{saving ? "Adding…" : "Add champion"}</button>
+              <button className="primary-action" disabled={saving || !selectedChampion} type="submit">{saving ? "Adding…" : "Add champion"}</button>
             </div>
           </form>
         </div>
       )}
+
+      {picker === "champion" && <CatalogPickerDialog items={champions} kind="champion" onChoose={(champion) => { setSelectedChampionId(champion.id); setSelectedTrait("Standard"); }} onClose={() => setPicker(null)} selectedValue={selectedChampionId} title="Choose a champion" />}
+      {picker === "trait" && <CatalogPickerDialog items={traits} kind="trait" onChoose={setSelectedTrait} onClose={() => setPicker(null)} selectedValue={selectedTrait} title="Choose a trait" />}
+      {deleteTarget && <ConfirmDialog busy={deletingId === deleteTarget.id} cancelLabel="Keep champion" confirmLabel="Remove champion" danger description={listingsByChampion.has(deleteTarget.id) ? `Remove ${deleteTarget.name} from your Collection? Its active Shelf listing will be removed too.` : `Remove ${deleteTarget.name} from your Collection? This only removes your private Lumio record.`} onCancel={() => setDeleteTarget(null)} onConfirm={() => void removeChampion()} title="Remove this champion?" />}
     </Layout>
   );
 }

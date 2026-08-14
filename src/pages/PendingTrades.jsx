@@ -2,14 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Layout from "../components/Layout";
+import TradeDetailsModal, { TradeChampionList } from "../components/TradeDetailsModal";
 
 import { supabase } from "../lib/supabase";
 import useAuth from "../context/useAuth";
-
-function formatDate(ts) {
-  if (!ts) return "—";
-  return new Date(ts).toLocaleString();
-}
+import { formatDateTime } from "../utils/marketplace";
 
 function PendingTrades() {
   const { user } = useAuth();
@@ -18,6 +15,7 @@ function PendingTrades() {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(null);
   const [recipients, setRecipients] = useState({});
+  const [detailsTrade, setDetailsTrade] = useState(null);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -106,7 +104,9 @@ function PendingTrades() {
       ) : (
         <section className="trade-list">
           {trades.map((trade) => {
-          const requested = trade.requested_champion || { name: "Open direct offer", rarity: "No specific champion requested" };
+          const requested = trade.requested_champions?.length
+            ? trade.requested_champions
+            : (trade.requested_champion ? [trade.requested_champion] : []);
           const offered = trade.offered_champions || [];
           const code = trade.trade_code ? `#${trade.trade_code}` : "Trade code pending";
           const recipient = recipients[trade.recipient_id];
@@ -117,7 +117,7 @@ function PendingTrades() {
               <div className="trade-card-heading">
                 <div>
                   <span className="trade-code">{code}</span>
-                  <h2>{requested.name || "Open direct offer"}</h2>
+                  <h2>{requested[0]?.name || "Open direct offer"}</h2>
                 </div>
                 <span className={`trade-status status-${trade.status}`}>
                   {statusEmoji[trade.status] || trade.status}
@@ -133,27 +133,16 @@ function PendingTrades() {
               ) : null}
 
               <h3>You requested</h3>
-              <p>
-                <strong>{requested.name || "Open direct offer"}</strong>{" "}
-                {requested.rarity && requested.rarity !== "No specific champion requested" ? `(${requested.rarity})` : null}
-              </p>
+              <TradeChampionList champions={requested} emptyCopy="Open direct offer — no specific champion was requested." />
 
               <h3>You offered</h3>
-              {offered.length === 0 ? (
-                <p>No champions offered.</p>
-              ) : (
-                offered.map((champion, index) => (
-                  <p key={index}>
-                    {champion.name}{champion.rarity ? ` (${champion.rarity})` : ""}
-                  </p>
-                ))
-              )}
+              <TradeChampionList champions={offered} emptyCopy="No champions were included in this offer." />
 
               {trade.offer_value !== undefined && (
-                <p>💎 Offer Value: {trade.offer_value}</p>
+                <p className="trade-offer-total">Offer value: <strong>◈ {Number(trade.offer_value || 0).toLocaleString()}</strong></p>
               )}
 
-              <p className="trade-created">Sent {formatDate(trade.created_at)}</p>
+              <p className="trade-created">Sent {formatDateTime(trade.created_at)}</p>
 
               {trade.status === "accepted" && (
                 <section className="trade-coordination">
@@ -163,20 +152,31 @@ function PendingTrades() {
                 </section>
               )}
 
-              {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDate(trade.completed_at || trade.updated_at)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}
+              {trade.status === "completed" && <p className="trade-completed-note">Completed {formatDateTime(trade.completed_at || trade.updated_at)}{trade.xp_awarded ? ` · +${trade.xp_awarded} XP awarded to both traders` : ""}</p>}
 
               {trade.status === "pending" && (
-                <button
-                  onClick={() => cancelTrade(trade.id)}
-                  disabled={cancelling === trade.id}
-                >
-                  {cancelling === trade.id ? "Cancelling…" : "Cancel Trade"}
-                </button>
+                <div className="card-actions trade-card-actions">
+                  <button className="secondary-action" onClick={() => setDetailsTrade(trade)} type="button">View details</button>
+                  <button className="danger-action" onClick={() => cancelTrade(trade.id)} disabled={cancelling === trade.id} type="button">{cancelling === trade.id ? "Cancelling…" : "Cancel trade"}</button>
+                </div>
               )}
+              {trade.status !== "pending" && <button className="secondary-action trade-details-button" onClick={() => setDetailsTrade(trade)} type="button">View details</button>}
             </article>
           );
           })}
         </section>
+      )}
+
+      {detailsTrade && (
+        <TradeDetailsModal
+          counterpartName={recipients[detailsTrade.recipient_id]?.discord_display_name || recipients[detailsTrade.recipient_id]?.discord_username}
+          leftChampions={detailsTrade.requested_champions?.length ? detailsTrade.requested_champions : (detailsTrade.requested_champion ? [detailsTrade.requested_champion] : [])}
+          leftLabel="You requested"
+          onClose={() => setDetailsTrade(null)}
+          rightChampions={detailsTrade.offered_champions || []}
+          rightLabel="You offered"
+          trade={detailsTrade}
+        />
       )}
     </Layout>
   );

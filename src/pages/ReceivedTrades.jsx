@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Layout from "../components/Layout";
+import TradeDetailsModal, { TradeChampionList } from "../components/TradeDetailsModal";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { formatDateTime } from "../utils/marketplace";
@@ -27,6 +28,7 @@ function ReceivedTrades() {
   const [error, setError] = useState(null);
   const [respondingId, setRespondingId] = useState(null);
   const [acceptingTrade, setAcceptingTrade] = useState(null);
+  const [detailsTrade, setDetailsTrade] = useState(null);
 
   const loadTrades = useCallback(async () => {
     if (!user) return;
@@ -126,16 +128,19 @@ function ReceivedTrades() {
                 <div className="trade-details-grid">
                   <div>
                     <h3>You listed</h3>
-                    {requested.length ? requested.map((champion) => <p key={`${trade.id}-${champion.user_champion_id || champion.id}`}><strong>{champion.name}</strong>{champion.rarity && <span> ({champion.rarity})</span>}</p>) : <p><strong>Open direct offer</strong> <span>(no specific champion requested)</span></p>}
+                    <TradeChampionList champions={requested} emptyCopy="Open direct offer — no specific champion was requested." />
                   </div>
                   <div>
                     <h3>They offered</h3>
-                    {offered.map((champion) => <p key={`${trade.id}-${champion.user_champion_id || champion.id}`}><strong>{champion.name}</strong>{champion.rarity && <span> ({champion.rarity})</span>}</p>)}
+                    <TradeChampionList champions={offered} emptyCopy="No champions were included in this offer." />
                   </div>
                 </div>
                 <div className="trade-footer">
                   <span>◈ {trade.offer_value?.toLocaleString() || "0"} offered · {formatDateTime(trade.created_at)}</span>
-                  {trade.status === "pending" && <div className="card-actions"><button className="secondary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "declined")} type="button">Decline</button><button className="primary-action" disabled={respondingId === trade.id} onClick={() => setAcceptingTrade(trade)} type="button">Accept offer</button></div>}
+                  <div className="card-actions">
+                    <button className="secondary-action" onClick={() => setDetailsTrade(trade)} type="button">View details</button>
+                    {trade.status === "pending" && <><button className="secondary-action" disabled={respondingId === trade.id} onClick={() => respondToTrade(trade.id, "declined")} type="button">Decline</button><button className="primary-action" disabled={respondingId === trade.id} onClick={() => setAcceptingTrade(trade)} type="button">Accept offer</button></>}
+                  </div>
                 </div>
                 {trade.status === "accepted" && (
                   <section className="trade-coordination">
@@ -164,6 +169,18 @@ function ReceivedTrades() {
             </div>
           </section>
         </div>
+      )}
+
+      {detailsTrade && (
+        <TradeDetailsModal
+          counterpartName={profiles[detailsTrade.sender_id]?.discord_display_name || profiles[detailsTrade.sender_id]?.discord_username}
+          leftChampions={tradeRequestedChampions(detailsTrade)}
+          leftLabel="You listed"
+          onClose={() => setDetailsTrade(null)}
+          rightChampions={detailsTrade.offered_champions || []}
+          rightLabel="They offered"
+          trade={detailsTrade}
+        />
       )}
     </Layout>
   );

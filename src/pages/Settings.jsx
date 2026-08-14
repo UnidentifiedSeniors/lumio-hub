@@ -4,6 +4,7 @@ import Layout from "../components/Layout";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { formatDisplayNameChangeTime, getDisplayNameChangeState } from "../utils/displayNameCooldown";
+import { LUMIO_DISPLAY_NAME_MAX_LENGTH, validateLumioDisplayName } from "../utils/lumioDisplayName";
 
 async function edgeFunctionErrorMessage(data, error, fallback) {
   if (data?.error) return data.error;
@@ -94,8 +95,9 @@ function Settings() {
       return;
     }
 
-    if (nextName.length < 2 || nextName.length > 32) {
-      setDisplayNameMessage({ type: "error", text: "Use a display name between 2 and 32 characters." });
+    const nameValidationError = validateLumioDisplayName(nextName);
+    if (nameValidationError) {
+      setDisplayNameMessage({ type: "error", text: nameValidationError });
       return;
     }
     if (!user) return;
@@ -207,7 +209,7 @@ function Settings() {
         <article className="settings-card display-name-card">
           <span className="settings-card-label">Lumio identity</span>
           <h2>Display name</h2>
-          <p>Choose the name Lumio members see across your profile, market listings, and offers.</p>
+          <p>Choose the name Lumio members see across your profile, market listings, and offers. Lumio names use 3–15 letters only.</p>
           {displayNameFeatureEnabled ? (
             <>
               <form className="display-name-form" onSubmit={saveDisplayName}>
@@ -215,13 +217,13 @@ function Settings() {
                 <input
                   disabled={savingDisplayName || !displayNameChange.canChange}
                   id="lumio-display-name"
-                  maxLength="32"
+                  maxLength={LUMIO_DISPLAY_NAME_MAX_LENGTH}
                   onChange={(event) => setLumioDisplayName(event.target.value)}
                   value={lumioDisplayName}
                 />
                 <button className="secondary-action" disabled={savingDisplayName || !lumioDisplayName.trim() || !displayNameChange.canChange} type="submit">{savingDisplayName ? "Saving…" : "Save display name"}</button>
               </form>
-              <small>Your Discord display name stays underneath and is not changed here.</small>
+              <small>Your Discord display name stays underneath and is not changed here. Discord defaults can be longer; your custom Lumio name cannot.</small>
               {!displayNameChange.canChange && <small className="display-name-cooldown">Next change available {nextDisplayNameChange}.</small>}
               {displayNameMessage && <p className={displayNameMessage.type === "success" ? "inline-success" : "inline-error"} role={displayNameMessage.type === "success" ? "status" : "alert"}>{displayNameMessage.text}</p>}
             </>

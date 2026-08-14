@@ -6,6 +6,7 @@ import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { getDiscordIdentity } from "../utils/discordIdentity";
 import { formatDisplayNameChangeTime, getDisplayNameChangeState } from "../utils/displayNameCooldown";
+import { LUMIO_DISPLAY_NAME_MAX_LENGTH, validateLumioDisplayName } from "../utils/lumioDisplayName";
 import getRank from "../utils/rankCalculator";
 import getXPProgress from "../utils/xpProgress";
 
@@ -70,8 +71,9 @@ function Profile() {
     }
 
     const nextName = displayNameDraft.trim().replace(/\s+/g, " ");
-    if (nextName.length < 2 || nextName.length > 32) {
-      setDisplayNameError("Use a display name between 2 and 32 characters.");
+    const nameValidationError = validateLumioDisplayName(nextName);
+    if (nameValidationError) {
+      setDisplayNameError(nameValidationError);
       return;
     }
 
@@ -186,9 +188,9 @@ function Profile() {
           <form aria-modal="true" className="trade-modal display-name-editor-modal" onSubmit={saveDisplayName} role="dialog" aria-labelledby="profile-display-name-title">
             <p className="eyebrow">Lumio identity</p>
             <h2 id="profile-display-name-title">Edit display name</h2>
-            <p className="modal-copy">This name appears across Lumio. Your Discord display name remains below it and is never changed here.</p>
+            <p className="modal-copy">This name appears across Lumio. Use 3–15 letters only; your Discord display name remains below it and is never changed here.</p>
             <label className="field-label" htmlFor="profile-display-name">Lumio display name</label>
-            <input autoFocus disabled={savingDisplayName} id="profile-display-name" maxLength="32" onChange={(event) => setDisplayNameDraft(event.target.value)} value={displayNameDraft} />
+            <input autoFocus disabled={savingDisplayName} id="profile-display-name" maxLength={LUMIO_DISPLAY_NAME_MAX_LENGTH} onChange={(event) => setDisplayNameDraft(event.target.value)} value={displayNameDraft} />
             {displayNameError && <p className="inline-error" role="alert">{displayNameError}</p>}
             <div className="modal-buttons">
               <button className="secondary-action" disabled={savingDisplayName} onClick={() => setDisplayNameEditorOpen(false)} type="button">Cancel</button>

@@ -120,7 +120,7 @@ function Trading() {
     return listings.filter((listing) => {
       if (listing.owner_id === user?.id) return false;
       if (hiddenListingIds.includes(listing.id) || blockedTraderIds.includes(listing.owner_id)) return false;
-      return !normalizedQuery || [listing.name, listing.rarity, listing.trait, listing.discord_display_name, listing.discord_username]
+      return !normalizedQuery || [listing.name, listing.rarity, listing.trait, listing.lumio_display_name, listing.discord_display_name, listing.discord_username]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(normalizedQuery));
     });
@@ -171,7 +171,7 @@ function Trading() {
     setBlockedTraderIds(nextIds);
     saveIds(blockedTradersKey(user.id), nextIds);
     setBlockTarget(null);
-    setSuccessMessage(`${blockTarget.discord_display_name || blockTarget.discord_username || "This trader"} is now hidden from your Market on this device.`);
+    setSuccessMessage(`${blockTarget.lumio_display_name || blockTarget.discord_display_name || blockTarget.discord_username || "This trader"} is now hidden from your Market on this device.`);
   };
 
   const copyListingLink = async (listing) => {
@@ -189,7 +189,7 @@ function Trading() {
 
   const copyReportReference = async () => {
     if (!reportTarget) return;
-    const sellerName = reportTarget.discord_display_name || reportTarget.discord_username || "Unknown trader";
+    const sellerName = reportTarget.lumio_display_name || reportTarget.discord_display_name || reportTarget.discord_username || "Unknown trader";
     const link = new URL("/trades", window.location.origin);
     link.searchParams.set("listing", reportTarget.id);
     const reportReference = [
@@ -256,7 +256,7 @@ function Trading() {
         <section className="marketplace-grid">
           {visibleListings.map((listing) => {
             const traits = getChampionTraits(listing);
-            const sellerName = listing.discord_display_name || listing.discord_username || "Licensed trader";
+            const sellerName = listing.lumio_display_name || listing.discord_display_name || listing.discord_username || "Licensed trader";
             return (
               <article className={`marketplace-card${sharedListingId === listing.id ? " shared-listing" : ""}`} id={`listing-${listing.id}`} key={listing.id}>
                 <div className="card-topline">
@@ -321,7 +321,7 @@ function Trading() {
             <p className="eyebrow">Market safety</p>
             <h2>Block this trader?</h2>
             <p className="modal-copy">Their active and future Market listings will be hidden in this browser. You can undo this anytime from Manage Market filters.</p>
-            <div className="form-value-preview"><span>Trader</span><strong>{blockTarget.discord_display_name || blockTarget.discord_username || "Licensed trader"}</strong></div>
+            <div className="form-value-preview"><span>Trader</span><strong>{blockTarget.lumio_display_name || blockTarget.discord_display_name || blockTarget.discord_username || "Licensed trader"}</strong></div>
             <div className="modal-buttons">
               <button className="secondary-action" onClick={() => setBlockTarget(null)} type="button">Keep visible</button>
               <button className="danger-action" onClick={blockTrader} type="button">Block trader</button>
@@ -343,7 +343,7 @@ function Trading() {
               </div>
               <div>
                 <h3>Blocked traders</h3>
-                {blockedTraders.length ? blockedTraders.map((listing) => <p key={listing.owner_id}><span>{listing.discord_display_name || listing.discord_username || "Licensed trader"}</span><button onClick={() => unblockTrader(listing.owner_id)} type="button">Unblock</button></p>) : <small>No blocked traders.</small>}
+                {blockedTraders.length ? blockedTraders.map((listing) => <p key={listing.owner_id}><span>{listing.lumio_display_name || listing.discord_display_name || listing.discord_username || "Licensed trader"}</span><button onClick={() => unblockTrader(listing.owner_id)} type="button">Unblock</button></p>) : <small>No blocked traders.</small>}
               </div>
             </div>
             <div className="modal-buttons"><button className="primary-action" onClick={() => setFiltersOpen(false)} type="button">Done</button></div>

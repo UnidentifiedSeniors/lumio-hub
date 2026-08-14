@@ -40,7 +40,7 @@ function PendingTrades() {
           if (recipientIds.length) {
             const { data: profileData, error: profileError } = await supabase
               .from("public_profiles")
-              .select("id, discord_username, discord_display_name")
+              .select("*")
               .in("id", recipientIds);
             if (active && !profileError) {
               setRecipients(Object.fromEntries((profileData || []).map((profile) => [profile.id, profile])));
@@ -138,7 +138,7 @@ function PendingTrades() {
           const offered = trade.offered_champions || [];
           const code = trade.trade_code ? `#${trade.trade_code}` : "Trade code pending";
           const recipient = recipients[trade.recipient_id];
-          const recipientName = recipient?.discord_display_name || recipient?.discord_username;
+          const recipientName = recipient?.lumio_display_name || recipient?.discord_display_name || recipient?.discord_username;
 
           return (
             <article className="sent-trade-card" key={trade.id}>
@@ -201,7 +201,7 @@ function PendingTrades() {
 
       {detailsTrade && (
         <TradeDetailsModal
-          counterpartName={recipients[detailsTrade.recipient_id]?.discord_display_name || recipients[detailsTrade.recipient_id]?.discord_username}
+          counterpartName={recipients[detailsTrade.recipient_id]?.lumio_display_name || recipients[detailsTrade.recipient_id]?.discord_display_name || recipients[detailsTrade.recipient_id]?.discord_username}
           leftChampions={detailsTrade.requested_champions?.length ? detailsTrade.requested_champions : (detailsTrade.requested_champion ? [detailsTrade.requested_champion] : [])}
           leftLabel="You requested"
           onClose={() => setDetailsTrade(null)}

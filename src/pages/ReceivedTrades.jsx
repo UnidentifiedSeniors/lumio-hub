@@ -53,7 +53,7 @@ function ReceivedTrades() {
     if (senderIds.length) {
       const { data: profileData, error: profileError } = await supabase
         .from("public_profiles")
-        .select("id, discord_username, discord_display_name, discord_avatar")
+        .select("*")
         .in("id", senderIds);
       if (profileError) setError(profileError.message);
       setProfiles(Object.fromEntries((profileData || []).map((profile) => [profile.id, profile])));
@@ -137,7 +137,7 @@ function ReceivedTrades() {
         <section className="trade-list">
           {trades.map((trade) => {
             const sender = profiles[trade.sender_id];
-            const senderName = sender?.discord_display_name || sender?.discord_username || "Licensed trader";
+            const senderName = sender?.lumio_display_name || sender?.discord_display_name || sender?.discord_username || "Licensed trader";
             const requested = tradeRequestedChampions(trade);
             const offered = trade.offered_champions || [];
             return (
@@ -202,7 +202,7 @@ function ReceivedTrades() {
 
       {detailsTrade && (
         <TradeDetailsModal
-          counterpartName={profiles[detailsTrade.sender_id]?.discord_display_name || profiles[detailsTrade.sender_id]?.discord_username}
+          counterpartName={profiles[detailsTrade.sender_id]?.lumio_display_name || profiles[detailsTrade.sender_id]?.discord_display_name || profiles[detailsTrade.sender_id]?.discord_username}
           leftChampions={tradeRequestedChampions(detailsTrade)}
           leftLabel="You listed"
           onClose={() => setDetailsTrade(null)}

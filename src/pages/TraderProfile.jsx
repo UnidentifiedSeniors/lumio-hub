@@ -81,7 +81,7 @@ function TraderProfile() {
     );
   }
 
-  const displayName = trader.discord_display_name || trader.discord_username || "Licensed trader";
+  const displayName = trader.lumio_display_name || trader.discord_display_name || trader.discord_username || "Licensed trader";
   const isOwnProfile = user?.id === trader.id;
   const openDirectOffer = () => {
     setSuccessMessage(null);

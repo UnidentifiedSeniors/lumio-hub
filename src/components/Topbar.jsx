@@ -35,6 +35,7 @@ function Topbar() {
   const discordIdentity = getDiscordIdentity(user);
 
   const displayName =
+    profile?.lumio_display_name ||
     profile?.discord_display_name ||
     discordIdentity.displayName ||
     "Trader";

@@ -18,6 +18,7 @@ function Dashboard() {
 
   // Use the profile (DB row) instead of raw auth user
   const displayName =
+    profile?.lumio_display_name ||
     profile?.discord_display_name ||
     user?.user_metadata?.full_name ||
     user?.user_metadata?.name ||

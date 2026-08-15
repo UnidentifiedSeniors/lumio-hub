@@ -4963,6 +4963,50 @@ button.profile-settings-link {
   padding: 5px 9px;
 }
 
+.rarity-badge-sovereign {
+  border: 1px solid rgba(146, 221, 255, 0.8);
+  background: linear-gradient(135deg, #6fd4ff, #4d8cff);
+  box-shadow: 0 5px 16px rgba(96, 199, 255, 0.24);
+  color: #f6fcff;
+}
+
+.rarity-badge-exclusive {
+  border: 1px solid rgba(172, 48, 68, 0.7);
+  background: linear-gradient(135deg, #741b2b, #360c15);
+  box-shadow: 0 5px 16px rgba(103, 16, 31, 0.28);
+  color: #ffe9ec;
+}
+
+.rarity-badge-secret {
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  background: linear-gradient(125deg, #f9fbff 0%, #bac0cb 27%, #232734 56%, #090b11 100%);
+  box-shadow: 0 5px 16px rgba(218, 225, 239, 0.17);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.rarity-badge-mythic {
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  background: linear-gradient(105deg, #ff668c, #ffab4d, #f7eb55, #67d989, #58bfff, #a876ff, #f36dde);
+  box-shadow: 0 5px 16px rgba(181, 105, 255, 0.3);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(38, 16, 75, 0.72);
+}
+
+.rarity-badge-legendary {
+  border: 1px solid rgba(255, 218, 104, 0.78);
+  background: linear-gradient(135deg, #ffdf68, #e89a22);
+  box-shadow: 0 5px 16px rgba(232, 166, 42, 0.25);
+  color: #312003;
+}
+
+.rarity-badge-epic {
+  border: 1px solid rgba(185, 128, 255, 0.68);
+  background: linear-gradient(135deg, #985df9, #4c1d95);
+  box-shadow: 0 5px 16px rgba(123, 68, 224, 0.28);
+  color: #fcfaff;
+}
+
 .traits {
   display: flex;
   flex-wrap: wrap;

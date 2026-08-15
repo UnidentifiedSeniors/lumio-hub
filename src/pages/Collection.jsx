@@ -10,6 +10,7 @@ import useAuth from "../context/useAuth";
 import useCatalog from "../context/useCatalog";
 import { supabase } from "../lib/supabase";
 import { getChampionTraits } from "../utils/marketplace";
+import { rarityBadgeClassName } from "../utils/rarityBadge";
 import traitEffectSummary from "../utils/traitEffectSummary";
 
 function Collection() {
@@ -276,7 +277,7 @@ function Collection() {
             <div className="catalog-field">
               <span className="field-label">Trait</span>
               <button className="catalog-selection has-selection" onClick={() => setPicker("trait")} type="button">
-                <span className="rarity-badge">{selectedTraitData?.rarity || "Base"}</span><strong>{selectedTrait}</strong><small>{selectedTraitData ? traitEffectSummary(selectedTraitData) : "No trait modifiers"}</small><em>Change</em>
+                <span className={rarityBadgeClassName(selectedTraitData?.rarity || "Base")}>{selectedTraitData?.rarity || "Base"}</span><strong>{selectedTrait}</strong><small>{selectedTraitData ? traitEffectSummary(selectedTraitData) : "No trait modifiers"}</small><em>Change</em>
               </button>
               {selectedTraitData?.notes && <p className="collection-source-note">{selectedTraitData.notes}</p>}
             </div>

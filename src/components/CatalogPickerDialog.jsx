@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import ListingArtwork from "./ListingArtwork";
+import { rarityBadgeClassName } from "../utils/rarityBadge";
 import traitEffectSummary from "../utils/traitEffectSummary";
 
 function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, selectedValue, title }) {
@@ -44,7 +45,7 @@ function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, sele
               const selected = String(value) === String(selectedValue);
               return isTraitPicker ? (
                 <button aria-pressed={selected} className={`catalog-picker-card trait-picker-card${selected ? " is-selected" : ""}`} key={item.name} onClick={() => selectItem(item)} type="button">
-                  <span className="catalog-picker-card-top"><span className="rarity-badge">{item.rarity}</span>{selected && <span className="picker-selected-label">Selected</span>}</span>
+                  <span className="catalog-picker-card-top"><span className={rarityBadgeClassName(item.rarity)}>{item.rarity}</span>{selected && <span className="picker-selected-label">Selected</span>}</span>
                   <strong>{item.name}</strong>
                   <span>{traitEffectSummary(item)}</span>
                   {item.notes && <small>{item.notes}</small>}

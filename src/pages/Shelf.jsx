@@ -10,7 +10,7 @@ import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
 import { getDatePreferences } from "../utils/datePreferences";
-import { formatDateTime, getChampionTraits, getOwnedChampionValue } from "../utils/marketplace";
+import { formatDateTime, getChampionTraits } from "../utils/marketplace";
 
 const LISTING_STATUS_OPTIONS = [
   { value: "active", label: "Live on Market" },
@@ -45,12 +45,12 @@ function Shelf() {
     const [listingsResult, championsResult] = await Promise.all([
       supabase
         .from("shelf_listings")
-        .select("id, user_champion_id, status, note, created_at, updated_at, user_champions(id, name, image_url, rarity, trait, base_value, market_adjustment)")
+        .select("id, user_champion_id, status, note, created_at, updated_at, user_champions(id, name, image_url, trait)")
         .eq("owner_id", user.id)
         .order("updated_at", { ascending: false }),
       supabase
         .from("user_champions")
-        .select("id, name, image_url, rarity, trait, base_value, market_adjustment")
+        .select("id, name, image_url, trait")
         .eq("owner_id", user.id)
         .order("updated_at", { ascending: false }),
     ]);
@@ -212,14 +212,10 @@ function Shelf() {
 
             return (
               <article className="shelf-card" key={listing.id}>
-                <div className="card-topline">
-                  <span className={`rarity-badge rarity-${champion.rarity.toLowerCase().replaceAll(" ", "-")}`}>{champion.rarity}</span>
-                  <span className={`listing-status listing-${listing.status}`}>{listing.status}</span>
-                </div>
-                <ListingArtwork imageUrl={champion.image_url} name={champion.name} rarity={champion.rarity} trait={traitLabel} />
+                <div className="card-topline"><span className={`listing-status listing-${listing.status}`}>{listing.status}</span></div>
+                <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait={traitLabel} />
                 <h2>{champion.name}</h2>
                 <div className="traits card-traits">{championTraits.length ? championTraits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
-                <p className="market-value">◈ {getOwnedChampionValue(champion).toLocaleString()}</p>
                 {listing.note && <p className="listing-note">“{listing.note}”</p>}
                 <p className="card-meta">Listed {formatDateTime(listing.created_at, datePreferences)}</p>
                 <div className="card-actions">
@@ -238,11 +234,11 @@ function Shelf() {
           <form className="trade-modal collection-modal collection-add-modal" onSubmit={createListing}>
             <p className="eyebrow">Public Shelf</p>
             <h2>Create listing</h2>
-            <p className="modal-copy">Your champion name, rarity, trait, market value, and trader card become visible to licensed members.</p>
+            <p className="modal-copy">Your champion name, artwork, trait, and trader card become visible to licensed members.</p>
             <div className="catalog-field">
               <span className="field-label">Champion copy</span>
               <button className={`catalog-selection${selectedChampion ? " has-selection" : ""}`} onClick={() => setShowChampionPicker(true)} type="button">
-                {selectedChampion ? <><span className="rarity-badge">{selectedChampion.rarity}</span><strong>{selectedChampion.name}</strong><small>{selectedChampion.trait || "Standard"} trait · ◈ {getOwnedChampionValue(selectedChampion).toLocaleString()}</small><em>Change</em></> : <><strong>Choose a champion copy</strong><small>Browse your private Collection before publishing.</small><em>Browse Collection</em></>}
+                {selectedChampion ? <><strong>{selectedChampion.name}</strong><small>{selectedChampion.trait || "Standard"} trait</small><em>Change</em></> : <><strong>Choose a champion copy</strong><small>Browse your private Collection before publishing.</small><em>Browse Collection</em></>}
               </button>
             </div>
             <label className="field-label" htmlFor="listing-note">Note <span>optional</span></label>
@@ -255,7 +251,7 @@ function Shelf() {
         </div>
       )}
 
-      {showChampionPicker && <CatalogPickerDialog getItemMeta={(champion) => `${champion.trait || "Standard"} trait · ◈ ${getOwnedChampionValue(champion).toLocaleString()}`} items={availableChampions} kind="champion" onChoose={(champion) => setSelectedChampionId(champion.id)} onClose={() => setShowChampionPicker(false)} selectedValue={selectedChampionId} title="Choose a champion copy" />}
+      {showChampionPicker && <CatalogPickerDialog getItemMeta={(champion) => `${champion.trait || "Standard"} trait`} items={availableChampions} kind="champion" onChoose={(champion) => setSelectedChampionId(champion.id)} onClose={() => setShowChampionPicker(false)} selectedValue={selectedChampionId} title="Choose a champion copy" />}
 
       {editingListing && (
         <div className="modal-overlay" role="presentation">
@@ -263,7 +259,7 @@ function Shelf() {
             <p className="eyebrow">Public Shelf</p>
             <h2 id="listing-editor-title">Edit listing</h2>
             <p className="modal-copy">Update the listing note or make the exact champion copy live or paused. Its champion and trait stay unchanged.</p>
-            {editingListing.user_champions && <div className="listing-editor-preview"><ListingArtwork imageUrl={editingListing.user_champions.image_url} name={editingListing.user_champions.name} rarity={editingListing.user_champions.rarity} trait={editingListing.user_champions.trait || "Standard"} /><div><span className="rarity-badge">{editingListing.user_champions.rarity}</span><strong>{editingListing.user_champions.name}</strong><small>{editingListing.user_champions.trait || "Standard"} trait · ◈ {getOwnedChampionValue(editingListing.user_champions).toLocaleString()}</small></div></div>}
+            {editingListing.user_champions && <div className="listing-editor-preview"><ListingArtwork imageUrl={editingListing.user_champions.image_url} name={editingListing.user_champions.name} trait={editingListing.user_champions.trait || "Standard"} /><div><strong>{editingListing.user_champions.name}</strong><small>{editingListing.user_champions.trait || "Standard"} trait</small></div></div>}
             <ChoiceMenu label="Listing visibility" onChange={setEditingStatus} options={LISTING_STATUS_OPTIONS} value={editingStatus} />
             <label className="field-label" htmlFor="edit-listing-note">Note <span>optional</span></label>
             <textarea id="edit-listing-note" maxLength="280" onChange={(event) => setEditingNote(event.target.value)} placeholder="What kind of offers are you open to?" rows="4" value={editingNote} />

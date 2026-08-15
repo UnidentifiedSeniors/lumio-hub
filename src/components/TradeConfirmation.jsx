@@ -4,12 +4,8 @@ function TradeConfirmation({
   onRemove,
   onConfirm,
   onCancel,
-  offerValue,
-  requestedValue,
   tradeResult,
 }) {
-  const displayedOfferValue = offerValue;
-
   return (
     <div className="modal-overlay">
       <div className="trade-modal">
@@ -18,8 +14,7 @@ function TradeConfirmation({
         <div className="modal-section">
           <h3>You Receive:</h3>
           <p><strong>{selected.name}</strong></p>
-          <p>Rarity: {selected.rarity}</p>
-          <p>💎 {requestedValue}</p>
+          <p>Trait: {selected.trait || "Standard"}</p>
         </div>
 
         <div className="modal-section">
@@ -27,11 +22,10 @@ function TradeConfirmation({
 
           {offer.map((champion, index) => (
             <div key={index} className="offer-item">
-              <strong>{champion.name}</strong> ({champion.rarity})
+              <strong>{champion.name}</strong>
               {champion.traits && champion.traits.length > 0 && (
                 <span> ✨ {champion.traits.join(", ")}</span>
               )}
-              <span style={{ float: "right" }}>💎 {champion.value || "—"}</span>
               {onRemove && (
                 <button
                   onClick={() => onRemove(champion)}
@@ -47,8 +41,6 @@ function TradeConfirmation({
               )}
             </div>
           ))}
-
-          <strong>Total Offer Value: 💎 {displayedOfferValue}</strong>
         </div>
 
         {tradeResult && (

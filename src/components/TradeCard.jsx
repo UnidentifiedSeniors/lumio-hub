@@ -1,15 +1,13 @@
-import { calculateChampionValue } from "../utils/valueCalculator";
+import ListingArtwork from "./ListingArtwork";
 
-function TradeCard({ champion, action, label, value }) {
+function TradeCard({ champion, action, label }) {
   const unavailable = champion.stock <= 0;
-  const displayValue = value ?? calculateChampionValue(champion);
 
   return (
     <div className="trade-card">
       <div>
+        <ListingArtwork imageUrl={champion.image_url} name={champion.name} />
         <h3>{champion.name}</h3>
-        <p className="rarity-badge">{champion.rarity}</p>
-        <p>💎 {displayValue}</p>
         <p>📦 Stock: {champion.stock}</p>
         {champion.traits && champion.traits.length > 0 && (
           <p>✨ {champion.traits.join(", ")}</p>

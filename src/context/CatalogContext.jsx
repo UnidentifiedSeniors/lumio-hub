@@ -1,28 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import staticChampions, { traits as staticTraits } from "../data/gameCatalog";
+import staticChampions, { getChampionImageUrl, traits as staticTraits } from "../data/gameCatalog";
 import { supabase } from "../lib/supabase";
 import CatalogContext from "./catalog-context";
 import useAuth from "./useAuth";
 
-function toNumber(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function toChampion(record) {
-  const rawBonuses = record.stat_bonuses && typeof record.stat_bonuses === "object" ? record.stat_bonuses : {};
-  const statBonuses = Object.fromEntries(["strength", "durability", "chakra", "sword", "speed", "agility"].map((key) => [key, toNumber(rawBonuses[key])]));
   return {
     id: Number(record.id),
     name: record.name,
-    rarity: record.rarity,
-    statBonuses,
-    statTotal: toNumber(record.stat_total),
-    clanPoints: toNumber(record.clan_points),
     traits: Array.isArray(record.traits) ? record.traits : [],
     tradable: record.tradable !== false,
-    image_url: record.image_url || null,
+    image_url: record.image_url || getChampionImageUrl(record.name),
   };
 }
 
@@ -32,7 +21,7 @@ function toTrait(record) {
     name: record.name,
     rarity: record.rarity,
     bonuses,
-    bonusTotal: toNumber(record.bonus_total),
+    bonusTotal: Number.isFinite(Number(record.bonus_total)) ? Number(record.bonus_total) : 0,
     notes: record.notes || null,
   };
 }
@@ -47,7 +36,7 @@ export function CatalogProvider({ children }) {
     if (!user) return false;
     setLoading(true);
     const [championResult, traitResult] = await Promise.all([
-      supabase.from("champions").select("id, name, rarity, traits, tradable, stat_bonuses, stat_total, clan_points, image_url").eq("tradable", true).order("id"),
+      supabase.from("champions").select("id, name, image_url, tradable").eq("tradable", true).order("id"),
       supabase.from("catalog_traits").select("catalog_key, name, rarity, bonuses, bonus_total, notes").eq("is_active", true).order("name"),
     ]);
 

@@ -3,12 +3,11 @@ import { useCallback, useEffect, useState } from "react";
 import ListingArtwork from "./ListingArtwork";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
-import { getChampionTraits, getOwnedChampionValue, toTradeChampion } from "../utils/marketplace";
+import { getChampionTraits, toTradeChampion } from "../utils/marketplace";
 
 const OFFER_LIMIT = 4;
 
 function OfferChampionChoice({ champion, kind, onSelect, selected }) {
-  const rarity = champion.rarity || "AFS Champion";
   const traits = getChampionTraits(champion);
   const selectionLabel = kind === "request"
     ? (selected ? "Requested" : "Request")
@@ -17,12 +16,10 @@ function OfferChampionChoice({ champion, kind, onSelect, selected }) {
   return (
     <button aria-pressed={selected} className={`offer-champion-choice ${kind}${selected ? " selected" : ""}`} onClick={onSelect} type="button">
       <span className="offer-choice-indicator">{selected ? "✓" : "+"}</span>
-      <ListingArtwork imageUrl={champion.image_url} name={champion.name} rarity={rarity} trait={traits[0] || "Standard"} />
+      <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait={traits[0] || "Standard"} />
       <span className="offer-champion-choice-copy">
-        <span className={`rarity-badge rarity-${rarity.toLowerCase().replaceAll(" ", "-")}`}>{rarity}</span>
         <strong>{champion.name}</strong>
         <small>{traits.length ? traits.join(" · ") : "Standard trait"}</small>
-        <em>◈ {getOwnedChampionValue(champion).toLocaleString()}</em>
       </span>
       <span className="offer-choice-label">{selectionLabel}</span>
     </button>
@@ -82,7 +79,6 @@ function OfferComposer({ target, onClose, onSent }) {
   }, [loadOfferableChampions]);
 
   const selectedOffer = ownedChampions.filter((champion) => offerIds.includes(champion.id));
-  const offerValue = selectedOffer.reduce((total, champion) => total + getOwnedChampionValue(champion), 0);
   const selectedRequestedChampion = isDirectOffer
     ? recipientChampions.find((champion) => champion.id === requestedChampionId) || null
     : target.requestedChampion || null;
@@ -111,8 +107,8 @@ function OfferComposer({ target, onClose, onSent }) {
         requested_champion: requestedChampion,
         requested_champions: requestedChampion ? [requestedChampion] : [],
         offered_champions: selectedOffer.map(toTradeChampion),
-        offer_value: offerValue,
-        requested_value: selectedRequestedChampion ? getOwnedChampionValue(selectedRequestedChampion) : null,
+        offer_value: 0,
+        requested_value: null,
         offer_note: offerNote.trim() || null,
         status: "pending",
       })
@@ -180,7 +176,7 @@ function OfferComposer({ target, onClose, onSent }) {
                   {ownedChampions.map((champion) => <OfferChampionChoice champion={champion} key={champion.id} kind="offer" onSelect={() => toggleChampion(champion.id)} selected={offerIds.includes(champion.id)} />)}
                 </div>
               )}
-              <div className="offer-total"><span>{selectedOffer.length} champion{selectedOffer.length === 1 ? "" : "s"} selected</span><strong>Offer total ◈ {offerValue.toLocaleString()}</strong></div>
+              <div className="offer-total"><span>{selectedOffer.length} champion{selectedOffer.length === 1 ? "" : "s"} selected</span><strong>Ready to send</strong></div>
             </section>
 
             <label className="offer-note-field" htmlFor="offer-note">

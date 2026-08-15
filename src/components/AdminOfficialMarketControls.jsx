@@ -6,7 +6,6 @@ import ConfirmDialog from "./ConfirmDialog";
 import ListingArtwork from "./ListingArtwork";
 import useCatalog from "../context/useCatalog";
 import { supabase } from "../lib/supabase";
-import { calculateChampionValue } from "../utils/valueCalculator";
 
 const STATUS_OPTIONS = [
   { value: "draft", label: "Draft" },
@@ -91,7 +90,7 @@ function recordStatus(record) {
 }
 
 function AdminOfficialMarketControls({ onUpdated }) {
-  const { champions, traitsByName } = useCatalog();
+  const { champions } = useCatalog();
   const [events, setEvents] = useState([]);
   const [drops, setDrops] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +126,6 @@ function AdminOfficialMarketControls({ onUpdated }) {
   const eventOptions = useMemo(() => [{ value: "", label: "No event grouping" }, ...events.map((event) => ({ value: event.id, label: event.title }))], [events]);
   const selectedPreviewChampion = useMemo(() => ({
     name: dropForm.name || "Official champion",
-    rarity: dropForm.rarity || "Special",
     trait: dropForm.trait || "Standard",
     image_url: dropForm.image_url || null,
   }), [dropForm]);
@@ -225,8 +223,8 @@ function AdminOfficialMarketControls({ onUpdated }) {
     const referenceValue = optionalWholeNumber(dropForm.reference_value);
     const ctaLabel = dropForm.cta_label.trim() || null;
     const ctaUrl = dropForm.cta_url.trim() || null;
-    if (!name || !rarity || slug.length < 2) {
-      setMessage({ type: "error", text: "Every official drop needs a champion name and rarity." });
+    if (!name || slug.length < 2) {
+      setMessage({ type: "error", text: "Every official drop needs a champion name." });
       return;
     }
     if ([quantityTotal, quantityRemaining, referenceValue].some(Number.isNaN)) {
@@ -258,7 +256,7 @@ function AdminOfficialMarketControls({ onUpdated }) {
       slug,
       event_id: dropForm.event_id || null,
       name,
-      rarity,
+      rarity: rarity || "Official",
       trait: dropForm.trait.trim() || "Standard",
       image_url: dropForm.image_url.trim() || null,
       reference_value: referenceValue ?? 0,
@@ -292,9 +290,7 @@ function AdminOfficialMarketControls({ onUpdated }) {
     setDropForm((current) => ({
       ...current,
       name: champion.name,
-      rarity: champion.rarity,
       image_url: champion.image_url || "",
-      reference_value: String(calculateChampionValue(champion, traitsByName)),
       slug: current.slug || toSlug(champion.name),
     }));
   };
@@ -350,8 +346,8 @@ function AdminOfficialMarketControls({ onUpdated }) {
 
         <form className="admin-official-form admin-official-drop-form" onSubmit={saveDrop}>
           <div className="admin-official-form-heading"><div><p className="eyebrow">Drop studio</p><h3>{editingDropId ? "Edit official drop" : "Create official drop"}</h3></div>{editingDropId && <button className="quiet-action" onClick={resetDrop} type="button">New drop</button>}</div>
-          <div className="admin-official-item-picker"><ListingArtwork imageUrl={selectedPreviewChampion.image_url} name={selectedPreviewChampion.name} rarity={selectedPreviewChampion.rarity} trait={selectedPreviewChampion.trait} /><div><span>Champion details</span><strong>{dropForm.name || "Choose from catalog or enter a custom drop"}</strong><small>{dropForm.rarity ? `${dropForm.rarity} · ${dropForm.trait || "Standard"}` : "Your catalog data is copied into this official listing."}</small></div><button className="secondary-action" onClick={() => setCatalogPickerOpen(true)} type="button">Choose champion</button></div>
-          <div className="admin-field-grid two-columns"><label><span>Champion name</span><input maxLength="100" onChange={(event) => setDropForm((current) => ({ ...current, name: event.target.value }))} placeholder="Champion name" value={dropForm.name} /></label><label><span>Rarity</span><input maxLength="60" onChange={(event) => setDropForm((current) => ({ ...current, rarity: event.target.value }))} placeholder="Sovereign" value={dropForm.rarity} /></label><label><span>Trait</span><input maxLength="100" onChange={(event) => setDropForm((current) => ({ ...current, trait: event.target.value }))} placeholder="Standard" value={dropForm.trait} /></label><label><span>Reference value</span><input min="0" onChange={(event) => setDropForm((current) => ({ ...current, reference_value: event.target.value }))} placeholder="Optional" type="number" value={dropForm.reference_value} /></label></div>
+          <div className="admin-official-item-picker"><ListingArtwork imageUrl={selectedPreviewChampion.image_url} name={selectedPreviewChampion.name} trait={selectedPreviewChampion.trait} /><div><span>Champion details</span><strong>{dropForm.name || "Choose from catalog or enter a custom drop"}</strong><small>{dropForm.trait || "Standard"} trait · matching catalog artwork is used automatically</small></div><button className="secondary-action" onClick={() => setCatalogPickerOpen(true)} type="button">Choose champion</button></div>
+          <div className="admin-field-grid two-columns"><label><span>Champion name</span><input maxLength="100" onChange={(event) => setDropForm((current) => ({ ...current, name: event.target.value }))} placeholder="Champion name" value={dropForm.name} /></label><label><span>Drop label <em>optional</em></span><input maxLength="60" onChange={(event) => setDropForm((current) => ({ ...current, rarity: event.target.value }))} placeholder="Limited" value={dropForm.rarity} /></label><label><span>Trait</span><input maxLength="100" onChange={(event) => setDropForm((current) => ({ ...current, trait: event.target.value }))} placeholder="Standard" value={dropForm.trait} /></label><label><span>Reference value</span><input min="0" onChange={(event) => setDropForm((current) => ({ ...current, reference_value: event.target.value }))} placeholder="Optional" type="number" value={dropForm.reference_value} /></label></div>
           <div className="admin-field-grid two-columns"><ChoiceMenu label="Event grouping" onChange={(eventId) => setDropForm((current) => ({ ...current, event_id: eventId }))} options={eventOptions} value={dropForm.event_id} /><label><span>Badge label</span><input maxLength="40" onChange={(event) => setDropForm((current) => ({ ...current, badge_label: event.target.value }))} placeholder="Official drop" value={dropForm.badge_label} /></label></div>
           <label><span>Description <em>optional</em></span><textarea maxLength="500" onChange={(event) => setDropForm((current) => ({ ...current, description: event.target.value }))} placeholder="Why this champion is special and what players should know." rows="3" value={dropForm.description} /></label>
           <div className="admin-field-grid two-columns"><label><span>Image URL <em>optional</em></span><input onChange={(event) => setDropForm((current) => ({ ...current, image_url: event.target.value }))} placeholder="https://..." value={dropForm.image_url} /></label><label><span>Availability note <em>optional</em></span><input maxLength="120" onChange={(event) => setDropForm((current) => ({ ...current, availability_note: event.target.value }))} placeholder="Claimed through the weekend event" value={dropForm.availability_note} /></label></div>
@@ -374,7 +370,7 @@ function AdminOfficialMarketControls({ onUpdated }) {
         </div> : <p className="admin-empty-copy">No official events or drops exist yet. Create an event for a rotation, then add the champions Lumio is promoting.</p>}
       </section>
 
-      {catalogPickerOpen && <CatalogPickerDialog getItemMeta={(champion) => `+${champion.statTotal || 0}% total bonus · ${champion.clanPoints || 0} Clan Points`} items={champions} kind="champion" onChoose={chooseChampion} onClose={() => setCatalogPickerOpen(false)} selectedValue={null} title="Choose champion for official drop" />}
+      {catalogPickerOpen && <CatalogPickerDialog getItemMeta={() => "Use matching catalog artwork"} items={champions} kind="champion" onChoose={chooseChampion} onClose={() => setCatalogPickerOpen(false)} selectedValue={null} title="Choose champion for official drop" />}
       {deleteTarget && <ConfirmDialog busy={saving === `delete-${deleteTarget.record.id}`} cancelLabel="Keep record" confirmLabel="Delete permanently" danger description={deleteTarget.kind === "event" ? `Delete ${deleteTarget.record.title}? Its drops will keep their information, but they will no longer be grouped under this event.` : `Delete ${deleteTarget.record.name}? It will disappear from the live Official Drops area immediately.`} onCancel={() => setDeleteTarget(null)} onConfirm={() => void removeRecord()} title={`Delete ${deleteTarget.kind === "event" ? "official event" : "official drop"}?`} />}
     </section>
   );

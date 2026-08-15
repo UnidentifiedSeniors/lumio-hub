@@ -1,15 +1,6 @@
 import championsCsv from "../Game-data/champions.csv?raw";
 import traitsCsv from "../Game-data/traits.csv?raw";
 
-const CHAMPION_STAT_COLUMNS = [
-  ["strength", "Strength"],
-  ["durability", "Durability"],
-  ["chakra", "Chakra"],
-  ["sword", "Sword"],
-  ["speed", "Speed"],
-  ["agility", "Agility"],
-];
-
 const TRAIT_BONUS_COLUMNS = [
   ["chakra", "Chakra Bonus"],
   ["strength", "Strength Bonus"],
@@ -24,6 +15,26 @@ const TRAIT_BONUS_COLUMNS = [
   ["defense", "Defense Bonus"],
   ["allDamage", "All Damage Bonus"],
 ];
+
+const championImageModules = import.meta.glob("../AFS Champions pngs/*.png", {
+  eager: true,
+  import: "default",
+});
+
+function championKey(value) {
+  return String(value || "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "");
+}
+
+const championImagesByKey = new Map(
+  Object.entries(championImageModules).map(([path, imageUrl]) => [
+    championKey(path.split("/").pop()?.replace(/\.png$/i, "")),
+    imageUrl,
+  ]),
+);
+
+export function getChampionImageUrl(name) {
+  return championImagesByKey.get(championKey(name)) || null;
+}
 
 function parseCsv(rawCsv) {
   const rows = [];
@@ -66,11 +77,6 @@ function percentage(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function number(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 export const traits = parseCsv(traitsCsv)
   .filter((record) => record.Trait && record.Rarity)
   .map((record) => {
@@ -89,30 +95,19 @@ export const traitNames = traits.map((trait) => trait.name);
 
 export const champions = parseCsv(championsCsv)
   .filter((record) => {
-    if (!record.Champions) return false;
-    // Current exports label every champion with a rarity, including entries
-    // where the base-stat columns have not yet been filled in. Ranking rows
-    // use "/" in the Rarity column and are not catalog entries.
-    if (record.Rarity) return record.Rarity !== "/";
-    // Preserve compatibility with the earlier stat-only source export.
-    return Boolean(record["Clan Points"]) && Number.isFinite(Number(record["Clan Points"]));
+    const name = record.Champions?.trim();
+    return Boolean(name)
+      && name !== "Best for Each Stat"
+      && !/^\d+(?:st|nd|rd|th)$/i.test(name);
   })
   .map((record, index) => {
-    const statBonuses = Object.fromEntries(CHAMPION_STAT_COLUMNS.map(([key, header]) => [key, percentage(record[header])]));
     return {
       id: index + 1,
       name: record.Champions,
-      // Older source exports did not include Rarity. Keep those entries
-      // usable, while preferring the actual value whenever the column exists.
-      rarity: record.Rarity || "AFS Champion",
-      statBonuses,
-      statTotal: Object.values(statBonuses).reduce((total, bonus) => total + bonus, 0),
-      clanPoints: number(record["Clan Points"]),
+      image_url: getChampionImageUrl(record.Champions),
       traits: [],
       tradable: true,
     };
   });
-
-export const championStatLabels = Object.fromEntries(CHAMPION_STAT_COLUMNS.map(([key, header]) => [key, header]));
 
 export default champions;

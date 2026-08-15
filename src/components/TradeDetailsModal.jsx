@@ -1,9 +1,4 @@
-import { getChampionTraits, getOwnedChampionValue, formatDateTime } from "../utils/marketplace";
-
-function championValue(champion) {
-  const snapshotValue = Number(champion?.value);
-  return Number.isFinite(snapshotValue) ? Math.round(snapshotValue) : getOwnedChampionValue(champion);
-}
+import { getChampionTraits, formatDateTime } from "../utils/marketplace";
 
 export function TradeChampionList({ champions, emptyCopy }) {
   if (!champions?.length) return <p className="trade-champion-empty">{emptyCopy}</p>;
@@ -16,10 +11,8 @@ export function TradeChampionList({ champions, emptyCopy }) {
           <article className="trade-champion-row" key={`${champion.user_champion_id || champion.id || champion.name}-${index}`}>
             <div>
               <strong>{champion.name || "Unknown champion"}</strong>
-              {champion.rarity && <span>{champion.rarity}</span>}
               <small>{traits.length ? traits.join(" · ") : "Standard"}</small>
             </div>
-            <em>◈ {championValue(champion).toLocaleString()}</em>
           </article>
         );
       })}
@@ -40,7 +33,6 @@ function TradeDetailsModal({ trade, counterpartName, leftLabel, leftChampions, r
         <div className="trade-detail-meta">
           <div><span>Status</span><strong className={`trade-status status-${trade.status}`}>{trade.status}</strong></div>
           <div><span>Created</span><strong>{formatDateTime(trade.created_at, datePreferences, { forceTime: true })}</strong></div>
-          <div><span>Offer value</span><strong>◈ {Number(trade.offer_value || 0).toLocaleString()}</strong></div>
         </div>
 
         {trade.offer_note && <section className="trade-note-preview"><span>Offer note</span><p>{trade.offer_note}</p></section>}

@@ -1,7 +1,7 @@
 Champions,Rarity,Strength,Durability,Chakra,Sword,Speed,Agility,Clan Points
 Pride,Sovereign,100%,100%,0%,100%,0%,0%,3
 Liberator,Sovereign,110%,110%,0%,90%,0%,60%,3
-Naruto,Sovereign,95%,95%,120%,0%,85%,0%,3
+Naruto (beast mode),Sovereign,95%,95%,120%,0%,85%,0%,3
 Rengoku,Exclusive,0%,85%,0%,95%,70%,70%,2
 Thor,Exclusive,85%,80%,0%,0%,70%,70%,2
 Spangled Hero,Exclusive,90%,85%,0%,0%,80%,0%,2
@@ -10,10 +10,10 @@ Buddha,Exclusive,85%,0%,85%,0%,0%,0%,2
 Egoist,Exclusive,0%,75%,0%,0%,110%,110%,1
 Kenpachi,Secret,100%,0%,0%,85%,0%,0%,2
 Vampire,Secret,100%,100%,0%,0%,95%,95%,2
-Mada,Secret,80%,90%,90%,0%,0%,0%,3
+Mada (reincarnated),Secret,80%,90%,90%,0%,0%,0%,3
 Rogue Ninja,Secret,0%,0%,85%,85%,0%,100%,2
 Vasto Lorde,Secret,90%,75%,90%,0%,0%,75%,3
-Manipulatior,Secret,0%,75%,80%,80%,65%,0%,3
+Manipulator,Secret,0%,75%,80%,80%,65%,0%,3
 King Ant,Secret,90%,80%,0%,0%,0%,90%,2
 Curse King,Secret,90%,75%,0%,80%,0%,0%,3
 Shadow Monarch,Secret,85%,0%,75%,85%,45%,0%,3
@@ -21,11 +21,10 @@ Jogu,Secret,0%,80%,85%,0%,100%,100%,2
 Boron,Secret,80%,80%,80%,0%,0%,0%,3
 Ice Queen,Mythic,0%,0%,85%,70%,0%,0%,2
 Rock King,Mythic,0%,80%,75%,0%,0%,0%,2
-Alquuior,Mythic,0%,74%,79%,0%,59%,69%,2
+Alquior,Mythic,0%,74%,79%,0%,59%,69%,2
 Igros,Mythic,59%,59%,0%,74%,0%,0%,3
 Puya,Mythic,0%,0%,74%,79%,0%,0%,2
 Curse Hunter,Mythic,69%,59%,0%,59%,0%,0%,3
-Special Grade,Mythic,50%,0%,50%,0%,0%,60%,2
 Bladedancer,Mythic,0%,0%,59%,69%,89%,0%,2
 White Tiger,Mythic,74%,69%,0%,0%,54%,49%,2
 Brokai,Mythic,74%,74%,0%,0%,0%,0%,2
@@ -42,6 +41,8 @@ Puu,Legendary,,,,,,,
 Sparrow,Legendary,,,,,,,
 Son SSJ1,Legendary,,,,,,,
 Wagura,Legendary,,,,,,,
+Special Grade,Legendary,,,,,,,
+Kuya,Legendary,,,,,,,
 Goora,Epic,,,,,,,
 Natou,Epic,,,,,,,
 Two Zero,Epic,,,,,,,

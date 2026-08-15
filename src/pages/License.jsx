@@ -10,13 +10,13 @@ const LESSONS = [
   {
     eyebrow: "01 · Accurate listings",
     title: "Trade the exact champion copy—not a vague name.",
-    body: "A good listing makes the important details obvious: champion, rarity, trait, and anything that changes what the other trader is evaluating. Clear information protects both sides.",
-    points: ["List the exact champion copy you recorded in Lumio.", "Keep its rarity and trait visible from the start.", "Use the note field for honest context, not pressure."],
+    body: "A good listing makes the important details obvious: the exact champion, its trait, and anything that changes what the other trader is evaluating. Clear information protects both sides.",
+    points: ["List the exact champion copy you recorded in Lumio.", "Keep its champion art, name, and trait visible from the start.", "Use the note field for honest context, not pressure."],
   },
   {
     eyebrow: "02 · Evaluate carefully",
-    title: "Reference value helps, but it is not the whole agreement.",
-    body: "Traits, the exact copies involved, and the terms you both discuss matter alongside any calculated reference value. Take a moment to compare the full offer before accepting.",
+    title: "Compare the whole agreement before you accept.",
+    body: "The exact copies involved, their traits, and the terms you both discuss all matter. Take a moment to compare the full offer before accepting.",
     points: ["Review every offered and requested copy.", "Ask a clear question when a detail is missing.", "You can decline any offer without owing an explanation."],
   },
   {

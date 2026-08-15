@@ -13,7 +13,7 @@ function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, sele
       : items;
 
     if (!normalizedQuery) return choices;
-    return choices.filter((item) => [item.name, item.rarity, traitEffectSummary(item), getItemMeta?.(item)]
+    return choices.filter((item) => [item.name, isTraitPicker ? item.rarity : null, traitEffectSummary(item), getItemMeta?.(item)]
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(normalizedQuery)));
   }, [getItemMeta, isTraitPicker, items, query]);
@@ -21,13 +21,6 @@ function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, sele
   const selectItem = (item) => {
     onChoose(isTraitPicker ? item.name : item);
     onClose();
-  };
-
-  const defaultChampionMeta = (champion) => {
-    if (champion.statTotal > 0 || champion.clanPoints > 0) {
-      return `+${champion.statTotal}% total bonus · ${champion.clanPoints} Clan Points`;
-    }
-    return "Base stats not recorded in source";
   };
 
   return (
@@ -42,7 +35,7 @@ function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, sele
         </header>
         <label className="catalog-picker-search">
           <span className="sr-only">Search {isTraitPicker ? "traits" : "champions"}</span>
-          <input autoFocus onChange={(event) => setQuery(event.target.value)} placeholder={isTraitPicker ? "Search traits or effects" : "Search champions or rarities"} type="search" value={query} />
+          <input autoFocus onChange={(event) => setQuery(event.target.value)} placeholder={isTraitPicker ? "Search traits or effects" : "Search champions by name"} type="search" value={query} />
         </label>
         {pickerItems.length ? (
           <div className={`catalog-picker-grid ${isTraitPicker ? "trait-picker-grid" : "champion-picker-grid"}`}>
@@ -58,10 +51,10 @@ function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, sele
                 </button>
               ) : (
                 <button aria-pressed={selected} className={`catalog-picker-card champion-picker-card${selected ? " is-selected" : ""}`} key={item.id} onClick={() => selectItem(item)} type="button">
-                  <ListingArtwork imageUrl={item.image_url} name={item.name} rarity={item.rarity} trait={item.trait} />
-                  <span className="catalog-picker-card-top"><span className="rarity-badge">{item.rarity}</span>{selected && <span className="picker-selected-label">Selected</span>}</span>
+                  <ListingArtwork imageUrl={item.image_url} name={item.name} trait={item.trait} />
+                  {selected && <span className="catalog-picker-card-top"><span className="picker-selected-label">Selected</span></span>}
                   <strong>{item.name}</strong>
-                  <span>{getItemMeta ? getItemMeta(item) : defaultChampionMeta(item)}</span>
+                  <span>{getItemMeta ? getItemMeta(item) : "Choose this champion"}</span>
                 </button>
               );
             })}

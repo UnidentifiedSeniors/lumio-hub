@@ -1,14 +1,4 @@
 import { formatLumioDate } from "./datePreferences";
-import { calculateChampionValue } from "./valueCalculator";
-
-export function getOwnedChampionValue(champion) {
-  const baseValue = Number(
-    champion?.base_value ?? calculateChampionValue(champion || {})
-  );
-  const adjustment = Number(champion?.market_adjustment ?? 1);
-
-  return Math.round(baseValue * adjustment);
-}
 
 export function getChampionTraits(champion) {
   if (Array.isArray(champion?.traits)) return champion.traits.filter(Boolean);
@@ -21,10 +11,8 @@ export function toTradeChampion(champion) {
     id: champion.champion_id || champion.id,
     user_champion_id: champion.id,
     name: champion.name,
-    rarity: champion.rarity,
     traits: getChampionTraits(champion),
     trait: champion.trait || "Standard",
-    value: getOwnedChampionValue(champion),
   };
 }
 

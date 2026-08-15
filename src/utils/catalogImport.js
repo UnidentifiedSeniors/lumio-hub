@@ -1,12 +1,3 @@
-const CHAMPION_STAT_COLUMNS = [
-  ["strength", "Strength"],
-  ["durability", "Durability"],
-  ["chakra", "Chakra"],
-  ["sword", "Sword"],
-  ["speed", "Speed"],
-  ["agility", "Agility"],
-];
-
 const TRAIT_BONUS_COLUMNS = [
   ["chakra", "Chakra Bonus"],
   ["strength", "Strength Bonus"],
@@ -66,11 +57,6 @@ function percentage(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function wholeNumber(value) {
-  const parsed = Number(String(value || "").replace(/,/g, ""));
-  return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
-}
-
 export function catalogKey(...parts) {
   return parts.join("-").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 119);
 }
@@ -79,23 +65,12 @@ export function parseChampionCatalogCsv(rawCsv) {
   const rows = [];
   const issues = [];
 
-  parseCsv(rawCsv).forEach((record, index) => {
+  parseCsv(rawCsv).forEach((record) => {
     const name = getColumn(record, ["Champions", "Champion", "Name"]).trim();
-    const rarity = getColumn(record, ["Rarity"]).trim();
-    if (!name || rarity === "/") return;
-    if (!rarity) {
-      issues.push(`Row ${index + 2}: ${name} is missing a rarity.`);
-      return;
-    }
-    const statBonuses = Object.fromEntries(CHAMPION_STAT_COLUMNS.map(([key, header]) => [key, percentage(getColumn(record, [header]))]));
-    const statTotal = Object.values(statBonuses).reduce((total, bonus) => total + bonus, 0);
+    if (!name || name === "Best for Each Stat" || /^\d+(?:st|nd|rd|th)$/i.test(name)) return;
     rows.push({
-      catalog_key: catalogKey(name, rarity),
+      catalog_key: catalogKey(name),
       name,
-      rarity,
-      stat_bonuses: statBonuses,
-      stat_total: Math.round(statTotal),
-      clan_points: wholeNumber(getColumn(record, ["Clan Points", "Clan Point"])),
       image_url: getColumn(record, ["Image URL", "Image"]),
     });
   });
@@ -130,14 +105,9 @@ export function parseTraitCatalogCsv(rawCsv) {
 }
 
 export function catalogChampionPayload(champion) {
-  const statBonuses = champion.statBonuses || {};
   return {
-    catalog_key: catalogKey(champion.name, champion.rarity),
+    catalog_key: catalogKey(champion.name),
     name: champion.name,
-    rarity: champion.rarity,
-    stat_bonuses: statBonuses,
-    stat_total: Math.round(Number(champion.statTotal) || Object.values(statBonuses).reduce((total, bonus) => total + (Number(bonus) || 0), 0)),
-    clan_points: wholeNumber(champion.clanPoints),
     image_url: champion.image_url || "",
   };
 }

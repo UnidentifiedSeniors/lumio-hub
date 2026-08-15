@@ -11,8 +11,7 @@ function formatChampions(champions) {
   if (!entries.length) return [{ label: "No champion selected", meta: "No specific copy was included" }];
   return entries.map((champion) => {
     const trait = champion?.trait || (Array.isArray(champion?.traits) ? champion.traits.filter(Boolean).join(" · ") : "") || "Standard";
-    const value = Number(champion?.value || 0);
-    return { label: champion?.name || "Unknown champion", meta: `${champion?.rarity || "Unknown rarity"} · ${trait}${value ? ` · ${value.toLocaleString()} value` : ""}` };
+    return { label: champion?.name || "Unknown champion", meta: `${trait} trait` };
   });
 }
 

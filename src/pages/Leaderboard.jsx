@@ -14,6 +14,26 @@ function formatCount(value) {
   return Number(value).toLocaleString();
 }
 
+function LeaderboardTrophy({ className, position }) {
+  const trophy = {
+    1: { label: "Diamond trophy", tone: "diamond" },
+    2: { label: "Gold trophy", tone: "gold" },
+    3: { label: "Copper trophy", tone: "copper" },
+  }[position];
+
+  if (!trophy) return <span className={className}>#{position}</span>;
+
+  return (
+    <span aria-label={trophy.label} className={`${className} leaderboard-trophy leaderboard-trophy-${trophy.tone}`} role="img">
+      <span aria-hidden="true" className="leaderboard-trophy-art">
+        <i className="leaderboard-trophy-cup" />
+        <i className="leaderboard-trophy-stem" />
+        <i className="leaderboard-trophy-base" />
+      </span>
+    </span>
+  );
+}
+
 function Leaderboard() {
   const { user } = useAuth();
   const [traders, setTraders] = useState([]);
@@ -106,7 +126,7 @@ function Leaderboard() {
               const name = displayName(trader);
               return (
                 <Link className={`podium-trader podium-position-${trader.position}${trader.id === user?.id ? " is-current" : ""}`} key={trader.id} to={`/trader/${trader.id}`}>
-                  <span className="podium-place">#{trader.position}</span>
+                  <LeaderboardTrophy className="podium-place" position={trader.position} />
                   {trader.discord_avatar ? <img alt="" src={trader.discord_avatar} /> : <span className="podium-avatar-fallback">{name.charAt(0).toUpperCase()}</span>}
                   <div>
                     <strong>{name}</strong>
@@ -125,7 +145,7 @@ function Leaderboard() {
               const isCurrent = trader.id === user?.id;
               return (
                 <Link className={`leaderboard-row${isCurrent ? " is-current" : ""}`} key={trader.id} to={`/trader/${trader.id}`}>
-                  <span className="leaderboard-rank">#{trader.position}</span>
+                  <LeaderboardTrophy className="leaderboard-rank" position={trader.position} />
                   <span className="leaderboard-trader">
                     {trader.discord_avatar ? <img alt="" src={trader.discord_avatar} /> : <i>{name.charAt(0).toUpperCase()}</i>}
                     <span><strong>{name}{isCurrent && <em>You</em>}</strong><small>{trader.rank || "Rookie Trader"}</small></span>

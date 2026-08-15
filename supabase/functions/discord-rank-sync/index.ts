@@ -16,6 +16,7 @@ type ProfileRecord = {
   id: string;
   discord_id: string | null;
   rank: string | null;
+  trading_license_status: string | null;
 };
 
 type RankRoleMap = Record<string, string>;
@@ -88,6 +89,10 @@ async function discordRequest(path: string, method: "PUT" | "DELETE", botToken: 
 }
 
 async function syncRank(profile: ProfileRecord) {
+  if (profile.trading_license_status !== "licensed") {
+    throw new Error("Pass the Trading License assessment before synchronizing Discord roles");
+  }
+
   if (!profile.discord_id) {
     throw new Error("This Lumio profile is missing a Discord user ID");
   }
@@ -149,7 +154,7 @@ serve(async (request) => {
       if (payload.type !== "UPDATE") {
         return jsonResponse(request, { skipped: "profile event is not an update" });
       }
-      if (oldRecord?.rank === webhookRecord.rank) {
+      if (oldRecord?.rank === webhookRecord.rank && oldRecord?.trading_license_status === webhookRecord.trading_license_status) {
         return jsonResponse(request, { skipped: "rank is unchanged" });
       }
 
@@ -176,7 +181,7 @@ serve(async (request) => {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, discord_id, rank")
+      .select("id, discord_id, rank, trading_license_status")
       .eq("id", authData.user.id)
       .maybeSingle();
     if (profileError || !profile) {

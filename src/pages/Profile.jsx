@@ -9,6 +9,7 @@ import { getDiscordIdentity } from "../utils/discordIdentity";
 import { formatDisplayNameChangeTime, getDisplayNameChangeState } from "../utils/displayNameCooldown";
 import { LUMIO_DISPLAY_NAME_MAX_LENGTH, validateLumioDisplayName } from "../utils/lumioDisplayName";
 import getRank from "../utils/rankCalculator";
+import { isTradingLicensed } from "../utils/tradingLicense";
 import getXPProgress from "../utils/xpProgress";
 
 function ProfileIcon({ name }) {
@@ -26,6 +27,7 @@ function ProfileIcon({ name }) {
 
 function Profile() {
   const { user, profile, refreshProfile } = useAuth();
+  const licensed = isTradingLicensed(profile);
   const [completedTradeCount, setCompletedTradeCount] = useState(0);
   const [collectionCount, setCollectionCount] = useState(0);
   const [displayNameEditorOpen, setDisplayNameEditorOpen] = useState(false);
@@ -96,7 +98,9 @@ function Profile() {
   };
 
   useEffect(() => {
-    if (!user) return undefined;
+    if (!user || !licensed) {
+      return undefined;
+    }
 
     const participantFilter = `sender_id.eq.${user.id},recipient_id.eq.${user.id}`;
     Promise.all([
@@ -115,20 +119,20 @@ function Profile() {
     });
 
     return undefined;
-  }, [user]);
+  }, [licensed, user]);
 
   return (
     <Layout>
       <section className="page-heading">
         <p className="eyebrow">Your Lumio account</p>
         <h1>Profile</h1>
-        <p>Your verified trading identity, connected accounts, and progression at a glance.</p>
+        <p>{licensed ? "Your verified trading identity, connected accounts, and progression at a glance." : "Your Discord-connected Lumio identity and Trading License progress."}</p>
       </section>
 
       <section className="profile-hero">
         {avatar ? <img alt="" className="profile-hero-avatar" src={avatar} /> : <span className="profile-hero-avatar avatar-fallback">{displayName.charAt(0).toUpperCase()}</span>}
         <div className="profile-hero-copy">
-          <span className="profile-license-label">Licensed trader</span>
+          <span className="profile-license-label">{licensed ? "Licensed trader" : "License required"}</span>
           <h2>{displayName}</h2>
           <p className="profile-handle">Discord · {discordDisplayName}</p>
           <div className="profile-meta">
@@ -137,7 +141,7 @@ function Profile() {
           </div>
         </div>
         <div className="profile-hero-actions">
-          {user && <Link className="secondary-action" to={`/trader/${user.id}`}>View public profile</Link>}
+          {user && (licensed ? <Link className="secondary-action" to={`/trader/${user.id}`}>View public profile</Link> : <Link className="secondary-action" to="/license">Earn Trading License</Link>)}
           {displayNameFeatureEnabled ? <>
             <button aria-label="Edit Lumio display name" className="profile-edit-display-name" disabled={!displayNameChange.canChange} onClick={openDisplayNameEditor} title={displayNameChange.canChange ? "Edit Lumio display name" : `Available ${nextDisplayNameChange}`} type="button"><ProfileIcon name="edit" /><span>Edit display name</span></button>
             {!displayNameChange.canChange && <small className="profile-name-cooldown">Available {nextDisplayNameChange}</small>}
@@ -145,7 +149,7 @@ function Profile() {
         </div>
       </section>
 
-      <section className="profile-metrics" aria-label="Trading summary">
+      {licensed ? <section className="profile-metrics" aria-label="Trading summary">
         <article className="profile-metric profile-progress-card">
           <div className="profile-metric-heading"><span className="profile-metric-icon"><ProfileIcon name="progress" /></span><span>Trading progress</span></div>
           <strong>{rank.title}</strong>
@@ -163,7 +167,7 @@ function Profile() {
           <strong>{collectionCount.toLocaleString()}</strong>
           <p>Champion copies you have recorded in Lumio.</p>
         </article>
-      </section>
+      </section> : <section className="profile-metrics" aria-label="Trading License status"><article className="profile-metric profile-progress-card"><div className="profile-metric-heading"><span className="profile-metric-icon"><ProfileIcon name="progress" /></span><span>Trading License</span></div><strong>Required</strong><p>Complete Lumio&apos;s guide and assessment to unlock Market, Shelf, offers, and trader progression.</p><Link className="success-action" to="/license">Start the guide</Link></article></section>}
 
       <section className="profile-detail-grid">
         <article className="profile-detail-panel">

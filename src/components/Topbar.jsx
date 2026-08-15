@@ -4,6 +4,7 @@ import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { getDatePreferences } from "../utils/datePreferences";
 import { getDiscordIdentity } from "../utils/discordIdentity";
+import { isTradingLicensed } from "../utils/tradingLicense";
 import NotificationList from "./NotificationList";
 
 const EMPTY_SEARCH_RESULTS = {
@@ -72,6 +73,7 @@ function Topbar() {
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
   const discordIdentity = getDiscordIdentity(user);
+  const licensed = isTradingLicensed(profile);
 
   const displayName =
     profile?.lumio_display_name ||
@@ -138,7 +140,7 @@ function Topbar() {
     const query = search.trim().toLowerCase();
     let active = true;
 
-    if (!user || query.length < 2) {
+    if (!user || !licensed || query.length < 2) {
       const resetTimer = window.setTimeout(() => {
         if (!active) return;
         setSearchResults(EMPTY_SEARCH_RESULTS);
@@ -186,7 +188,7 @@ function Topbar() {
       active = false;
       window.clearTimeout(searchTimer);
     };
-  }, [search, user]);
+  }, [licensed, search, user]);
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -258,7 +260,8 @@ function Topbar() {
             aria-label="Search Lumio Hub"
             onChange={(event) => { setSearch(event.target.value); setSearchOpen(true); }}
             onFocus={() => setSearchOpen(true)}
-            placeholder="Search champions, drops, traders, and trades"
+            disabled={!licensed}
+            placeholder={licensed ? "Search champions, drops, traders, and trades" : "Complete your Trading License to search"}
             ref={searchInputRef}
             type="search"
             value={search}
@@ -267,7 +270,9 @@ function Topbar() {
         </form>
         {searchOpen && (
           <section aria-label="Lumio search results" className="global-search-panel" id="global-search-results" role="dialog">
-            {search.trim().length < 2 ? (
+            {!licensed ? (
+              <p className="global-search-empty">Complete the Trading License assessment to unlock Market and trader search.</p>
+            ) : search.trim().length < 2 ? (
               <p className="global-search-empty">Type at least two characters to search your Collection, Official Drops, the Market, traders, and trade activity.</p>
             ) : searchLoading ? (
               <p className="global-search-empty">Searching Lumio...</p>

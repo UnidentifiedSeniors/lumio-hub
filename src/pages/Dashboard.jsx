@@ -7,6 +7,7 @@ import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { getDatePreferences } from "../utils/datePreferences";
 import getRank from "../utils/rankCalculator";
+import { isTradingLicensed } from "../utils/tradingLicense";
 import getXPProgress from "../utils/xpProgress";
 
 function DashboardIcon({ name }) {
@@ -22,6 +23,7 @@ function DashboardIcon({ name }) {
 
 function Dashboard() {
   const { user, profile } = useAuth();
+  const licensed = isTradingLicensed(profile);
   const datePreferences = getDatePreferences(profile);
   const navigate = useNavigate();
   const [recentTrades, setRecentTrades] = useState([]);
@@ -43,7 +45,9 @@ function Dashboard() {
   const xpPercentage = Math.max(0, Math.min(100, progress.percentage));
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !licensed) {
+      return;
+    }
 
     const participantFilter = `sender_id.eq.${user.id},recipient_id.eq.${user.id}`;
 
@@ -68,7 +72,7 @@ function Dashboard() {
       if (!completedResult.error) setCompletedTradeCount(completedResult.data?.length || 0);
       if (!collectionResult.error) setCollectionCount(collectionResult.count || 0);
     });
-  }, [user]);
+  }, [licensed, user]);
 
   const loadNotifications = useCallback(async () => {
     if (!user) return;
@@ -103,18 +107,18 @@ function Dashboard() {
   return (
     <Layout>
       <section className="hero-card">
-        <p className="eyebrow">Licensed trader workspace</p>
+        <p className="eyebrow">{licensed ? "Licensed trader workspace" : "Lumio onboarding"}</p>
         <h1>Welcome back, {displayName}</h1>
 
-        <p>Keep your marketplace listings, direct offers, and trading progress in one clear place.</p>
+        <p>{licensed ? "Keep your marketplace listings, direct offers, and trading progress in one clear place." : "Complete the Trading License guide and assessment to unlock Lumio’s marketplace tools."}</p>
 
         <div className="license-status">
           <span className="license-status-label"><DashboardIcon name="license" />Trading License</span>
-          <strong>Active</strong>
+          <strong>{licensed ? "Active" : "Required"}</strong>
         </div>
       </section>
 
-      <section className="dashboard-grid">
+      {licensed && <section className="dashboard-grid">
         <div className="dashboard-card">
           <h2>Trading rank</h2>
 
@@ -141,35 +145,21 @@ function Dashboard() {
           <p className="big-number">{collectionCount}</p>
           <p>Private champion copies in your inventory</p>
         </div>
-      </section>
+      </section>}
 
       <section className="dashboard-card quick-actions-card">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Quick actions</p>
-            <h2>Trade without losing momentum</h2>
+            <p className="eyebrow">{licensed ? "Quick actions" : "Your next step"}</p>
+            <h2>{licensed ? "Trade without losing momentum" : "Earn your Trading License"}</h2>
           </div>
         </div>
         <div className="quick-actions">
-          <Link to="/trades">
-            <span className="quick-action-icon"><DashboardIcon name="market" /></span>
-            <strong>Explore Market</strong>
-            <small>Browse public listings</small>
-          </Link>
-          <Link to="/shelf">
-            <span className="quick-action-icon"><DashboardIcon name="shelf" /></span>
-            <strong>Manage Shelf</strong>
-            <small>List your champions</small>
-          </Link>
-          <Link to="/received-trades">
-            <span className="quick-action-icon"><DashboardIcon name="inbox" /></span>
-            <strong>Review Offers</strong>
-            <small>See direct proposals</small>
-          </Link>
+          {licensed ? <><Link to="/trades"><span className="quick-action-icon"><DashboardIcon name="market" /></span><strong>Explore Market</strong><small>Browse public listings</small></Link><Link to="/shelf"><span className="quick-action-icon"><DashboardIcon name="shelf" /></span><strong>Manage Shelf</strong><small>List your champions</small></Link><Link to="/received-trades"><span className="quick-action-icon"><DashboardIcon name="inbox" /></span><strong>Review Offers</strong><small>See direct proposals</small></Link></> : <><Link to="/license"><span className="quick-action-icon"><DashboardIcon name="license" /></span><strong>Start the guide</strong><small>Learn Lumio’s trade standards</small></Link><Link to="/license"><span className="quick-action-icon"><DashboardIcon name="market" /></span><strong>Take the assessment</strong><small>Pass to unlock all trading tools</small></Link><Link to="/settings"><span className="quick-action-icon"><DashboardIcon name="inbox" /></span><strong>Account settings</strong><small>Manage your Discord-connected account</small></Link></>}
         </div>
       </section>
 
-      {recentTrades.length > 0 && (
+      {licensed && recentTrades.length > 0 && (
         <section className="dashboard-card">
           <h2>Recent trade activity</h2>
           {recentTrades.map((trade) => {
@@ -198,12 +188,12 @@ function Dashboard() {
       <section className="dashboard-card announcement notification-dashboard-card">
         <div className="section-heading notification-section-heading">
           <div>
-            <p className="eyebrow">Trade activity</p>
+            <p className="eyebrow">{licensed ? "Trade activity" : "Account activity"}</p>
             <h2>Notifications</h2>
           </div>
-          <Link to="/received-trades">Open trade inbox</Link>
+          {licensed ? <Link to="/received-trades">Open trade inbox</Link> : <Link to="/license">Open license guide</Link>}
         </div>
-        <NotificationList datePreferences={datePreferences} emptyCopy="You are all caught up. New offers and trade updates will appear here." notifications={notifications} onOpen={openNotification} />
+        <NotificationList datePreferences={datePreferences} emptyCopy={licensed ? "You are all caught up. New offers and trade updates will appear here." : "License updates and important Lumio notices will appear here."} notifications={notifications} onOpen={openNotification} />
       </section>
     </Layout>
   );

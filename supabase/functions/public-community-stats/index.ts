@@ -37,7 +37,7 @@ serve(async (request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
     const [traders, listings, completedTrades] = await Promise.all([
-      supabase.from("profiles").select("id", { count: "exact", head: true }),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("trading_license_status", "licensed"),
       supabase.from("shelf_listings").select("id", { count: "exact", head: true }).eq("status", "active"),
       supabase.from("trades").select("id", { count: "exact", head: true }).eq("status", "completed"),
     ]);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import ChoiceMenu from "../components/ChoiceMenu";
 import Layout from "../components/Layout";
@@ -7,6 +8,7 @@ import { supabase } from "../lib/supabase";
 import { formatDisplayNameChangeTime, getDisplayNameChangeState } from "../utils/displayNameCooldown";
 import { DATE_FORMAT_OPTIONS, getDatePreferences } from "../utils/datePreferences";
 import { LUMIO_DISPLAY_NAME_MAX_LENGTH, validateLumioDisplayName } from "../utils/lumioDisplayName";
+import { isTradingLicensed } from "../utils/tradingLicense";
 
 async function edgeFunctionErrorMessage(data, error, fallback) {
   if (data?.error) return data.error;
@@ -26,6 +28,7 @@ async function edgeFunctionErrorMessage(data, error, fallback) {
 
 function Settings() {
   const { profile, refreshProfile, user } = useAuth();
+  const licensed = isTradingLicensed(profile);
   const [syncingRank, setSyncingRank] = useState(false);
   const [rankSyncMessage, setRankSyncMessage] = useState(null);
   const [lumioDisplayName, setLumioDisplayName] = useState("");
@@ -233,7 +236,7 @@ function Settings() {
       <section className="page-heading">
         <p className="eyebrow">Account preferences</p>
         <h1>Settings</h1>
-        <p>Manage the connections and preferences that shape your trading experience.</p>
+        <p>{licensed ? "Manage the connections and preferences that shape your trading experience." : "Manage your connected account. Trading preferences unlock after you pass the Trading License assessment."}</p>
       </section>
 
       <section className="settings-grid">
@@ -268,6 +271,8 @@ function Settings() {
           <p>Your Discord account is used to verify your trader license and send trade updates.</p>
           <span className="connected-label">Connected</span>
         </article>
+        {!licensed && <article className="settings-card license-settings-card"><span className="settings-card-label">Trading access</span><h2>Trading License required</h2><p>Market, Shelf, direct offers, and trader preferences unlock only after you complete Lumio&apos;s guide and pass the assessment.</p><Link className="success-action" to="/license">Start the license guide</Link></article>}
+        {licensed && <>
         <article className="settings-card rank-sync-card">
           <span className="settings-card-label">Discord roles</span>
           <h2>Rank sync</h2>
@@ -348,6 +353,7 @@ function Settings() {
             <small>Available as soon as the profile privacy update is applied.</small>
           )}
         </article>
+        </>}
       </section>
     </Layout>
   );

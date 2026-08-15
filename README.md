@@ -38,7 +38,7 @@ Before enabling the Database Webhook, create a Discord bot, invite it to the Lum
 - `DISCORD_GUILD_ID`
 - `DISCORD_RANK_ROLE_IDS`, a JSON object such as `{"Rookie Trader":"123...","Beginner Trader":"456..."}`
 
-In **Database → Webhooks**, create an `UPDATE` webhook for `public.profiles`, choose the `discord-rank-sync` Edge Function, and use **Add auth header with service key**. The function ignores profile updates where the rank has not changed. Members can also use **Settings → Sync my Discord rank** after the server configuration is complete.
+In **Database → Webhooks**, create an `UPDATE` webhook for `public.profiles`, choose the `discord-rank-sync` Edge Function, and use **Add auth header with service key**. The function ignores profile updates where the rank has not changed, and automatically applies the correct Discord role whenever a member earns their license or their rank changes.
 
 The function only adds/removes role IDs listed in `DISCORD_RANK_ROLE_IDS`; it does not touch any other server roles.
 

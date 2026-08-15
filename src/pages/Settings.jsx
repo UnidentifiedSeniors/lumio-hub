@@ -10,27 +10,9 @@ import { DATE_FORMAT_OPTIONS, getDatePreferences } from "../utils/datePreference
 import { LUMIO_DISPLAY_NAME_MAX_LENGTH, validateLumioDisplayName } from "../utils/lumioDisplayName";
 import { isTradingLicensed } from "../utils/tradingLicense";
 
-async function edgeFunctionErrorMessage(data, error, fallback) {
-  if (data?.error) return data.error;
-
-  const response = error?.context;
-  if (response && typeof response.json === "function") {
-    try {
-      const errorBody = await response.json();
-      if (errorBody?.error) return errorBody.error;
-    } catch {
-      // The response body may already be consumed. Use the generic SDK error.
-    }
-  }
-
-  return error?.message || fallback;
-}
-
 function Settings() {
   const { profile, refreshProfile, user } = useAuth();
   const licensed = isTradingLicensed(profile);
-  const [syncingRank, setSyncingRank] = useState(false);
-  const [rankSyncMessage, setRankSyncMessage] = useState(null);
   const [lumioDisplayName, setLumioDisplayName] = useState("");
   const [savingDisplayName, setSavingDisplayName] = useState(false);
   const [displayNameMessage, setDisplayNameMessage] = useState(null);
@@ -72,28 +54,6 @@ function Settings() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, [profile?.notification_preferences]);
-
-  const syncDiscordRank = async () => {
-    setSyncingRank(true);
-    setRankSyncMessage(null);
-
-    const { data, error } = await supabase.functions.invoke("discord-rank-sync", {
-      body: { source: "settings" },
-    });
-
-    if (error || data?.error) {
-      setRankSyncMessage({
-        type: "error",
-        text: await edgeFunctionErrorMessage(data, error, "Unable to sync your Discord rank."),
-      });
-    } else {
-      setRankSyncMessage({
-        type: "success",
-        text: `${data.rank} is now synced to Discord.`,
-      });
-    }
-    setSyncingRank(false);
-  };
 
   const saveDisplayName = async (event) => {
     event.preventDefault();
@@ -268,21 +228,11 @@ function Settings() {
         <article className="settings-card">
           <span className="settings-card-label">Connections</span>
           <h2>Discord</h2>
-          <p>Your Discord account is used to verify your trader license and send trade updates.</p>
+          <p>Your Discord account is used to verify your trader license and send trade updates. {licensed ? `Your ${profile?.rank || "Rookie Trader"} role stays synchronized automatically as your Lumio rank changes.` : "Your Discord rank role will synchronize automatically once you earn your Trading License."}</p>
           <span className="connected-label">Connected</span>
         </article>
         {!licensed && <article className="settings-card license-settings-card"><span className="settings-card-label">Trading access</span><h2>Trading License required</h2><p>Market, Shelf, direct offers, and trader preferences unlock only after you complete Lumio&apos;s guide and pass the assessment.</p><Link className="success-action" to="/license">Start the license guide</Link></article>}
         {licensed && <>
-        <article className="settings-card rank-sync-card">
-          <span className="settings-card-label">Discord roles</span>
-          <h2>Rank sync</h2>
-          <p>Keep your Lumio rank aligned with the dedicated Discord role for your current progression level.</p>
-          <div className="rank-sync-footer">
-            <span className="rank-sync-current">Current rank: <strong>{profile?.rank || "Rookie Trader"}</strong></span>
-            <button className="secondary-action" disabled={syncingRank} onClick={syncDiscordRank} type="button">{syncingRank ? "Syncing…" : "Sync my Discord rank"}</button>
-          </div>
-          {rankSyncMessage && <p className={rankSyncMessage.type === "success" ? "inline-success" : "inline-error"} role={rankSyncMessage.type === "success" ? "status" : "alert"}>{rankSyncMessage.text}</p>}
-        </article>
         <article className="settings-card notification-preferences-card">
           <span className="settings-card-label">Trading</span>
           <h2>Offer notifications</h2>

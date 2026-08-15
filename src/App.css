@@ -2176,10 +2176,6 @@ a.trade-participant:hover {
   margin-top: auto;
 }
 
-.rank-sync-card {
-  min-height: 250px;
-}
-
 .display-name-card {
   min-height: 274px;
 }
@@ -2329,26 +2325,6 @@ a.trade-participant:hover {
 .preference-switch.is-on i {
   transform: translateX(13px);
   background: #fff;
-}
-
-.rank-sync-footer {
-  display: grid;
-  width: 100%;
-  gap: 10px;
-  margin-top: auto;
-}
-
-.rank-sync-current {
-  color: #9299af;
-  font-size: 0.75rem;
-}
-
-.rank-sync-current strong {
-  color: #dfe3fb;
-}
-
-.rank-sync-footer .secondary-action {
-  width: 100%;
 }
 
 .inline-success,

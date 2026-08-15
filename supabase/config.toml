@@ -22,7 +22,6 @@ entrypoint = "./functions/trade-notifier/index.ts"
 [functions.discord-rank-sync]
 enabled = true
 # Database Webhooks should use Supabase's "Add auth header with service key"
-# option. The manual Settings action uses the member's JWT.
 verify_jwt = true
 import_map = "./functions/discord-rank-sync/deno.json"
 entrypoint = "./functions/discord-rank-sync/index.ts"

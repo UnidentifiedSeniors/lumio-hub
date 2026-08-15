@@ -5087,6 +5087,27 @@ button.profile-settings-link {
   color: #fcfaff;
 }
 
+.rarity-badge-rare {
+  border: 1px solid rgba(104, 171, 255, 0.76);
+  background: linear-gradient(135deg, #3d91f5, #1752b9);
+  box-shadow: 0 5px 16px rgba(42, 115, 232, 0.24);
+  color: #f5f9ff;
+}
+
+.rarity-badge-uncommon {
+  border: 1px solid rgba(104, 222, 141, 0.7);
+  background: linear-gradient(135deg, #3ca867, #17633d);
+  box-shadow: 0 5px 16px rgba(44, 164, 95, 0.22);
+  color: #f2fff6;
+}
+
+.rarity-badge-common {
+  border: 1px solid rgba(181, 188, 204, 0.48);
+  background: linear-gradient(135deg, #6d7482, #3c424d);
+  box-shadow: 0 5px 16px rgba(86, 94, 110, 0.18);
+  color: #f2f4f8;
+}
+
 .traits {
   display: flex;
   flex-wrap: wrap;

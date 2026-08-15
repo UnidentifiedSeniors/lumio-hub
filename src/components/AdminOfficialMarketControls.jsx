@@ -4,8 +4,10 @@ import CatalogPickerDialog from "./CatalogPickerDialog";
 import ChoiceMenu from "./ChoiceMenu";
 import ConfirmDialog from "./ConfirmDialog";
 import ListingArtwork from "./ListingArtwork";
+import RarityBadge from "./RarityBadge";
 import useCatalog from "../context/useCatalog";
 import { supabase } from "../lib/supabase";
+import { getOfficialChampionValue } from "../utils/marketplace";
 
 const STATUS_OPTIONS = [
   { value: "draft", label: "Draft" },
@@ -290,7 +292,9 @@ function AdminOfficialMarketControls({ onUpdated }) {
     setDropForm((current) => ({
       ...current,
       name: champion.name,
+      rarity: champion.rarity || current.rarity,
       image_url: champion.image_url || "",
+      reference_value: current.reference_value || String(getOfficialChampionValue(champion)),
       slug: current.slug || toSlug(champion.name),
     }));
   };
@@ -346,7 +350,7 @@ function AdminOfficialMarketControls({ onUpdated }) {
 
         <form className="admin-official-form admin-official-drop-form" onSubmit={saveDrop}>
           <div className="admin-official-form-heading"><div><p className="eyebrow">Drop studio</p><h3>{editingDropId ? "Edit official drop" : "Create official drop"}</h3></div>{editingDropId && <button className="quiet-action" onClick={resetDrop} type="button">New drop</button>}</div>
-          <div className="admin-official-item-picker"><ListingArtwork imageUrl={selectedPreviewChampion.image_url} name={selectedPreviewChampion.name} trait={selectedPreviewChampion.trait} /><div><span>Champion details</span><strong>{dropForm.name || "Choose from catalog or enter a custom drop"}</strong><small>{dropForm.trait || "Standard"} trait · matching catalog artwork is used automatically</small></div><button className="secondary-action" onClick={() => setCatalogPickerOpen(true)} type="button">Choose champion</button></div>
+          <div className="admin-official-item-picker"><ListingArtwork imageUrl={selectedPreviewChampion.image_url} name={selectedPreviewChampion.name} trait={selectedPreviewChampion.trait} /><div><span>Champion details</span><strong>{dropForm.name || "Choose from catalog or enter a custom drop"}</strong><small>{dropForm.rarity ? <><RarityBadge rarity={dropForm.rarity} /> · </> : null}{dropForm.trait || "Standard"} trait · matching catalog artwork is used automatically</small></div><button className="secondary-action" onClick={() => setCatalogPickerOpen(true)} type="button">Choose champion</button></div>
           <div className="admin-field-grid two-columns"><label><span>Champion name</span><input maxLength="100" onChange={(event) => setDropForm((current) => ({ ...current, name: event.target.value }))} placeholder="Champion name" value={dropForm.name} /></label><label><span>Drop label <em>optional</em></span><input maxLength="60" onChange={(event) => setDropForm((current) => ({ ...current, rarity: event.target.value }))} placeholder="Limited" value={dropForm.rarity} /></label><label><span>Trait</span><input maxLength="100" onChange={(event) => setDropForm((current) => ({ ...current, trait: event.target.value }))} placeholder="Standard" value={dropForm.trait} /></label><label><span>Reference value</span><input min="0" onChange={(event) => setDropForm((current) => ({ ...current, reference_value: event.target.value }))} placeholder="Optional" type="number" value={dropForm.reference_value} /></label></div>
           <div className="admin-field-grid two-columns"><ChoiceMenu label="Event grouping" onChange={(eventId) => setDropForm((current) => ({ ...current, event_id: eventId }))} options={eventOptions} value={dropForm.event_id} /><label><span>Badge label</span><input maxLength="40" onChange={(event) => setDropForm((current) => ({ ...current, badge_label: event.target.value }))} placeholder="Official drop" value={dropForm.badge_label} /></label></div>
           <label><span>Description <em>optional</em></span><textarea maxLength="500" onChange={(event) => setDropForm((current) => ({ ...current, description: event.target.value }))} placeholder="Why this champion is special and what players should know." rows="3" value={dropForm.description} /></label>

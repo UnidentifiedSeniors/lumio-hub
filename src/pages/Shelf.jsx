@@ -6,11 +6,12 @@ import ChoiceMenu from "../components/ChoiceMenu";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
+import RarityBadge from "../components/RarityBadge";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { readBooleanPreference, saveBooleanPreference } from "../utils/clientPreferences";
 import { getDatePreferences } from "../utils/datePreferences";
-import { formatDateTime, getChampionTraits } from "../utils/marketplace";
+import { formatDateTime, getChampionTraits, getOfficialChampionValue } from "../utils/marketplace";
 
 const LISTING_STATUS_OPTIONS = [
   { value: "active", label: "Live on Market" },
@@ -45,12 +46,12 @@ function Shelf() {
     const [listingsResult, championsResult] = await Promise.all([
       supabase
         .from("shelf_listings")
-        .select("id, user_champion_id, status, note, created_at, updated_at, user_champions(id, name, image_url, trait)")
+        .select("id, user_champion_id, status, note, created_at, updated_at, user_champions(id, name, image_url, rarity, trait, base_value)")
         .eq("owner_id", user.id)
         .order("updated_at", { ascending: false }),
       supabase
         .from("user_champions")
-        .select("id, name, image_url, trait")
+        .select("id, name, image_url, rarity, trait, base_value")
         .eq("owner_id", user.id)
         .order("updated_at", { ascending: false }),
     ]);
@@ -212,10 +213,11 @@ function Shelf() {
 
             return (
               <article className="shelf-card" key={listing.id}>
-                <div className="card-topline"><span className={`listing-status listing-${listing.status}`}>{listing.status}</span></div>
+                <div className="card-topline"><RarityBadge rarity={champion.rarity} /><span className={`listing-status listing-${listing.status}`}>{listing.status}</span></div>
                 <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait={traitLabel} />
                 <h2>{champion.name}</h2>
                 <div className="traits card-traits">{championTraits.length ? championTraits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
+                <p className="market-value">Official value · ◈ {getOfficialChampionValue(champion).toLocaleString()}</p>
                 {listing.note && <p className="listing-note">“{listing.note}”</p>}
                 <p className="card-meta">Listed {formatDateTime(listing.created_at, datePreferences)}</p>
                 <div className="card-actions">
@@ -259,7 +261,7 @@ function Shelf() {
             <p className="eyebrow">Public Shelf</p>
             <h2 id="listing-editor-title">Edit listing</h2>
             <p className="modal-copy">Update the listing note or make the exact champion copy live or paused. Its champion and trait stay unchanged.</p>
-            {editingListing.user_champions && <div className="listing-editor-preview"><ListingArtwork imageUrl={editingListing.user_champions.image_url} name={editingListing.user_champions.name} trait={editingListing.user_champions.trait || "Standard"} /><div><strong>{editingListing.user_champions.name}</strong><small>{editingListing.user_champions.trait || "Standard"} trait</small></div></div>}
+            {editingListing.user_champions && <div className="listing-editor-preview"><ListingArtwork imageUrl={editingListing.user_champions.image_url} name={editingListing.user_champions.name} trait={editingListing.user_champions.trait || "Standard"} /><div><RarityBadge rarity={editingListing.user_champions.rarity} /><strong>{editingListing.user_champions.name}</strong><small>Official value ◈ {getOfficialChampionValue(editingListing.user_champions).toLocaleString()} · {editingListing.user_champions.trait || "Standard"} trait</small></div></div>}
             <ChoiceMenu label="Listing visibility" onChange={setEditingStatus} options={LISTING_STATUS_OPTIONS} value={editingStatus} />
             <label className="field-label" htmlFor="edit-listing-note">Note <span>optional</span></label>
             <textarea id="edit-listing-note" maxLength="280" onChange={(event) => setEditingNote(event.target.value)} placeholder="What kind of offers are you open to?" rows="4" value={editingNote} />

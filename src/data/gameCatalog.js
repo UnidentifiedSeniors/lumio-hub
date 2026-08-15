@@ -1,4 +1,5 @@
 import championsCsv from "../Game-data/champions.csv?raw";
+import championValuesCsv from "../Game-data/champion_values.csv?raw";
 import traitsCsv from "../Game-data/traits.csv?raw";
 
 const TRAIT_BONUS_COLUMNS = [
@@ -77,6 +78,17 @@ function percentage(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function wholeNumber(value) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function isChampionName(name) {
+  return Boolean(name)
+    && name !== "Best for Each Stat"
+    && !/^\d+(?:st|nd|rd|th)$/i.test(name);
+}
+
 export const traits = parseCsv(traitsCsv)
   .filter((record) => record.Trait && record.Rarity)
   .map((record) => {
@@ -93,20 +105,37 @@ export const traits = parseCsv(traitsCsv)
 export const traitsByName = new Map(traits.map((trait) => [trait.name, trait]));
 export const traitNames = traits.map((trait) => trait.name);
 
+export const championValues = parseCsv(championValuesCsv)
+  .filter((record) => isChampionName(record.Champions?.trim()))
+  .map((record) => ({
+    name: record.Champions.trim(),
+    rarity: record.Rarity?.trim() || "Unlisted",
+    officialValue: wholeNumber(record.Value),
+    clanPoints: wholeNumber(record["Clan Points"]),
+    obtainment: record.Obtainment?.trim() || null,
+  }));
+
+export const championValuesByKey = new Map(
+  championValues.map((champion) => [championKey(champion.name), champion]),
+);
+
 export const champions = parseCsv(championsCsv)
   .filter((record) => {
     const name = record.Champions?.trim();
-    return Boolean(name)
-      && name !== "Best for Each Stat"
-      && !/^\d+(?:st|nd|rd|th)$/i.test(name);
+    return isChampionName(name);
   })
   .map((record, index) => {
+    const valueInfo = championValuesByKey.get(championKey(record.Champions));
     return {
       id: index + 1,
       name: record.Champions,
       image_url: getChampionImageUrl(record.Champions),
       traits: [],
       tradable: true,
+      rarity: valueInfo?.rarity || "Unlisted",
+      officialValue: valueInfo?.officialValue || 0,
+      clanPoints: valueInfo?.clanPoints || 0,
+      obtainment: valueInfo?.obtainment || null,
     };
   });
 

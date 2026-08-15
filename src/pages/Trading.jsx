@@ -4,10 +4,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
 import OfferComposer from "../components/OfferComposer";
+import RarityBadge from "../components/RarityBadge";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
 import { getDatePreferences } from "../utils/datePreferences";
-import { formatDateTime, getChampionTraits, getListingCode } from "../utils/marketplace";
+import { formatDateTime, getChampionTraits, getListingCode, getOfficialChampionValue } from "../utils/marketplace";
 
 const hiddenListingsKey = (userId) => `lumio-market-hidden-listings:${userId}`;
 const blockedTradersKey = (userId) => `lumio-market-blocked-traders:${userId}`;
@@ -129,7 +130,7 @@ function Trading() {
     return listings.filter((listing) => {
       if (listing.owner_id === user?.id) return false;
       if (hiddenListingIds.includes(listing.id) || blockedTraderIds.includes(listing.owner_id)) return false;
-      return !normalizedQuery || [listing.name, listing.trait, listing.lumio_display_name, listing.discord_display_name, listing.discord_username]
+      return !normalizedQuery || [listing.name, listing.rarity, listing.trait, listing.lumio_display_name, listing.discord_display_name, listing.discord_username]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(normalizedQuery));
     });
@@ -176,7 +177,7 @@ function Trading() {
       listingId: listing.id,
       requestedChampion: listing,
       title: `Offer for ${listing.name}`,
-      summary: `${listing.name} · ${listing.trait || "Standard"} trait`,
+      summary: `${listing.name} · ◈ ${getOfficialChampionValue(listing).toLocaleString()} · ${listing.trait || "Standard"} trait`,
     });
   };
 
@@ -217,7 +218,7 @@ function Trading() {
     link.searchParams.set("listing", reportTarget.id);
     const reportReference = [
       "Lumio Market listing report",
-      `Listing: ${getListingCode(reportTarget.id)} · ${reportTarget.name}`,
+      `Listing: ${getListingCode(reportTarget.id)} · ${reportTarget.name} · ◈ ${getOfficialChampionValue(reportTarget).toLocaleString()}`,
       `Trader: ${sellerName}`,
       `Link: ${link.toString()}`,
       "Reason:",
@@ -274,6 +275,11 @@ function Trading() {
         {(hiddenListingIds.length > 0 || blockedTraderIds.length > 0) && <button className="market-filter-control" onClick={() => setFiltersOpen(true)} type="button">Manage Market filters</button>}
       </section>
 
+      <section className="official-value-guidance" aria-label="Official value guide">
+        <span aria-hidden="true">◈</span>
+        <p><strong>Official value guide.</strong> Values are set using the champion’s Clan Points trained, how difficult it is to obtain, and a small amount of revised personal judgment. They are a reference for fair discussion, not a guaranteed trade outcome.</p>
+      </section>
+
       {error && <p className="form-error" role="alert">{error}</p>}
       {successMessage && <p className="form-success" role="status">{successMessage}</p>}
 
@@ -291,7 +297,7 @@ function Trading() {
           <section className="community-market-section" aria-labelledby="community-listings-heading"><header className="community-market-heading"><div><p className="eyebrow">Trader marketplace</p><h2 id="community-listings-heading">Community listings</h2><p>Private offers stay between licensed traders until accepted.</p></div></header>{visibleListings.length === 0 ? <section className="empty-state marketplace-empty-state"><span className="empty-state-icon">⇄</span><h2>{listings.length ? "No community listings match that search" : officialDrops.length ? "No community listings yet" : "The marketplace is quiet right now"}</h2><p>{listings.length ? "Try a different champion, trait, or trader name." : "Create your own Shelf listing to be ready when other licensed traders arrive."}</p></section> : <section className="marketplace-grid">{visibleListings.map((listing) => {
             const traits = getChampionTraits(listing);
             const sellerName = listing.lumio_display_name || listing.discord_display_name || listing.discord_username || "Licensed trader";
-            return <article className={`marketplace-card${sharedListingId === listing.id ? " shared-listing" : ""}`} id={`listing-${listing.id}`} key={listing.id}><div className="card-topline"><span className="listing-status listing-active">Live on Shelf</span></div><span className="listing-code">Listing {getListingCode(listing.id)}</span><ListingArtwork imageUrl={listing.image_url} name={listing.name} trait={traits[0] || "Standard"} /><h2>{listing.name}</h2><div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>{listing.note && <p className="listing-note">“{listing.note}”</p>}<Link className="seller-row" to={`/trader/${listing.owner_id}`}>{listing.discord_avatar ? <img alt="" src={listing.discord_avatar} /> : <span>{sellerName.charAt(0).toUpperCase()}</span>}<div><small>Listed by</small><strong>{sellerName}</strong>{listing.discord_display_name && <em>Discord · {listing.discord_display_name}</em>}</div></Link><div className="listing-card-actions"><button className="primary-action" onClick={() => openOffer(listing)} type="button">Make an offer</button><div className="listing-menu-wrap" ref={openMenuId === listing.id ? menuRef : null}><button aria-controls={`listing-menu-${listing.id}`} aria-expanded={openMenuId === listing.id} aria-haspopup="menu" className="listing-menu-trigger" onClick={() => setOpenMenuId((current) => current === listing.id ? null : listing.id)} type="button"><span className="sr-only">More actions for {listing.name}</span><span aria-hidden="true">•••</span></button>{openMenuId === listing.id && <div className="listing-action-menu" id={`listing-menu-${listing.id}`} role="menu"><button onClick={() => hideListing(listing)} role="menuitem" type="button">Don&apos;t show again</button><button onClick={() => { setOpenMenuId(null); setReportTarget(listing); }} role="menuitem" type="button">Report listing</button><button onClick={() => { setOpenMenuId(null); setBlockTarget(listing); }} role="menuitem" type="button">Block trader</button><button onClick={() => void copyListingLink(listing)} role="menuitem" type="button">Copy listing link</button><Link onClick={() => setOpenMenuId(null)} role="menuitem" to={`/trader/${listing.owner_id}`}>View trader profile</Link></div>}</div></div></article>;
+            return <article className={`marketplace-card${sharedListingId === listing.id ? " shared-listing" : ""}`} id={`listing-${listing.id}`} key={listing.id}><div className="card-topline"><RarityBadge rarity={listing.rarity} /><span className="listing-status listing-active">Live on Shelf</span></div><span className="listing-code">Listing {getListingCode(listing.id)}</span><ListingArtwork imageUrl={listing.image_url} name={listing.name} trait={traits[0] || "Standard"} /><h2>{listing.name}</h2><div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div><p className="market-value">Official value · ◈ {getOfficialChampionValue(listing).toLocaleString()}</p>{listing.note && <p className="listing-note">“{listing.note}”</p>}<Link className="seller-row" to={`/trader/${listing.owner_id}`}>{listing.discord_avatar ? <img alt="" src={listing.discord_avatar} /> : <span>{sellerName.charAt(0).toUpperCase()}</span>}<div><small>Listed by</small><strong>{sellerName}</strong>{listing.discord_display_name && <em>Discord · {listing.discord_display_name}</em>}</div></Link><div className="listing-card-actions"><button className="primary-action" onClick={() => openOffer(listing)} type="button">Make an offer</button><div className="listing-menu-wrap" ref={openMenuId === listing.id ? menuRef : null}><button aria-controls={`listing-menu-${listing.id}`} aria-expanded={openMenuId === listing.id} aria-haspopup="menu" className="listing-menu-trigger" onClick={() => setOpenMenuId((current) => current === listing.id ? null : listing.id)} type="button"><span className="sr-only">More actions for {listing.name}</span><span aria-hidden="true">•••</span></button>{openMenuId === listing.id && <div className="listing-action-menu" id={`listing-menu-${listing.id}`} role="menu"><button onClick={() => hideListing(listing)} role="menuitem" type="button">Don&apos;t show again</button><button onClick={() => { setOpenMenuId(null); setReportTarget(listing); }} role="menuitem" type="button">Report listing</button><button onClick={() => { setOpenMenuId(null); setBlockTarget(listing); }} role="menuitem" type="button">Block trader</button><button onClick={() => void copyListingLink(listing)} role="menuitem" type="button">Copy listing link</button><Link onClick={() => setOpenMenuId(null)} role="menuitem" to={`/trader/${listing.owner_id}`}>View trader profile</Link></div>}</div></div></article>;
           })}</section>}</section>
         </>
       )}
@@ -304,7 +310,7 @@ function Trading() {
             <p className="eyebrow">Market safety</p>
             <h2>Report this listing</h2>
             <p className="modal-copy">We&apos;ll copy the listing details and direct link. Paste them in the Lumio Discord with a short explanation so the team can review it.</p>
-            <div className="form-value-preview"><span>Listing</span><strong>{reportTarget.name}</strong></div>
+            <div className="form-value-preview"><span>Listing</span><strong>{reportTarget.name} · ◈ {getOfficialChampionValue(reportTarget).toLocaleString()}</strong></div>
             <div className="modal-buttons">
               <button className="secondary-action" onClick={() => setReportTarget(null)} type="button">Cancel</button>
               <button className="secondary-action" onClick={() => void copyReportReference()} type="button">Copy report details</button>

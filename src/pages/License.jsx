@@ -16,8 +16,8 @@ const LESSONS = [
   {
     eyebrow: "02 · Evaluate carefully",
     title: "Compare the whole agreement before you accept.",
-    body: "The exact copies involved, their traits, and the terms you both discuss all matter. Take a moment to compare the full offer before accepting.",
-    points: ["Review every offered and requested copy.", "Ask a clear question when a detail is missing.", "You can decline any offer without owing an explanation."],
+    body: "Official values are a reference based on Clan Points trained, obtainment difficulty, and a small amount of revised personal judgment. The exact copies, traits, and terms still matter, so compare the full offer before accepting.",
+    points: ["Review every offered and requested copy alongside its official value.", "Ask a clear question when a detail is missing.", "You can decline any offer without owing an explanation."],
   },
   {
     eyebrow: "03 · Coordinate safely",

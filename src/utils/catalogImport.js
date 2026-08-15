@@ -57,6 +57,11 @@ function percentage(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function wholeNumber(value) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
 export function catalogKey(...parts) {
   return parts.join("-").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 119);
 }
@@ -72,6 +77,38 @@ export function parseChampionCatalogCsv(rawCsv) {
       catalog_key: catalogKey(name),
       name,
       image_url: getColumn(record, ["Image URL", "Image"]),
+    });
+  });
+
+  return { rows, issues };
+}
+
+export function parseChampionValuesCsv(rawCsv) {
+  const rows = [];
+  const issues = [];
+
+  parseCsv(rawCsv).forEach((record, index) => {
+    const name = getColumn(record, ["Champions", "Champion", "Name"]).trim();
+    if (!name || name === "Best for Each Stat" || /^\d+(?:st|nd|rd|th)$/i.test(name)) return;
+
+    const rarity = getColumn(record, ["Rarity"]).trim();
+    const officialValue = wholeNumber(getColumn(record, ["Value", "Official Value"]));
+    const clanPointsText = getColumn(record, ["Clan Points"]);
+    const clanPoints = clanPointsText.trim() ? wholeNumber(clanPointsText) : 0;
+    const obtainment = getColumn(record, ["Obtainment", "How to obtain", "How to get"]).trim();
+
+    if (!rarity || officialValue === null || clanPoints === null || !obtainment) {
+      issues.push(`Row ${index + 2}: ${name} needs rarity, a whole-number value, Clan Points, and obtainment.`);
+      return;
+    }
+
+    rows.push({
+      catalog_key: catalogKey(name),
+      name,
+      rarity,
+      official_value: officialValue,
+      clan_points: clanPoints,
+      obtainment,
     });
   });
 
@@ -109,6 +146,10 @@ export function catalogChampionPayload(champion) {
     catalog_key: catalogKey(champion.name),
     name: champion.name,
     image_url: champion.image_url || "",
+    rarity: champion.rarity || "",
+    official_value: Number(champion.officialValue) || 0,
+    clan_points: Number(champion.clanPoints) || 0,
+    obtainment: champion.obtainment || "",
   };
 }
 

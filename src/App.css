@@ -2778,6 +2778,44 @@ a.trade-participant:hover {
   font-weight: 720;
 }
 
+.official-value-guidance,
+.offer-value-guidance {
+  border: 1px solid rgba(229, 189, 107, 0.2);
+  border-radius: 13px;
+  background: linear-gradient(120deg, rgba(88, 68, 33, 0.3), rgba(19, 22, 34, 0.74));
+  color: #b6bdce;
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.official-value-guidance {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 16px 0 2px;
+  padding: 13px 15px;
+}
+
+.official-value-guidance > span {
+  color: #e8c16e;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.official-value-guidance p,
+.offer-value-guidance {
+  margin: 0;
+}
+
+.official-value-guidance strong {
+  color: #f0d38f;
+}
+
+.offer-value-guidance {
+  margin: -5px 0 16px;
+  padding: 10px 12px;
+}
+
 .owned-champion-value {
   display: flex;
   align-items: end;
@@ -4013,6 +4051,14 @@ a.trade-participant:hover {
 .trade-champion-row small {
   color: #858da5;
   font-size: 0.66rem;
+}
+
+.trade-champion-row > span {
+  flex: 0 0 auto;
+  color: #e1bd76;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.69rem;
+  font-weight: 720;
 }
 
 .trade-champion-row em {

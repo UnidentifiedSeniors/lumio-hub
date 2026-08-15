@@ -1,4 +1,5 @@
-import { getChampionTraits, formatDateTime } from "../utils/marketplace";
+import RarityBadge from "./RarityBadge";
+import { getChampionTraits, getOfficialChampionValue, formatDateTime } from "../utils/marketplace";
 
 export function TradeChampionList({ champions, emptyCopy }) {
   if (!champions?.length) return <p className="trade-champion-empty">{emptyCopy}</p>;
@@ -10,9 +11,11 @@ export function TradeChampionList({ champions, emptyCopy }) {
         return (
           <article className="trade-champion-row" key={`${champion.user_champion_id || champion.id || champion.name}-${index}`}>
             <div>
+              <RarityBadge rarity={champion.rarity} />
               <strong>{champion.name || "Unknown champion"}</strong>
               <small>{traits.length ? traits.join(" · ") : "Standard"}</small>
             </div>
+            <span>◈ {getOfficialChampionValue(champion).toLocaleString()}</span>
           </article>
         );
       })}

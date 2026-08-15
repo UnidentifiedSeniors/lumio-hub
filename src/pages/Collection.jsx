@@ -6,10 +6,11 @@ import ChoiceMenu from "../components/ChoiceMenu";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
+import RarityBadge from "../components/RarityBadge";
 import useAuth from "../context/useAuth";
 import useCatalog from "../context/useCatalog";
 import { supabase } from "../lib/supabase";
-import { getChampionTraits } from "../utils/marketplace";
+import { getChampionTraits, getOfficialChampionValue } from "../utils/marketplace";
 import { rarityBadgeClassName } from "../utils/rarityBadge";
 import traitEffectSummary from "../utils/traitEffectSummary";
 
@@ -136,9 +137,9 @@ function Collection() {
       owner_id: user.id,
       name: selectedChampion.name,
       image_url: selectedChampion.image_url || null,
-      rarity: "AFS Champion",
+      rarity: selectedChampion.rarity || "Unlisted",
       trait: selectedTrait,
-      base_value: 0,
+      base_value: getOfficialChampionValue(selectedChampion),
       market_adjustment: 1,
     });
 
@@ -223,10 +224,11 @@ function Collection() {
 
             return (
               <article className="owned-champion-card" key={champion.id}>
-                {listing && <div className="card-topline"><span className={`listing-status listing-${listing.status}`}>{listing.status === "active" ? "On Shelf" : "Shelf paused"}</span></div>}
+                <div className="card-topline"><RarityBadge rarity={champion.rarity} />{listing && <span className={`listing-status listing-${listing.status}`}>{listing.status === "active" ? "On Shelf" : "Shelf paused"}</span>}</div>
                 <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait={traitLabel} />
                 <h2>{champion.name}</h2>
                 <div className="traits card-traits">{championTraits.length ? championTraits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
+                <div className="owned-champion-value"><span>Official value</span><strong>◈ {getOfficialChampionValue(champion).toLocaleString()}</strong></div>
                 <div className="card-actions owned-card-actions">
                   <button className="secondary-action" onClick={() => setDetailsChampion(champion)} type="button">View details</button>
                   {listing ? <Link className="secondary-action" to="/shelf">Manage listing</Link> : <Link className="primary-action" to={`/shelf?list=${champion.id}`}>List on Shelf</Link>}
@@ -243,14 +245,16 @@ function Collection() {
             <div className="collection-details-heading">
               <ListingArtwork imageUrl={detailsChampion.image_url} name={detailsChampion.name} trait={getChampionTraits(detailsChampion)[0] || "Standard"} />
               <div>
+                <RarityBadge rarity={detailsChampion.rarity} />
                 <h2 id="collection-details-title">{detailsChampion.name}</h2>
                 <p>{getChampionTraits(detailsChampion).length ? getChampionTraits(detailsChampion).join(" · ") : "Standard trait"}</p>
               </div>
             </div>
             <div className="collection-detail-metrics">
+              <div><span>Official value</span><strong>◈ {getOfficialChampionValue(detailsChampion).toLocaleString()}</strong></div>
               <div><span>Shelf status</span><strong>{listingsByChampion.get(detailsChampion.id)?.status === "active" ? "Listed publicly" : listingsByChampion.get(detailsChampion.id)?.status === "paused" ? "Listing paused" : "Private to you"}</strong></div>
             </div>
-            <p className="modal-copy">This is one exact copy in your Collection. Listing it on Shelf makes only its champion details visible to other licensed traders.</p>
+            <p className="modal-copy">Official values are a guide based on Clan Points trained, obtainment difficulty, and a small amount of revised personal judgment. This is one exact copy in your Collection.</p>
             <div className="modal-buttons collection-details-actions">
               <button className="danger-action" onClick={() => setDeleteTarget(detailsChampion)} type="button">Remove from Collection</button>
               <button className="secondary-action" onClick={() => setDetailsChampion(null)} type="button">Done</button>
@@ -270,7 +274,7 @@ function Collection() {
             <div className="catalog-field">
               <span className="field-label">Champion</span>
               <button className={`catalog-selection${selectedChampion ? " has-selection" : ""}`} onClick={() => setPicker("champion")} type="button">
-                {selectedChampion ? <><strong>{selectedChampion.name}</strong><small>Select the trait on your exact copy below.</small><em>Change</em></> : <><strong>Choose a champion</strong><small>Browse the catalog by name and artwork.</small><em>Browse catalog</em></>}
+                {selectedChampion ? <><RarityBadge rarity={selectedChampion.rarity} /><strong>{selectedChampion.name}</strong><small>Official value ◈ {getOfficialChampionValue(selectedChampion).toLocaleString()} · select its trait below.</small><em>Change</em></> : <><strong>Choose a champion</strong><small>Browse the catalog by name, artwork, and official value.</small><em>Browse catalog</em></>}
               </button>
             </div>
 

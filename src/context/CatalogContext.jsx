@@ -12,6 +12,10 @@ function toChampion(record) {
     traits: Array.isArray(record.traits) ? record.traits : [],
     tradable: record.tradable !== false,
     image_url: record.image_url || getChampionImageUrl(record.name),
+    rarity: record.tier || "Unlisted",
+    officialValue: Number.isFinite(Number(record.value)) ? Number(record.value) : 0,
+    clanPoints: Number.isFinite(Number(record.clan_points)) ? Number(record.clan_points) : 0,
+    obtainment: record.obtainment || null,
   };
 }
 
@@ -36,7 +40,7 @@ export function CatalogProvider({ children }) {
     if (!user) return false;
     setLoading(true);
     const [championResult, traitResult] = await Promise.all([
-      supabase.from("champions").select("id, name, image_url, tradable").eq("tradable", true).order("id"),
+      supabase.from("champions").select("id, name, image_url, tradable, tier, value, clan_points, obtainment").eq("tradable", true).order("id"),
       supabase.from("catalog_traits").select("catalog_key, name, rarity, bonuses, bonus_total, notes").eq("is_active", true).order("name"),
     ]);
 

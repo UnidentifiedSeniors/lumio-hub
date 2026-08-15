@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
 import ListingArtwork from "./ListingArtwork";
+import RarityBadge from "./RarityBadge";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
-import { getChampionTraits, toTradeChampion } from "../utils/marketplace";
+import { getChampionTraits, getOfficialChampionValue, toTradeChampion } from "../utils/marketplace";
 
 const OFFER_LIMIT = 4;
 
@@ -18,8 +19,10 @@ function OfferChampionChoice({ champion, kind, onSelect, selected }) {
       <span className="offer-choice-indicator">{selected ? "✓" : "+"}</span>
       <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait={traits[0] || "Standard"} />
       <span className="offer-champion-choice-copy">
+        <RarityBadge rarity={champion.rarity} />
         <strong>{champion.name}</strong>
         <small>{traits.length ? traits.join(" · ") : "Standard trait"}</small>
+        <em>◈ {getOfficialChampionValue(champion).toLocaleString()}</em>
       </span>
       <span className="offer-choice-label">{selectionLabel}</span>
     </button>
@@ -79,6 +82,7 @@ function OfferComposer({ target, onClose, onSent }) {
   }, [loadOfferableChampions]);
 
   const selectedOffer = ownedChampions.filter((champion) => offerIds.includes(champion.id));
+  const offerValue = selectedOffer.reduce((total, champion) => total + getOfficialChampionValue(champion), 0);
   const selectedRequestedChampion = isDirectOffer
     ? recipientChampions.find((champion) => champion.id === requestedChampionId) || null
     : target.requestedChampion || null;
@@ -107,8 +111,8 @@ function OfferComposer({ target, onClose, onSent }) {
         requested_champion: requestedChampion,
         requested_champions: requestedChampion ? [requestedChampion] : [],
         offered_champions: selectedOffer.map(toTradeChampion),
-        offer_value: 0,
-        requested_value: null,
+        offer_value: offerValue,
+        requested_value: selectedRequestedChampion ? getOfficialChampionValue(selectedRequestedChampion) : null,
         offer_note: offerNote.trim() || null,
         status: "pending",
       })
@@ -176,8 +180,10 @@ function OfferComposer({ target, onClose, onSent }) {
                   {ownedChampions.map((champion) => <OfferChampionChoice champion={champion} key={champion.id} kind="offer" onSelect={() => toggleChampion(champion.id)} selected={offerIds.includes(champion.id)} />)}
                 </div>
               )}
-              <div className="offer-total"><span>{selectedOffer.length} champion{selectedOffer.length === 1 ? "" : "s"} selected</span><strong>Ready to send</strong></div>
+              <div className="offer-total"><span>{selectedOffer.length} champion{selectedOffer.length === 1 ? "" : "s"} selected</span><strong>◈ {offerValue.toLocaleString()} official value</strong></div>
             </section>
+
+            <p className="offer-value-guidance">Official values reflect Clan Points trained, obtainment difficulty, and a small amount of revised personal judgment. They guide discussion; the final agreement is yours.</p>
 
             <label className="offer-note-field" htmlFor="offer-note">
               <span>Offer note <small>Optional</small></span>

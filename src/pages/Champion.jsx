@@ -2,7 +2,9 @@ import { useParams, Link } from "react-router-dom";
 
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
+import RarityBadge from "../components/RarityBadge";
 import useCatalog from "../context/useCatalog";
+import { getOfficialChampionValue } from "../utils/marketplace";
 
 function Champion() {
   const { id } = useParams();
@@ -26,8 +28,9 @@ function Champion() {
       <section className="champion-catalog-hero">
         <div>
           <p className="eyebrow">AFS source catalog</p>
+          <RarityBadge rarity={champion.rarity} />
           <h1>{champion.name}</h1>
-          <p>Record the champion copy you own, choose its trait, and keep trade discussions focused on the exact copy.</p>
+          <p>Official value ◈ {getOfficialChampionValue(champion).toLocaleString()} · record the copy you own, choose its trait, and keep trade discussions focused on the exact copy.</p>
         </div>
         <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait="AFS champion" />
       </section>
@@ -36,11 +39,11 @@ function Champion() {
         <article className="champion-stat-card">
           <div className="section-title-row">
             <div>
-              <p className="eyebrow">Champion identity</p>
-              <h2>Trade the exact copy you own.</h2>
+              <p className="eyebrow">Official value reference</p>
+              <h2>◈ {getOfficialChampionValue(champion).toLocaleString()}</h2>
             </div>
           </div>
-          <p className="modal-copy">Lumio uses the source catalog for champion names and artwork. Your chosen trait and trade terms identify the individual copy you are offering.</p>
+          <p className="modal-copy">Values consider {champion.clanPoints || 0} Clan Points trained, {champion.obtainment || "the champion’s obtainment difficulty"}, and a small amount of revised personal judgment. They guide fair discussion rather than guaranteeing a specific trade outcome.</p>
         </article>
 
         <aside className="champion-catalog-note">

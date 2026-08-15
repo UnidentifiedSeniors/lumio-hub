@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 
 import ListingArtwork from "./ListingArtwork";
+import RarityBadge from "./RarityBadge";
 import { rarityBadgeClassName } from "../utils/rarityBadge";
+import { getOfficialChampionValue } from "../utils/marketplace";
 import traitEffectSummary from "../utils/traitEffectSummary";
 
 function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, selectedValue, title }) {
@@ -52,10 +54,10 @@ function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, sele
                 </button>
               ) : (
                 <button aria-pressed={selected} className={`catalog-picker-card champion-picker-card${selected ? " is-selected" : ""}`} key={item.id} onClick={() => selectItem(item)} type="button">
+                  <span className="catalog-picker-card-top"><RarityBadge rarity={item.rarity} />{selected && <span className="picker-selected-label">Selected</span>}</span>
                   <ListingArtwork imageUrl={item.image_url} name={item.name} trait={item.trait} />
-                  {selected && <span className="catalog-picker-card-top"><span className="picker-selected-label">Selected</span></span>}
                   <strong>{item.name}</strong>
-                  <span>{getItemMeta ? getItemMeta(item) : "Choose this champion"}</span>
+                  <span>{getItemMeta ? getItemMeta(item) : "Choose this champion"} · ◈ {getOfficialChampionValue(item).toLocaleString()}</span>
                 </button>
               );
             })}

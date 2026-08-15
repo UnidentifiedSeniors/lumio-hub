@@ -30,7 +30,7 @@ function Champion() {
           <p className="eyebrow">AFS source catalog</p>
           <RarityBadge rarity={champion.rarity} />
           <h1>{champion.name}</h1>
-          <p>Official value ◈ {getOfficialChampionValue(champion).toLocaleString()} · record the copy you own, choose its trait, and keep trade discussions focused on the exact copy.</p>
+          <p>Value ◈ {getOfficialChampionValue(champion).toLocaleString()} · record the copy you own, choose its trait, and keep trade discussions focused on the exact copy.</p>
         </div>
         <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait="AFS champion" />
       </section>
@@ -39,7 +39,7 @@ function Champion() {
         <article className="champion-stat-card">
           <div className="section-title-row">
             <div>
-              <p className="eyebrow">Official value reference</p>
+              <p className="eyebrow">Lumio value reference</p>
               <h2>◈ {getOfficialChampionValue(champion).toLocaleString()}</h2>
             </div>
           </div>

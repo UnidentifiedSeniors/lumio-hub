@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import CollapsibleChampionArtwork from "../components/CollapsibleChampionArtwork";
 import Layout from "../components/Layout";
-import ListingArtwork from "../components/ListingArtwork";
 import OfferComposer from "../components/OfferComposer";
 import RarityBadge from "../components/RarityBadge";
 import useAuth from "../context/useAuth";
@@ -176,10 +176,10 @@ function TraderProfile() {
               <article className="marketplace-card" key={listing.id}>
                 <div className="card-topline"><RarityBadge rarity={listing.rarity} /><span className="listing-status listing-active">Live on Shelf</span></div>
                 <span className="listing-code">Listing {getListingCode(listing.id)}</span>
-                <ListingArtwork imageUrl={listing.image_url} name={listing.name} trait={traits[0] || "Standard"} />
+                <CollapsibleChampionArtwork imageUrl={listing.image_url} name={listing.name} trait={traits[0] || "Standard"} />
                 <h2>{listing.name}</h2>
                 <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
-                <p className="market-value">Official value · ◈ {getOfficialChampionValue(listing).toLocaleString()}</p>
+                <p className="market-value">Value · ◈ {getOfficialChampionValue(listing).toLocaleString()}</p>
                 {listing.note && <p className="listing-note">“{listing.note}”</p>}
                 {!isOwnProfile && <button className="primary-action card-action" onClick={() => openListingOffer(listing)} type="button">Make an offer</button>}
               </article>
@@ -192,7 +192,7 @@ function TraderProfile() {
         <div>
           <p className="eyebrow">Collection</p>
           <h2>{isOwnProfile ? "Your recorded champions" : `${displayName}'s recorded champions`}</h2>
-          <p>{canViewCollection ? "Champion copies recorded in Lumio, including their artwork, rarity, trait, and official value." : "This trader has chosen not to share their recorded champions publicly."}</p>
+          <p>{canViewCollection ? "Champion copies recorded in Lumio, including their artwork, rarity, trait, and value." : "This trader has chosen not to share their recorded champions publicly."}</p>
         </div>
         <span className={`collection-visibility-badge${collectionIsPublic ? " is-public" : " is-private"}`}>{collectionIsPublic ? "Public Collection" : isOwnProfile ? "Private to others" : "Private Collection"}</span>
       </section>
@@ -214,10 +214,10 @@ function TraderProfile() {
             return (
               <article className="public-collection-card" key={champion.id}>
                 <div className="card-topline"><RarityBadge rarity={champion.rarity} /><span className="collection-copy-label">Collection copy</span></div>
-                <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait={traits[0] || "Standard"} />
+                <CollapsibleChampionArtwork imageUrl={champion.image_url} name={champion.name} trait={traits[0] || "Standard"} />
                 <h3>{champion.name}</h3>
                 <div className="traits card-traits">{traits.length ? traits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
-                <p className="market-value">Official value · ◈ {getOfficialChampionValue(champion).toLocaleString()}</p>
+                <p className="market-value">Value · ◈ {getOfficialChampionValue(champion).toLocaleString()}</p>
               </article>
             );
           })}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import ListingArtwork from "./ListingArtwork";
+import CollapsibleChampionArtwork from "./CollapsibleChampionArtwork";
 import RarityBadge from "./RarityBadge";
 import useAuth from "../context/useAuth";
 import { supabase } from "../lib/supabase";
@@ -15,17 +15,19 @@ function OfferChampionChoice({ champion, kind, onSelect, selected }) {
     : (selected ? "Included" : "Add to offer");
 
   return (
-    <button aria-pressed={selected} className={`offer-champion-choice ${kind}${selected ? " selected" : ""}`} onClick={onSelect} type="button">
-      <span className="offer-choice-indicator">{selected ? "✓" : "+"}</span>
-      <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait={traits[0] || "Standard"} />
-      <span className="offer-champion-choice-copy">
-        <RarityBadge rarity={champion.rarity} />
-        <strong>{champion.name}</strong>
-        <small>{traits.length ? traits.join(" · ") : "Standard trait"}</small>
-        <em>◈ {getOfficialChampionValue(champion).toLocaleString()}</em>
-      </span>
-      <span className="offer-choice-label">{selectionLabel}</span>
-    </button>
+    <article className={`offer-champion-choice ${kind}${selected ? " selected" : ""}`}>
+      <CollapsibleChampionArtwork compact imageUrl={champion.image_url} name={champion.name} trait={traits[0] || "Standard"} />
+      <button aria-pressed={selected} className="offer-champion-choice-select" onClick={onSelect} type="button">
+        <span className="offer-choice-indicator">{selected ? "✓" : "+"}</span>
+        <span className="offer-champion-choice-copy">
+          <RarityBadge rarity={champion.rarity} />
+          <strong>{champion.name}</strong>
+          <small>{traits.length ? traits.join(" · ") : "Standard trait"}</small>
+          <em>◈ {getOfficialChampionValue(champion).toLocaleString()} value</em>
+        </span>
+        <span className="offer-choice-label">{selectionLabel}</span>
+      </button>
+    </article>
   );
 }
 
@@ -180,10 +182,10 @@ function OfferComposer({ target, onClose, onSent }) {
                   {ownedChampions.map((champion) => <OfferChampionChoice champion={champion} key={champion.id} kind="offer" onSelect={() => toggleChampion(champion.id)} selected={offerIds.includes(champion.id)} />)}
                 </div>
               )}
-              <div className="offer-total"><span>{selectedOffer.length} champion{selectedOffer.length === 1 ? "" : "s"} selected</span><strong>◈ {offerValue.toLocaleString()} official value</strong></div>
+              <div className="offer-total"><span>{selectedOffer.length} champion{selectedOffer.length === 1 ? "" : "s"} selected</span><strong>◈ {offerValue.toLocaleString()} value</strong></div>
             </section>
 
-            <p className="offer-value-guidance">Official values reflect Clan Points trained, obtainment difficulty, and a small amount of revised personal judgment. They guide discussion; the final agreement is yours.</p>
+            <p className="offer-value-guidance">Lumio values reflect Clan Points trained, obtainment difficulty, and a small amount of revised personal judgment. They guide discussion; the final agreement is yours.</p>
 
             <label className="offer-note-field" htmlFor="offer-note">
               <span>Offer note <small>Optional</small></span>

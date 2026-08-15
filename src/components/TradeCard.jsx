@@ -1,4 +1,4 @@
-import ListingArtwork from "./ListingArtwork";
+import CollapsibleChampionArtwork from "./CollapsibleChampionArtwork";
 
 function TradeCard({ champion, action, label }) {
   const unavailable = champion.stock <= 0;
@@ -6,7 +6,7 @@ function TradeCard({ champion, action, label }) {
   return (
     <div className="trade-card">
       <div>
-        <ListingArtwork imageUrl={champion.image_url} name={champion.name} />
+        <CollapsibleChampionArtwork imageUrl={champion.image_url} name={champion.name} />
         <h3>{champion.name}</h3>
         <p>📦 Stock: {champion.stock}</p>
         {champion.traits && champion.traits.length > 0 && (

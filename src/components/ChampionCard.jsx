@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import ListingArtwork from "./ListingArtwork";
+import CollapsibleChampionArtwork from "./CollapsibleChampionArtwork";
 
 function ChampionCard({ champion }) {
   return (
     <div className="champion-card">
-      <ListingArtwork imageUrl={champion.image_url} name={champion.name} />
+      <CollapsibleChampionArtwork imageUrl={champion.image_url} name={champion.name} />
 
       <div className="traits">
         {champion.traits && champion.traits.map((trait, i) => (

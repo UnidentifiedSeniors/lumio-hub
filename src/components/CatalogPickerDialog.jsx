@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import ListingArtwork from "./ListingArtwork";
+import CollapsibleChampionArtwork from "./CollapsibleChampionArtwork";
 import RarityBadge from "./RarityBadge";
 import { rarityBadgeClassName } from "../utils/rarityBadge";
 import { getOfficialChampionValue } from "../utils/marketplace";
@@ -64,15 +64,17 @@ function CatalogPickerDialog({ getItemMeta, items, kind, onChoose, onClose, sele
                     </span>
                   </button>
                 ) : (
-                  <button aria-pressed={selected} className={`catalog-picker-card champion-picker-card${selected ? " is-selected" : ""}`} key={item.id} onClick={() => selectItem(item)} type="button">
-                    <span className="catalog-picker-card-top"><RarityBadge rarity={item.rarity} />{selected && <span className="picker-selected-label">Selected</span>}</span>
-                    <ListingArtwork imageUrl={item.image_url} name={item.name} trait={item.trait} />
-                    <span className="catalog-picker-card-copy">
-                      <strong>{item.name}</strong>
-                      <span className="catalog-picker-card-description">{getItemMeta ? getItemMeta(item) : "Add this champion to your Collection"}</span>
-                      <span className="catalog-picker-card-value">◈ {getOfficialChampionValue(item).toLocaleString()} official value</span>
-                    </span>
-                  </button>
+                  <article className={`catalog-picker-card champion-picker-card${selected ? " is-selected" : ""}`} key={item.id}>
+                    <button aria-pressed={selected} className="catalog-picker-select" onClick={() => selectItem(item)} type="button">
+                      <span className="catalog-picker-card-top"><RarityBadge rarity={item.rarity} />{selected && <span className="picker-selected-label">Selected</span>}</span>
+                      <span className="catalog-picker-card-copy">
+                        <strong>{item.name}</strong>
+                        <span className="catalog-picker-card-description">{getItemMeta ? getItemMeta(item) : "Add this champion to your Collection"}</span>
+                        <span className="catalog-picker-card-value">◈ {getOfficialChampionValue(item).toLocaleString()} value</span>
+                      </span>
+                    </button>
+                    <CollapsibleChampionArtwork imageUrl={item.image_url} name={item.name} trait={item.trait} />
+                  </article>
                 );
               })}
             </div>

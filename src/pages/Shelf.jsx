@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import CatalogPickerDialog from "../components/CatalogPickerDialog";
 import ChoiceMenu from "../components/ChoiceMenu";
+import CollapsibleChampionArtwork from "../components/CollapsibleChampionArtwork";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
@@ -214,10 +215,10 @@ function Shelf() {
             return (
               <article className="shelf-card" key={listing.id}>
                 <div className="card-topline"><RarityBadge rarity={champion.rarity} /><span className={`listing-status listing-${listing.status}`}>{listing.status}</span></div>
-                <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait={traitLabel} />
+                <CollapsibleChampionArtwork imageUrl={champion.image_url} name={champion.name} trait={traitLabel} />
                 <h2>{champion.name}</h2>
                 <div className="traits card-traits">{championTraits.length ? championTraits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
-                <p className="market-value">Official value · ◈ {getOfficialChampionValue(champion).toLocaleString()}</p>
+                <p className="market-value">Value · ◈ {getOfficialChampionValue(champion).toLocaleString()}</p>
                 {listing.note && <p className="listing-note">“{listing.note}”</p>}
                 <p className="card-meta">Listed {formatDateTime(listing.created_at, datePreferences)}</p>
                 <div className="card-actions">
@@ -261,7 +262,7 @@ function Shelf() {
             <p className="eyebrow">Public Shelf</p>
             <h2 id="listing-editor-title">Edit listing</h2>
             <p className="modal-copy">Update the listing note or make the exact champion copy live or paused. Its champion and trait stay unchanged.</p>
-            {editingListing.user_champions && <div className="listing-editor-preview"><ListingArtwork imageUrl={editingListing.user_champions.image_url} name={editingListing.user_champions.name} trait={editingListing.user_champions.trait || "Standard"} /><div><RarityBadge rarity={editingListing.user_champions.rarity} /><strong>{editingListing.user_champions.name}</strong><small>Official value ◈ {getOfficialChampionValue(editingListing.user_champions).toLocaleString()} · {editingListing.user_champions.trait || "Standard"} trait</small></div></div>}
+            {editingListing.user_champions && <div className="listing-editor-preview"><ListingArtwork imageUrl={editingListing.user_champions.image_url} name={editingListing.user_champions.name} trait={editingListing.user_champions.trait || "Standard"} /><div><RarityBadge rarity={editingListing.user_champions.rarity} /><strong>{editingListing.user_champions.name}</strong><small>Value ◈ {getOfficialChampionValue(editingListing.user_champions).toLocaleString()} · {editingListing.user_champions.trait || "Standard"} trait</small></div></div>}
             <ChoiceMenu label="Listing visibility" onChange={setEditingStatus} options={LISTING_STATUS_OPTIONS} value={editingStatus} />
             <label className="field-label" htmlFor="edit-listing-note">Note <span>optional</span></label>
             <textarea id="edit-listing-note" maxLength="280" onChange={(event) => setEditingNote(event.target.value)} placeholder="What kind of offers are you open to?" rows="4" value={editingNote} />

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import CatalogPickerDialog from "../components/CatalogPickerDialog";
 import ChoiceMenu from "../components/ChoiceMenu";
+import CollapsibleChampionArtwork from "../components/CollapsibleChampionArtwork";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Layout from "../components/Layout";
 import ListingArtwork from "../components/ListingArtwork";
@@ -225,10 +226,10 @@ function Collection() {
             return (
               <article className="owned-champion-card" key={champion.id}>
                 <div className="card-topline"><RarityBadge rarity={champion.rarity} />{listing && <span className={`listing-status listing-${listing.status}`}>{listing.status === "active" ? "On Shelf" : "Shelf paused"}</span>}</div>
-                <ListingArtwork imageUrl={champion.image_url} name={champion.name} trait={traitLabel} />
+                <CollapsibleChampionArtwork imageUrl={champion.image_url} name={champion.name} trait={traitLabel} />
                 <h2>{champion.name}</h2>
                 <div className="traits card-traits">{championTraits.length ? championTraits.map((trait) => <span className="trait" key={trait}>✦ {trait}</span>) : <span className="trait">✦ Standard</span>}</div>
-                <div className="owned-champion-value"><span>Official value</span><strong>◈ {getOfficialChampionValue(champion).toLocaleString()}</strong></div>
+                <div className="owned-champion-value"><span>Value</span><strong>◈ {getOfficialChampionValue(champion).toLocaleString()}</strong></div>
                 <div className="card-actions owned-card-actions">
                   <button className="secondary-action" onClick={() => setDetailsChampion(champion)} type="button">View details</button>
                   {listing ? <Link className="secondary-action" to="/shelf">Manage listing</Link> : <Link className="primary-action" to={`/shelf?list=${champion.id}`}>List on Shelf</Link>}
@@ -251,10 +252,10 @@ function Collection() {
               </div>
             </div>
             <div className="collection-detail-metrics">
-              <div><span>Official value</span><strong>◈ {getOfficialChampionValue(detailsChampion).toLocaleString()}</strong></div>
+              <div><span>Value</span><strong>◈ {getOfficialChampionValue(detailsChampion).toLocaleString()}</strong></div>
               <div><span>Shelf status</span><strong>{listingsByChampion.get(detailsChampion.id)?.status === "active" ? "Listed publicly" : listingsByChampion.get(detailsChampion.id)?.status === "paused" ? "Listing paused" : "Private to you"}</strong></div>
             </div>
-            <p className="modal-copy">Official values are a guide based on Clan Points trained, obtainment difficulty, and a small amount of revised personal judgment. This is one exact copy in your Collection.</p>
+            <p className="modal-copy">Lumio values are a guide based on Clan Points trained, obtainment difficulty, and a small amount of revised personal judgment. This is one exact copy in your Collection.</p>
             <div className="modal-buttons collection-details-actions">
               <button className="danger-action" onClick={() => setDeleteTarget(detailsChampion)} type="button">Remove from Collection</button>
               <button className="secondary-action" onClick={() => setDetailsChampion(null)} type="button">Done</button>
@@ -274,7 +275,7 @@ function Collection() {
             <div className="catalog-field">
               <span className="field-label">Champion</span>
               <button className={`catalog-selection${selectedChampion ? " has-selection" : ""}`} onClick={() => setPicker("champion")} type="button">
-                {selectedChampion ? <><RarityBadge rarity={selectedChampion.rarity} /><strong>{selectedChampion.name}</strong><small>Official value ◈ {getOfficialChampionValue(selectedChampion).toLocaleString()} · select its trait below.</small><em>Change</em></> : <><strong>Choose a champion</strong><small>Browse the catalog by name, artwork, and official value.</small><em>Browse catalog</em></>}
+                {selectedChampion ? <><RarityBadge rarity={selectedChampion.rarity} /><strong>{selectedChampion.name}</strong><small>Value ◈ {getOfficialChampionValue(selectedChampion).toLocaleString()} · select its trait below.</small><em>Change</em></> : <><strong>Choose a champion</strong><small>Browse the catalog by name, artwork, and value.</small><em>Browse catalog</em></>}
               </button>
             </div>
 
